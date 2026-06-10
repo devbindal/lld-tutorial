@@ -1,19 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Home from './components/Home.jsx'
-import Day1 from './months/month1/week1/Day1.jsx'
-import Day2 from './months/month1/week1/Day2.jsx'
-import Day3 from './months/month1/week1/Day3.jsx'
-import Day4 from './months/month1/week1/Day4.jsx'
-import Day5 from './months/month1/week1/Day5.jsx'
-import Day6 from './months/month1/week2/Day6.jsx'
-import Day7 from './months/month1/week2/Day7.jsx'
-import Day8 from './months/month1/week2/Day8.jsx'
-import Day9 from './months/month1/week2/Day9.jsx'
-import Day10 from './months/month1/week2/Day10.jsx'
-import Day11 from './months/month1/week3/Day11.jsx'
-import Day12 from './months/month1/week3/Day12.jsx'
 import { ALL_DAYS } from './data/roadmap.js'
+
+// Lazy imports: each day page is its own chunk, loaded on first visit.
+const Day1 = lazy(() => import('./months/month1/week1/Day1.jsx'))
+const Day2 = lazy(() => import('./months/month1/week1/Day2.jsx'))
+const Day3 = lazy(() => import('./months/month1/week1/Day3.jsx'))
+const Day4 = lazy(() => import('./months/month1/week1/Day4.jsx'))
+const Day5 = lazy(() => import('./months/month1/week1/Day5.jsx'))
+const Day6 = lazy(() => import('./months/month1/week2/Day6.jsx'))
+const Day7 = lazy(() => import('./months/month1/week2/Day7.jsx'))
+const Day8 = lazy(() => import('./months/month1/week2/Day8.jsx'))
+const Day9 = lazy(() => import('./months/month1/week2/Day9.jsx'))
+const Day10 = lazy(() => import('./months/month1/week2/Day10.jsx'))
+const Day11 = lazy(() => import('./months/month1/week3/Day11.jsx'))
+const Day12 = lazy(() => import('./months/month1/week3/Day12.jsx'))
 
 // Map of built day components. Add new days here as you create them (one folder per week).
 const DAY_COMPONENTS = {
@@ -93,7 +95,11 @@ export default function App() {
     <div className="app">
       <button className="menubtn" onClick={() => setMenuOpen((o) => !o)}>☰ Menu</button>
       <Sidebar route={{ ...route, menuOpen }} onNavigate={() => setMenuOpen(false)} />
-      <div className="content">{page}</div>
+      <div className="content">
+        <Suspense fallback={<div className="scrollarea"><p style={{ marginTop: 40, color: '#7c8aa5' }}>Loading…</p></div>}>
+          {page}
+        </Suspense>
+      </div>
     </div>
   )
 }
