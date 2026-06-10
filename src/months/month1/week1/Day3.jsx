@@ -416,6 +416,51 @@ d.fetch();            <span class="cm">// Dog’s own new method</span>`} />
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Why does Java forbid multiple inheritance of CLASSES?">
+          <p>The <strong>diamond problem</strong>: if <C>C extends A, B</C> and both parents define
+            <C> draw()</C> (or worse, both carry a <C>count</C> field), which one does C inherit? State makes
+            it unanswerable, so Java bans it for classes. Multiple inheritance of TYPE (interfaces) is fine —
+            and Java 8 default methods reopened a small diamond, with an explicit-override rule (Day 5).</p>
+        </Reveal>
+        <Reveal summary="Q: Are constructors inherited? Then how does the child get built?">
+          <p><strong>Not inherited.</strong> Every child constructor begins with a call up the chain —
+            <C> super(...)</C> explicit, or an invisible <C>super()</C> inserted by the compiler. Trap: if the
+            parent has NO no-arg constructor, the child MUST call <C>super(args)</C> explicitly or it won't
+            compile. And <C>super(...)</C>/<C>this(...)</C> must be the first statement.</p>
+        </Reveal>
+        <Reveal summary="Q: Can static methods be overridden?">
+          <p><strong>No — they are HIDDEN, not overridden.</strong> A same-signature static in the child shadows
+            the parent's, but calls resolve by the REFERENCE type at compile time — no dynamic dispatch.
+            <C> Parent p = new Child(); p.staticMethod()</C> runs the PARENT's version. That difference
+            (hide vs override) is a beloved written-test question.</p>
+        </Reveal>
+        <Reveal summary="Q: Name the methods every object inherits from Object.">
+          <p>The big ones: <C>equals</C>, <C>hashCode</C>, <C>toString</C>, <C>getClass</C>, <C>clone</C>
+            (protected — Day 25), <C>finalize</C> (deprecated), and the threading trio <C>wait/notify/notifyAll</C>
+            (Month 4). Knowing that EVERY class silently extends Object — and which of these to override as a
+            pair (equals+hashCode, Day 20) — is core trivia.</p>
+        </Reveal>
+        <Reveal summary={<>Q: Is <C>private</C> + same method name in the child an override?</>}>
+          <p><strong>No.</strong> Private methods are invisible to children, so the child's method is a brand-new,
+            unrelated method — no <C>@Override</C>, no dispatch. Same for constructors. This is why
+            <C> @Override</C> matters: it turns "I thought I overrode it" into a compile error.</p>
+        </Reveal>
+        <Reveal summary="Q: Can a child REDUCE the visibility of an inherited method (public → protected)?">
+          <p><strong>No — visibility can only stay or widen.</strong> Shrinking it would break substitutability:
+            code calling the method through the parent type would explode for that child (LSP, Day 13, enforced
+            by the compiler). Widening (protected → public) is fine.</p>
+        </Reveal>
+        <Reveal summary="Q: What does instanceof return for null?">
+          <p><strong>false — never a NullPointerException.</strong> <C>null instanceof Anything</C> is always
+            false. Handy one-liner that catches people who've never actually run it.</p>
+        </Reveal>
+      </section>
+
       {/* 10 */}
       <section id="s10">
         <div className="sec-label">Section 10 · Test yourself</div>

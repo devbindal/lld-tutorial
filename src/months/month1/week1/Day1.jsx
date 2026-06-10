@@ -517,6 +517,53 @@ c.accelerate();   <span class="cm">// 💥 NullPointerException — no house at 
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Edge cases and trivia interviewers use to separate "read about it" from "knows it". Answer each in
+          your head BEFORE revealing.</p>
+        <Reveal summary="Q: Is Java pass-by-value or pass-by-reference?">
+          <p><strong>Always pass-by-value.</strong> The confusion: for objects, the value copied IS the reference
+            (address). So a method CAN mutate the object the caller sees (<C>car.setColor(...)</C> works) — but
+            reassigning the parameter (<C>car = new Car()</C>) changes only the method's local copy. Java has no
+            C++-style pass-by-reference, ever.</p>
+        </Reveal>
+        <Reveal summary={<>Q: <C>String a = "hi"; String b = "hi";</C> — is <C>a == b</C> true or false?</>}>
+          <p><strong>True!</strong> String <em>literals</em> go into the <strong>string pool</strong> — identical
+            literals share ONE object, so addresses match. But <C>new String("hi")</C> forces a fresh heap object
+            → <C>==</C> false. This is why the rule stays absolute: use <C>.equals()</C> — <C>==</C> on strings
+            sometimes "works", which makes it the perfect trap.</p>
+        </Reveal>
+        <Reveal summary={<>Q: What is the FULL order of events when <C>new Child()</C> runs?</>}>
+          <p>① Parent statics (fields + static blocks, first class-load only) → ② Child statics (first time) →
+            ③ Parent instance field initializers → ④ Parent constructor body → ⑤ Child instance field
+            initializers → ⑥ Child constructor body. Memory hook: <em>statics once, top-down; then instance,
+            parent-before-child.</em></p>
+        </Reveal>
+        <Reveal summary="Q: Can a constructor be final, static, or abstract?">
+          <p><strong>None of the three.</strong> <C>final</C> is meaningless (constructors aren't inherited or
+            overridden), <C>static</C> contradicts the job (a constructor initializes a specific instance —
+            there's a <C>this</C>), <C>abstract</C> is absurd (it must have a body to run at birth). Allowed:
+            only access modifiers — including <C>private</C> (that's how Singleton works, Day 21).</p>
+        </Reveal>
+        <Reveal summary="Q: Do local variables get default values like fields do?">
+          <p><strong>No.</strong> Fields auto-default (<C>0</C>, <C>false</C>, <C>null</C>); locals get NOTHING —
+            reading an unassigned local is a compile error ("variable might not have been initialized"). Exam
+            favorite: the identical line is legal as a field, illegal in a method.</p>
+        </Reveal>
+        <Reveal summary={<>Q: Can you overload <C>main()</C>? Which one runs?</>}>
+          <p>Yes — <C>main(String name)</C>, <C>main(int x)</C> are legal overloads, but the JVM only calls the
+            exact <C>public static void main(String[] args)</C>; the rest are ordinary methods. Follow-up they
+            love: varargs <C>main(String... args)</C> ALSO works as the entry point.</p>
+        </Reveal>
+        <Reveal summary="Q: Where do static fields live? Are objects ever on the stack?">
+          <p>Statics live with the CLASS (the JVM's method area / metaspace), inside no object. And in Java's
+            language model, ALL objects live on the heap; the stack holds locals and references. (Bonus point:
+            the JIT may "scalar-replace" objects that never escape a method — an optimization, not the model.)</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

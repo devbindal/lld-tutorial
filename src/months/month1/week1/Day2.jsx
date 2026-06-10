@@ -477,6 +477,54 @@ tags.add(<span class="str">"hi"</span>);            <span class="cm">// ✅ tota
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Why exactly is String immutable in Java? (Give 3 reasons)">
+          <p>① <strong>Security</strong> — strings carry file paths, URLs, class names; if callers could mutate
+            them after validation, every check could be bypassed. ② <strong>The string pool</strong> — sharing
+            one "hi" among 100 variables is only safe if nobody can change it. ③ <strong>Caching</strong> —
+            String caches its hashCode (computed once), which is why it's the perfect HashMap key. Same logic
+            you'll apply to your own value objects on Day 20.</p>
+        </Reveal>
+        <Reveal summary={<>Q: <C>final List&lt;String&gt; list</C> — can I still call <C>list.add("x")</C>?</>}>
+          <p><strong>Yes!</strong> <C>final</C> freezes the REFERENCE, not the object: you can't reassign
+            <C> list = other</C>, but the list's contents stay fully mutable. True immutability needs an
+            immutable type (<C>List.copyOf</C>) or an unmodifiable wrapper. "final ≠ immutable" is a top-3
+            Java interview question.</p>
+        </Reveal>
+        <Reveal summary="Q: The checklist for writing a truly immutable class?">
+          <p>① class <C>final</C> (no subclass can add mutability — and LSP-proof, Day 13) · ② all fields
+            <C> private final</C> · ③ no setters · ④ defensive COPY of mutable constructor arguments ·
+            ⑤ defensive copy (or immutable views) on the way OUT of getters. Forgetting ④ or ⑤ is the classic
+            "immutable" class that isn't.</p>
+        </Reveal>
+        <Reveal summary="Q: Can reflection break private? So is encapsulation pointless?">
+          <p>Yes — <C>field.setAccessible(true)</C> can read/write privates (it's how many frameworks work).
+            No — encapsulation is a <em>design</em> boundary against accidental misuse, not a security wall
+            against determined attackers. (Newer JPMS modules can actually forbid it at runtime.) Day 21 shows
+            reflection cracking singletons the same way.</p>
+        </Reveal>
+        <Reveal summary="Q: What do final METHOD and final CLASS mean — and name a famous final class.">
+          <p><C>final</C> method = cannot be overridden (protects an invariant step). <C>final</C> class = cannot
+            be extended at all. Famous finals: <C>String</C>, <C>Integer</C>, all wrapper classes — final partly
+            SO THAT their immutability can't be sabotaged by a subclass.</p>
+        </Reveal>
+        <Reveal summary='Q: What is "effectively final" (lambdas keep mentioning it)?'>
+          <p>A local variable that is never reassigned after initialization — even without the keyword. Lambdas
+            and anonymous classes may only capture locals that are final or effectively final (the compiler
+            checks). Reassign the variable anywhere and every lambda using it stops compiling.</p>
+        </Reveal>
+        <Reveal summary="Q: Getter returns the internal Date/List — what's the bug called, and the fix?">
+          <p>A <strong>representation leak</strong> (escaping reference): the caller now holds your private
+            mutable state and can edit it past every guard. Fix: return a <strong>defensive copy</strong>
+            (<C>new ArrayList&lt;&gt;(items)</C>), an unmodifiable view, or store immutable types
+            (<C>LocalDate</C> instead of <C>Date</C>) so there's nothing to leak.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

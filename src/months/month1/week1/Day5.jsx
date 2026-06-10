@@ -505,6 +505,56 @@ Config.LIMIT = <span class="num">20</span>;   <span class="cm">// ❌ it's a con
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Can an abstract class have a constructor? Zero abstract methods? Can it be final?">
+          <p>Constructor: <strong>yes</strong> — it runs via <C>super()</C> when a concrete child is born
+            (initializing the abstract class's own fields). Zero abstract methods: <strong>yes</strong> — legal,
+            sometimes used just to block direct instantiation. <C>final abstract</C>: <strong>contradiction,
+            compile error</strong> — abstract demands subclassing, final forbids it.</p>
+        </Reveal>
+        <Reveal summary="Q: Two interfaces give the SAME default method — what must the class do?">
+          <p>The class <strong>must override it</strong> (the compiler forces resolution of the diamond) — and it
+            can still delegate to a chosen parent with the special syntax
+            <C> InterfaceA.super.method()</C>. This is THE default-method interview question; the
+            <C> X.super.m()</C> syntax is the part that proves you've really used it.</p>
+        </Reveal>
+        <Reveal summary="Q: What are interface fields, really? And which members can interfaces have today?">
+          <p>Every interface field is implicitly <C>public static final</C> — a constant, never instance state.
+            Modern interfaces may hold: abstract methods, <C>default</C> methods, <C>static</C> methods, and
+            (Java 9+) <C>private</C> methods — helpers shared by the defaults. What they can NEVER have:
+            instance fields and constructors. That's the line that keeps them "contracts, not classes".</p>
+        </Reveal>
+        <Reveal summary="Q: What is a functional interface and what does @FunctionalInterface do?">
+          <p>An interface with exactly ONE abstract method (defaults/statics don't count) — the target type for
+            lambdas: <C>Runnable</C>, <C>Comparator</C>, <C>Predicate</C>. <C>@FunctionalInterface</C> makes the
+            compiler ENFORCE the one-method rule, so nobody adds a second and breaks every lambda. (Extreme ISP
+            — Day 14.)</p>
+        </Reveal>
+        <Reveal summary="Q: What is a marker interface? Name three.">
+          <p>An interface with NO methods at all — pure metadata read via <C>instanceof</C>:
+            <C> Serializable</C>, <C>Cloneable</C> (Day 25's troublemaker), <C>RandomAccess</C>. Follow-up:
+            annotations largely replaced them, but markers participate in the type system
+            (<C>void save(Serializable s)</C>) — annotations can't do that.</p>
+        </Reveal>
+        <Reveal summary="Q: Abstract class vs interface — the 15-second exam answer?">
+          <p>Abstract class = <strong>is-a with shared STATE and skeleton code</strong> (fields, constructors,
+            any-visibility members; single inheritance). Interface = <strong>a capability contract</strong>
+            (no instance state; implement many). Quick test: need fields/constructor → abstract class; need
+            multiple inheritance or unrelated implementers → interface; both → class implements interfaces and
+            maybe extends one abstract base.</p>
+        </Reveal>
+        <Reveal summary="Q: Can an interface extend interfaces? A class extend AND implement?">
+          <p>Interfaces may extend MULTIPLE interfaces (<C>interface A extends B, C</C> — type inheritance has
+            no diamond-state problem). And a class can do both at once:
+            <C> class Dog extends Animal implements Pet, Comparable&lt;Dog&gt;</C> — one parent class, many
+            contracts. Order is fixed: <C>extends</C> first, then <C>implements</C>.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

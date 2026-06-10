@@ -441,6 +441,51 @@ f(<span class="num">5</span>);   <span class="cm">// calls f(long)! Widening (in
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary={<>Q: <C>f(1)</C> with overloads <C>f(long)</C>, <C>f(Integer)</C>, <C>f(int...)</C> — which wins?</>}>
+          <p><C>f(long)</C>. Overload resolution order: ① exact match → ② <strong>widening</strong> (int→long) →
+            ③ <strong>boxing</strong> (int→Integer) → ④ <strong>varargs</strong>, always last. Widening beats
+            boxing beats varargs — the single most asked overloading puzzle.</p>
+        </Reveal>
+        <Reveal summary={<>Q: <C>Parent p = new Child();</C> — p.field vs p.method(): which Child version runs?</>}>
+          <p>Only the METHOD. <strong>Fields are not polymorphic</strong> — field access resolves by the
+            REFERENCE type at compile time (you get Parent's field, "shadowed", not overridden), while instance
+            methods dispatch by the OBJECT's type at runtime. Same-named fields in parent and child = two
+            separate fields existing simultaneously.</p>
+        </Reveal>
+        <Reveal summary="Q: Which methods do NOT use dynamic dispatch?">
+          <p><C>static</C> (resolved by reference type — hidden, not overridden), <C>private</C> (invisible to
+            children), <C>final</C> (can't be overridden, so the JIT may inline them), and constructors. Memory
+            hook: <em>static, private, final — compile-time bound.</em></p>
+        </Reveal>
+        <Reveal summary="Q: Can the return type or exceptions change in an override?">
+          <p>Return type: yes, but only <strong>covariantly</strong> — a SUBTYPE of the parent's return
+            (Shape → Circle). Checked exceptions: only FEWER or NARROWER, never new/broader ones. Both rules are
+            the compiler enforcing "deliver more, surprise less" — LSP (Day 13) baked into the language.</p>
+        </Reveal>
+        <Reveal summary="Q: Can you override a method and make it synchronized / change parameter names?">
+          <p>Parameter NAMES are irrelevant (only types matter for the signature). <C>synchronized</C> is an
+            implementation detail, not part of the contract — an override may add or drop it. But change a
+            parameter TYPE and you've silently created an OVERLOAD, not an override — the #1 reason to always
+            write <C>@Override</C>.</p>
+        </Reveal>
+        <Reveal summary="Q: Overloading is resolved at ____ time; overriding at ____ time?">
+          <p>Overloading: <strong>compile</strong> time (static binding, by reference/argument types).
+            Overriding: <strong>run</strong> time (dynamic dispatch via the vtable, by the object's actual
+            class). If you can fill those two blanks with confidence and an example, this question is free
+            marks.</p>
+        </Reveal>
+        <Reveal summary="Q: What's the modern instanceof (Java 16+) that interviewers like to see?">
+          <p><strong>Pattern matching:</strong> <C>if (shape instanceof Circle c) {'{'} c.radius(); {'}'}</C> —
+            test + cast + scoped variable in one step, no separate <C>(Circle)</C> cast line. (And remember:
+            needing instanceof chains at all is often an LSP/polymorphism smell — Day 13.)</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>
