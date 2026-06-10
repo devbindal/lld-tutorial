@@ -460,6 +460,49 @@ export default function Day10() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: The noun-verb technique has an official name and author — what are they?">
+          <p><strong>Textual analysis</strong> (or "Abbott's heuristic") — Russell Abbott, 1983, later
+            popularized by Grady Booch. Saying "I'll run a quick Abbott-style textual analysis" in a design
+            interview is a power move — just be ready to actually do it.</p>
+        </Reveal>
+        <Reveal summary="Q: Information Expert comes from which catalog? Name two siblings.">
+          <p><strong>GRASP</strong> (General Responsibility Assignment Software Patterns) — Craig Larman's
+            catalog. Siblings worth name-dropping: <strong>Creator</strong> (who should instantiate X? whoever
+            aggregates/contains it), <strong>Controller</strong>, <strong>Low Coupling / High Cohesion</strong>
+            (Day 17 as named patterns), <strong>Protected Variations</strong> (≈ OCP).</p>
+        </Reveal>
+        <Reveal summary='Q: The god class anti-pattern has another famous name — and a "detector"?'>
+          <p>Also called <strong>The Blob</strong>. Detectors: a class named Manager/System/Processor, far more
+            methods than its neighbors, every change request landing in it (divergent change, Day 17), and
+            "the class everyone is afraid to touch."</p>
+        </Reveal>
+        <Reveal summary="Q: Where does YAGNI come from?">
+          <p><strong>Extreme Programming</strong> (Kent Beck / Ron Jeffries, late 1990s) — "You Aren't Gonna
+            Need It," a core XP practice alongside "do the simplest thing that could possibly work." Knowing
+            it's an XP term (not GoF, not SOLID) is a small but real trivia point.</p>
+        </Reveal>
+        <Reveal summary='Q: Requirement says "the system shall calculate fees". Does "system" become a class?'>
+          <p>No — "the system" IS the program; modeling it as a class births the god object. The verb
+            ("calculate fees") gets assigned to the entity holding the needed data (Information Expert).
+            "The system/the app/the platform" are scope words, not entities.</p>
+        </Reveal>
+        <Reveal summary='Q: "Status: pending, paid, shipped" — enum or subclasses? The decision rule?'>
+          <p>Enum when the values differ only as DATA/labels and transitions (state machine, Day 19). Subclasses
+            (State pattern, Month 2) when each status carries genuinely different BEHAVIOR of meaningful size.
+            Start with the enum; graduate when the switch-on-status blocks multiply (Day 12's fool-me-once).</p>
+        </Reveal>
+        <Reveal summary="Q: Interviewer stays silent after giving you vague requirements. What are they testing?">
+          <p>Whether you ASK. Scope discovery is the evaluated skill: clarify actors, core flows, in/out of
+            scope, multiplicities ("can an order have multiple payments?") — THEN model. Diving straight into
+            classes on vague input is the most common LLD interview fail.</p>
+        </Reveal>
+      </section>
+
       {/* 10 */}
       <section id="s10">
         <div className="sec-label">Section 10 · Test yourself</div>

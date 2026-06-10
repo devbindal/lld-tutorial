@@ -555,6 +555,53 @@ r.attack();                  <span class="cm">// "pew pew!"</span>`} />
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary='Q: Who coined "favor composition over inheritance" — and what does it NOT mean?'>
+          <p>The <strong>Gang of Four</strong> (Design Patterns, 1994) — it's one of their two foundational
+            principles (the other: "program to an interface, not an implementation"). It does NOT mean "never
+            inherit" — it means inheritance must pass the is-a + substitutability bar, not just "I want that
+            code".</p>
+        </Reveal>
+        <Reveal summary="Q: Define the fragile base class problem in one sentence.">
+          <p>A subclass silently depends on its parent's <em>implementation details</em> (like which methods call
+            which internally), so an apparently safe change to the base class breaks subclasses without
+            touching them. Canonical demo: extending a collection and double-counting because
+            <C> addAll()</C> internally calls <C>add()</C>.</p>
+        </Reveal>
+        <Reveal summary='Q: Why do people say "inheritance breaks encapsulation"?'>
+          <p>Because the child sees what outsiders can't: <C>protected</C> members, <C>super</C> behavior, and
+            the parent's self-call patterns. The parent can no longer change its internals freely — every
+            subclass is coupled to them. Inheritance is the strongest coupling in the language (Day 17's
+            ladder top).</p>
+        </Reveal>
+        <Reveal summary="Q: Name the two famous JDK inheritance mistakes — and why they can't be fixed.">
+          <p><C>Stack extends Vector</C> and <C>Properties extends Hashtable</C> — both inherit APIs that let
+            callers violate the subclass's rules (insert mid-stack; put non-String keys into Properties).
+            Unfixable because removing inherited methods would break decades of compiled client code — public
+            inheritance is FOREVER. That permanence is the interview point.</p>
+        </Reveal>
+        <Reveal summary="Q: Forwarding vs delegation — is there a difference?">
+          <p>Pedantically yes: <strong>forwarding</strong> = the wrapper calls the inner object as a separate
+            object. <strong>True delegation</strong> = the inner call operates as if on behalf of the wrapper
+            (receives its identity). In everyday/pattern usage the words are used interchangeably for
+            "hold a field, pass the call on" — but knowing the nuance exists impresses.</p>
+        </Reveal>
+        <Reveal summary="Q: With n independent boolean features, how many classes in each approach? (math)">
+          <p>Inheritance: up to <strong>2ⁿ subclasses</strong> (every combination its own class). Composition:
+            <strong> n behavior classes + 1 host</strong>. n=10 → 1024 vs 11. The exponential-vs-linear contrast
+            is the quantitative argument worth quoting.</p>
+        </Reveal>
+        <Reveal summary="Q: Can a class be designed to FORBID inheritance — and why would you?">
+          <p>Yes: mark it <C>final</C> (String does), or make constructors private + static factories. Why:
+            protect immutability/invariants from subclass sabotage, keep LSP trivially true, allow safe caching.
+            Effective Java: "design and document for inheritance, or else prohibit it."</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

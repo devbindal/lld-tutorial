@@ -504,6 +504,49 @@ export default function Day9() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Synchronous vs asynchronous message — the arrowhead difference?">
+          <p>Sync = solid line, <strong>FILLED</strong> head (caller blocks). Async = solid line,
+            <strong> OPEN</strong> head (fire and forget — caller continues). Return = dashed + open head. The
+            filled-vs-open head is a one-pixel detail examiners genuinely grade.</p>
+        </Reveal>
+        <Reveal summary="Q: Activation bar vs lifeline — precise definitions?">
+          <p>Lifeline = the dashed vertical: "this participant EXISTS during this span." Activation bar
+            (execution specification, its formal name) = the thin rectangle ON the lifeline: "it is actively
+            EXECUTING now." Nested bars on one lifeline = re-entrant calls — the call stack drawn sideways.</p>
+        </Reveal>
+        <Reveal summary="Q: Name the fragment for: if / if-else / loop / reference to another diagram.">
+          <p><C>opt</C> (single guard) · <C>alt</C> (compartments with guards, one runs, dashed dividers) ·
+            <C> loop</C> (guard says how often) · <C>ref</C> (a frame that "includes" another sequence diagram —
+            the function call of diagrams). Bonus pair: <C>par</C> = parallel regions, <C>break</C> = early
+            exit.</p>
+        </Reveal>
+        <Reveal summary="Q: How do you draw creating and destroying an object mid-scene?">
+          <p>Creation: a (often dashed) arrow labeled <C>«create»</C> pointing at the new participant's box drawn
+            LOWER on the page — its lifeline starts at birth, not at the top. Destruction: a big ✕ terminating
+            the lifeline (in Java, semantic only — GC, no destructors).</p>
+        </Reveal>
+        <Reveal summary="Q: Sequence diagram vs communication diagram?">
+          <p>Same information (interaction), different emphasis: sequence = TIME explicit (vertical axis),
+            communication (old name: collaboration) diagram = LINKS explicit, with messages NUMBERED 1, 1.1, 2…
+            to recover ordering. UML tools can convert between them mechanically — a classic theory question.</p>
+        </Reveal>
+        <Reveal summary="Q: Must every call show a return arrow?">
+          <p>No — returns are optional where obvious (void, trivial). Show them when the RESULT matters to the
+            story (the Book object coming back) or when omission would confuse activation-bar nesting.
+            Diagrams optimize for communication, not for completeness.</p>
+        </Reveal>
+        <Reveal summary="Q: What's a 'found message'?">
+          <p>A message whose sender is outside the diagram's scope — drawn from a filled dot into the first
+            participant. It's the standard way to start a scene without modeling the whole outside world
+            ("a request arrives"). Its mirror (arrow to a dot) is a lost message.</p>
+        </Reveal>
+      </section>
+
       {/* 10 */}
       <section id="s10">
         <div className="sec-label">Section 10 · Test yourself</div>

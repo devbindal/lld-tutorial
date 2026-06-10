@@ -574,6 +574,48 @@ h = <span class="kw">null</span>;                  <span class="cm">// house unr
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Does Java have a language feature for aggregation vs composition?">
+          <p><strong>No.</strong> Both are just reference fields — the distinction is a DESIGN convention you
+            enforce: composition = created inside, <C>private final</C>, never leaked; aggregation = passed in,
+            shareable. Interviewers ask this to see if you know UML diamonds map to discipline, not syntax.</p>
+        </Reveal>
+        <Reveal summary="Q: Association vs dependency in one line each (exam classic)?">
+          <p>Association: the relationship is <strong>stored</strong> (a field) — it persists between calls.
+            Dependency: <strong>used and forgotten</strong> (parameter, local, return) — it exists only during a
+            method call. Field vs method-scope is the whole exam answer.</p>
+        </Reveal>
+        <Reveal summary="Q: What multiplicity does composition force on the WHOLE's side?">
+          <p><strong>Exactly 1 (or 0..1 before attachment)</strong> — a part belongs to AT MOST one whole at a
+            time. That exclusivity is the defining constraint: if two wholes can share the part, it's
+            aggregation by definition. Drawn: <C>House ◆──── Room</C> with an implicit 1 at the house end.</p>
+        </Reveal>
+        <Reveal summary="Q: How do composed parts get 'destroyed' in Java with no destructors?">
+          <p>Pure <strong>reachability</strong>: if only the whole references its parts, then when the whole
+            becomes unreachable the parts are unreachable too, and GC collects the family together. Composition
+            in Java = an ownership pattern that MAKES reachability work that way.</p>
+        </Reveal>
+        <Reveal summary="Q: How do you implement a SAFE bidirectional association?">
+          <p>Make ONE side the owner with a single method that maintains both ends:
+            <C> team.addPlayer(p)</C> internally does <C>players.add(p); p.setTeam(this);</C>. Never let callers
+            set the two sides independently — half-updated pairs are the classic bidirectional bug.</p>
+        </Reveal>
+        <Reveal summary={<>Q: Is <C>private String name;</C> an association with String?</>}>
+          <p>Technically every object field is a reference — but in modeling, value-ish types (String, int,
+            LocalDate, Money) count as <strong>attributes</strong>, not associations. Associations are drawn
+            between DOMAIN entities. Saying this distinction out loud scores modeling maturity points.</p>
+        </Reveal>
+        <Reveal summary="Q: A leaked getter returns the composed list. What did the design just become?">
+          <p>Silently <strong>downgraded from composition to aggregation</strong> — outsiders now hold (and can
+            mutate) the parts, so exclusive ownership is gone. Fix: return <C>List.copyOf(parts)</C> or an
+            unmodifiable view (Day 2's defensive copying — same bug, relationship edition).</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

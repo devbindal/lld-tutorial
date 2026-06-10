@@ -497,6 +497,51 @@ export default function Day8() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: The 4-way arrow quiz: solid▷, dashed▷, solid▶, dashed▶ — name all four.">
+          <p>Solid + hollow triangle ▷ = <strong>extends</strong> (generalization). Dashed + hollow triangle ▷ =
+            <strong> implements</strong> (realization). Solid + open arrow ▶ = <strong>association</strong>
+            (navigability). Dashed + open arrow ▶ = <strong>dependency</strong>. Two seconds each — examiners
+            run exactly this drill.</p>
+        </Reveal>
+        <Reveal summary="Q: Underline, italics, and «guillemets» — what does each encode?">
+          <p><u>Underline</u> = static (class-level member). <em>Italics</em> = abstract (class name or method).
+            <C> «stereotype»</C> = the box's kind: «interface», «abstract», «enumeration». Styling IS semantics
+            in UML — a plain-looking diagram can be wrong purely through formatting.</p>
+        </Reveal>
+        <Reveal summary="Q: Class diagram vs OBJECT diagram — what's the difference? (exam classic)">
+          <p>A class diagram shows TYPES (Customer, one box, timeless). An <strong>object diagram</strong> shows
+            a snapshot of INSTANCES at one moment: boxes titled <C><u>asha: Customer</u></C> (underlined!) with
+            actual values, and plain links instead of multiplicities. Underlined name:Type = instance — same
+            convention sequence diagrams use for participants.</p>
+        </Reveal>
+        <Reveal summary="Q: Can BOTH ends of an association carry multiplicity? How do you read N..M?">
+          <p>Yes — and usually should: <C>Author 1..* ──── * Book</C>. Read each number from the OPPOSITE end's
+            perspective. <C>2..4</C> = at least 2, at most 4. <C>*</C> alone = 0..*. Missing multiplicity ≠ 1 —
+            it means "unspecified", which in an interview means "you forgot".</p>
+        </Reveal>
+        <Reveal summary="Q: How do you draw a class's dependency on something it only instantiates?">
+          <p>Dashed arrow with the optional stereotype <C>«create»</C>: <C>Factory ┄┄«create»┄┄▶ Product</C>.
+            Other named dependency stereotypes worth recognizing: <C>«use»</C>, <C>«call»</C>. They refine WHY
+            the dashed arrow exists.</p>
+        </Reveal>
+        <Reveal summary="Q: What's a role name vs an association name?">
+          <p>An association NAME labels the line itself ("teaches"), read with a direction triangle. A
+            <strong> role name</strong> sits at an END and names what the neighbor is to this class
+            (<C>mentor</C>, <C>employer</C>) — and usually matches your field name. Role names beat association
+            names in practice because they map 1:1 to code.</p>
+        </Reveal>
+        <Reveal summary="Q: Should you show getters/setters/constructors in every class box?">
+          <p>No — standard practice is to OMIT obvious accessors and default constructors; show fields with
+            visibility and only the methods that carry design meaning. UML's own spec allows suppressing any
+            compartment. A diagram is an argument, not an inventory.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>
