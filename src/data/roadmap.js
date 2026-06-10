@@ -38,7 +38,7 @@ export const COURSE = {
           days: [
             { id: 11, slug: 'day11', title: 'Single Responsibility Principle', sub: 'One class, one reason to change', ready: true },
             { id: 12, slug: 'day12', title: 'Open/Closed Principle', sub: 'Open for extension, closed for modification', ready: true },
-            { id: 13, slug: 'day13', title: 'Liskov Substitution Principle', sub: 'Subtypes must honor the parent\'s promises', ready: false },
+            { id: 13, slug: 'day13', title: 'Liskov Substitution Principle', sub: 'Subtypes must honor the parent\'s promises', ready: true },
             { id: 14, slug: 'day14', title: 'Interface Segregation Principle', sub: 'Many small interfaces beat one fat one', ready: false },
             { id: 15, slug: 'day15', title: 'Dependency Inversion Principle', sub: 'Depend on abstractions, not concretions', ready: false },
           ],
