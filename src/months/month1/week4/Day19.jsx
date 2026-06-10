@@ -491,6 +491,53 @@ order.setStatus(<span class="str">"CANCELED"</span>);              <span class="
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Can an enum implement interfaces? Extend a class? Be extended?">
+          <p>Implement interfaces: <strong>yes</strong> (enum PaymentType implements Describable — common and
+            useful). Extend a class: <strong>no</strong> — every enum already secretly extends
+            <C> java.lang.Enum</C>, and Java is single-inheritance. Be extended: <strong>no</strong> — enums are
+            implicitly final (though per-constant bodies create hidden subclasses, which is why you saw
+            <C>{'{ }'}</C> after constants).</p>
+        </Reveal>
+        <Reveal summary="Q: What visibility can an enum constructor have — and who calls it?">
+          <p>Only <C>private</C> (implicitly; writing public is a compile error). The JVM calls it once per
+            constant at class initialization — you can NEVER call it (no <C>new</C>, no reflection — the JVM
+            blocks it, which is the singleton superpower from Day 21).</p>
+        </Reveal>
+        <Reveal summary="Q: Where does values() come from? It's not on java.lang.Enum…">
+          <p>The COMPILER synthesizes <C>values()</C> and <C>valueOf(String)</C> for each enum class. That's why
+            <C> Enum.values()</C> doesn't exist as an inherited method — trivia that catches people who've never
+            looked. Bonus: <C>values()</C> returns a fresh array copy every call (defensive copy, Day 2!) — don't
+            call it in hot loops.</p>
+        </Reveal>
+        <Reveal summary="Q: Why are EnumSet/EnumMap so fast?">
+          <p>They exploit the fixed universe: EnumSet stores membership as BITS in one long (≤64 constants) —
+            contains/add are single bitwise ops; EnumMap is a plain array indexed by ordinal. "A Set
+            implemented as a bit vector" is the phrase to say.</p>
+        </Reveal>
+        <Reveal summary="Q: try { return 1; } finally { return 2; } — what's returned, and why is this evil?">
+          <p><strong>2.</strong> A return (or throw) in finally OVERRIDES the try's result — and worse, it
+            silently SWALLOWS any exception in flight. Compilers warn; style guides ban returns in finally
+            outright. Classic written-test puzzle.</p>
+        </Reveal>
+        <Reveal summary="Q: Try-with-resources: closing order of multiple resources, and what are suppressed exceptions?">
+          <p>Resources close in REVERSE declaration order. If the body throws AND close() also throws, the
+            body's exception wins and the close() failure is attached via <C>addSuppressed()</C> — readable with
+            <C> getSuppressed()</C>. Pre-Java-7 finally blocks silently LOST one of the two; this is why
+            try-with-resources exists.</p>
+        </Reveal>
+        <Reveal summary="Q: Is catching NullPointerException ever OK?">
+          <p>Practically never — NPE is a BUG indicator, not an event to handle; catching it hides the broken
+            invariant. Fix the null at its source (fail fast, Optional, validation). Acceptable rare exception:
+            at a top-level boundary that must survive anything and log. Saying "catch it and continue" in an
+            interview is a red flag.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

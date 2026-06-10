@@ -487,6 +487,53 @@ export default function Day17() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Who invented coupling & cohesion as metrics?">
+          <p>Larry Constantine (with Ed Yourdon), <em>Structured Design</em>, 1970s — predating OOP entirely.
+            The concepts survived three programming paradigms unchanged, which is exactly why they're the
+            "physics" under every newer rule.</p>
+        </Reveal>
+        <Reveal summary='Q: The classic ladder has a level we simplified away: STAMP coupling. Define it.'>
+          <p>Passing a whole data STRUCTURE when the callee needs one field:
+            <C> printAge(Employee e)</C> instead of <C>printAge(int age)</C>. Sits between control and data
+            coupling. It couples the callee to the structure's shape needlessly — the parameter-list cousin of
+            Day 14's "ask for the narrowest type".</p>
+        </Reveal>
+        <Reveal summary="Q: The cohesion scale also had levels we compressed — name the full seven.">
+          <p>Worst→best: coincidental, logical, temporal, <strong>procedural</strong> (steps of a workflow),
+            <strong> communicational</strong> (operate on the same data), sequential (output feeds input),
+            functional. For exams: know the seven names; for design reviews: junk-drawer vs one-job is 90% of
+            the value.</p>
+        </Reveal>
+        <Reveal summary='Q: "Temporal coupling" has a SECOND meaning besides the cohesion grade — what is it?'>
+          <p>Order-of-calls dependency: <C>init()</C> must be called before <C>process()</C>, or it breaks.
+            The API allows the wrong order; only tribal knowledge prevents it. Cures: constructors that
+            return ready objects, builder/staged types, or making each method self-sufficient. A favorite
+            "spot the hidden coupling" question.</p>
+        </Reveal>
+        <Reveal summary="Q: Afferent vs efferent coupling — and the instability metric?">
+          <p>Ca (afferent) = who depends ON me (incoming). Ce (efferent) = whom I depend on (outgoing).
+            Instability I = Ce / (Ca + Ce): 0 = maximally stable (many dependents, few dependencies — should be
+            abstract), 1 = maximally unstable (free to change). Martin's package metrics — deep-cut trivia that
+            lands well in senior interviews.</p>
+        </Reveal>
+        <Reveal summary="Q: Why are dependency CYCLES (A→B→A) singled out as especially bad?">
+          <p>The cycle is one unit: neither side can be understood, tested, versioned, or released alone — two
+            names, one module. Compile order breaks, and the blast radius of either is both. Break cycles with
+            an interface one side owns (DIP) or by extracting the shared piece into a third module.</p>
+        </Reveal>
+        <Reveal summary='Q: Interviewer: "give me a MEASURABLE definition of good design."'>
+          <p>"Low coupling, high cohesion — measurable as: small blast radius per change (few files touched per
+            feature), no cycles, dependencies pointing at stable abstractions, and tests needing few mocks. Every
+            SOLID principle is a special case of moving those numbers." That answer compresses the whole month
+            into four metrics.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

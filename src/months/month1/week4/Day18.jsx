@@ -424,6 +424,52 @@ customer.pay(<span class="num">30</span>);
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Why is it named after a Greek goddess?">
+          <p>It emerged from the <strong>Demeter Project</strong> at Northeastern University (1987, Lieberherr
+            et al.) — named for the goddess of agriculture because they aimed to "grow" software incrementally.
+            The law was a coding rule discovered inside that project. (Trivia gold; almost nobody knows it.)</p>
+        </Reveal>
+        <Reveal summary="Q: Recite the formal friend list — all FIVE allowed receivers.">
+          <p>Inside method M of object O, you may call methods of: ① O itself (<C>this</C>) · ② M's parameters ·
+            ③ objects CREATED inside M · ④ O's direct fields · ⑤ (often added) globals/statics accessible to M.
+            The forbidden sixth: objects returned by calls on any of the above — friends of friends.</p>
+        </Reveal>
+        <Reveal summary='Q: Why is "count the dots" wrong as a formal statement of LoD?'>
+          <p>Both directions fail: <C>a.getB().getC()</C> is two dots and a violation, while
+            <C> sb.append(x).append(y)</C> is two dots and fine (same receiver each time), and you can launder a
+            wreck into one-dot lines with local variables — still a violation! The law is about WHOSE structure
+            you traverse, not punctuation.</p>
+        </Reveal>
+        <Reveal summary={`Q: Where does "Tell, Don't Ask" come from?`}>
+          <p>Coined by Andy Hunt &amp; Dave Thomas (the Pragmatic Programmers). Companion idea: Fowler's
+            <strong> feature envy</strong> smell — a method more interested in another object's data than its
+            own. TDA is the prescription; feature envy is the diagnosis.</p>
+        </Reveal>
+        <Reveal summary="Q: Does LoD apply to methods of the SAME class chained on this?">
+          <p><C>this.validate(); this.save();</C> — fine, you're your own friend. Even
+            <C> this.getHelper().doThing()</C> is legal IF helper is your own field… but if the helper's only
+            purpose is to be fetched and operated on by outsiders, you've built a wreck dispenser. The law
+            permits it; Tell-Don't-Ask may still object.</p>
+        </Reveal>
+        <Reveal summary="Q: The check-then-act pair account.getBalance() / account.withdraw() — TWO problems?">
+          <p>① Design: the caller runs the account's business rule (ask-y, feature envy). ② Concurrency: between
+            the check and the act, another thread can change the balance — a race condition (TOCTOU). Moving the
+            rule inside <C>withdraw()</C> fixes both at once — one synchronized, self-guarding method.
+            (Month 4 expands the threading half.)</p>
+        </Reveal>
+        <Reveal summary="Q: Wrecks make MOCKING painful — explain the exact mechanics.">
+          <p>To test code containing <C>order.getCustomer().getAddress().getCity()</C>, the test must build
+            mock(Order)→returns mock(Customer)→returns mock(Address)→returns "Pune" — three stubbed layers per
+            call site, repeated in every test. After the delegate fix, one stub: <C>when(order.getShippingCity())
+            .thenReturn("Pune")</C>. Mock depth is a measurable LoD violation detector.</p>
+        </Reveal>
+      </section>
+
       {/* 10 */}
       <section id="s10">
         <div className="sec-label">Section 10 · Test yourself</div>

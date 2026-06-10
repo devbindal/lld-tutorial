@@ -443,6 +443,53 @@ sendTo(email);                            <span class="cm">// ❌ email = "lol-n
           Patterns</strong>. You'll find you have already secretly built half of them.</p>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Recite the FIVE properties of the equals() contract.">
+          <p>Reflexive (<C>x.equals(x)</C> true) · Symmetric (<C>x.equals(y) ⇔ y.equals(x)</C>) · Transitive
+            (x=y, y=z ⇒ x=z) · Consistent (same answer on repeated calls if nothing changed) · and
+            <C> x.equals(null)</C> must be <strong>false</strong> (never throw). Symmetry is the one subclassing
+            breaks most often — famous trap: Timestamp vs Date.</p>
+        </Reveal>
+        <Reveal summary="Q: The hashCode contract, precisely — and which direction is NOT required?">
+          <p>Required: equal objects ⇒ equal hash codes; consistent within a run. NOT required: unequal objects
+            may share a hash (collisions are legal — that's what buckets are for). The reverse implication
+            (same hash ⇒ equal) is the misconception examiners fish for.</p>
+        </Reveal>
+        <Reveal summary={<>Q: The BigDecimal trap — <C>new BigDecimal("2.0").equals(new BigDecimal("2.00"))</C> returns…?</>}>
+          <p><strong>false!</strong> BigDecimal's equals() compares value AND scale (2.0 has scale 1, 2.00 has
+            scale 2), while <C>compareTo()</C> returns 0 for them. So: equality/HashMap keys → normalize the
+            scale (your Money's setScale did this!) or compare with compareTo. A genuinely production-relevant
+            trap.</p>
+        </Reveal>
+        <Reveal summary="Q: Records: can they have extra methods? instance fields? extend? implement?">
+          <p>Extra methods, static members, compact-constructor validation: <strong>yes</strong>. Extra INSTANCE
+            fields beyond the header: <strong>no</strong> (the header IS the state, that's the guarantee).
+            Extend a class: no (they extend java.lang.Record). Implement interfaces: yes. They're implicitly
+            final.</p>
+        </Reveal>
+        <Reveal summary="Q: Why must a HashMap KEY never be mutated after insertion — mechanics, please?">
+          <p>The map stored the entry in the bucket chosen by the hash AT INSERT TIME. Mutate the key → its
+            hashCode changes → lookups compute the NEW hash, search the wrong bucket, find nothing — yet the
+            entry still exists (memory leak + phantom). This is the mechanical reason value objects (and all
+            keys) should be immutable.</p>
+        </Reveal>
+        <Reveal summary='Q: Where does the term "value object" come from — and its evil twin?'>
+          <p>Domain-Driven Design (Eric Evans, 2003): Entities vs Value Objects is DDD's first building-block
+            distinction. The evil twin: "primitive obsession", from Fowler's smell catalog. Knowing the
+            provenance of both terms marks you as well-read.</p>
+        </Reveal>
+        <Reveal summary="Q: Should an ENTITY (Customer) ever use Lombok/IDE-generated all-fields equals?">
+          <p>No — that gives content equality, so two "Asha Rao"s merge in Sets and a renamed customer "stops
+            being" herself. Entities: equals/hashCode on the IDENTITY field only (id), or rely on default
+            reference equality until an id exists. All-fields equals is for values; the generator doesn't know
+            which one you're writing.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

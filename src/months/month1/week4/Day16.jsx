@@ -454,6 +454,49 @@ export default function Day16() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Where is DRY from, and what is its EXACT wording?">
+          <p><em>The Pragmatic Programmer</em> (Hunt &amp; Thomas, 1999): "Every piece of knowledge must have a
+            single, unambiguous, authoritative representation within a system." Note: knowledge, system-wide —
+            it covers schemas, configs and docs, not just code. Quoting "knowledge, not code" is the
+            differentiator.</p>
+        </Reveal>
+        <Reveal summary="Q: What does WET stand for?">
+          <p>The joke antonym: "Write Everything Twice" (alternatively "We Enjoy Typing"). Interviewers drop it
+            to lighten the mood — knowing it signals you've been around the literature.</p>
+        </Reveal>
+        <Reveal summary='Q: The "rule of three" is from which book?'>
+          <p>Popularized in Fowler's <em>Refactoring</em> (credited to Don Roberts): first time, just do it;
+            second time, wince but duplicate; third time, refactor. Same evidence-based instinct as
+            fool-me-once for abstractions (Day 12).</p>
+        </Reveal>
+        <Reveal summary='Q: "Duplication is cheaper than the wrong abstraction" — who said it, what does it mean?'>
+          <p>Sandi Metz. Meaning: a premature shared abstraction grows flags and branches for each caller's
+            quirks until everyone fears it; un-merging is harder than tolerating two copies was. When in doubt
+            between a lookalike-copy and a forced unification — keep the copy a bit longer.</p>
+        </Reveal>
+        <Reveal summary="Q: KISS origin trivia?">
+          <p>"Keep It Simple, Stupid" — attributed to Kelly Johnson, lead engineer at Lockheed's Skunk Works
+            (the design should be repairable by an average mechanic in the field with basic tools). Engineering
+            heritage, not a programming book.</p>
+        </Reveal>
+        <Reveal summary="Q: YAGNI vs premature optimization — same thing?">
+          <p>Cousins, not twins. YAGNI rejects building unneeded FEATURES/flexibility (an XP practice). Premature
+            optimization (Knuth: "the root of all evil") rejects unneeded PERFORMANCE work before measuring.
+            One is about scope, the other about speed; both are "don't pay today for an imagined tomorrow".</p>
+        </Reveal>
+        <Reveal summary="Q: Your team lead says DRY demands merging two identical-looking validations. Push back correctly.">
+          <p>Ask the ownership question: "will these two ALWAYS change together?" If different actors own them
+            (contract law vs rental policy), merging couples unrelated reasons-to-change — that's an SRP
+            violation manufactured in DRY's name. False duplication: same text, different knowledge → keep
+            them apart.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>
