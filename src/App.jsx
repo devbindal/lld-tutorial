@@ -25,6 +25,7 @@ const Day18 = lazy(() => import('./months/month1/week4/Day18.jsx'))
 const Day19 = lazy(() => import('./months/month1/week4/Day19.jsx'))
 const Day20 = lazy(() => import('./months/month1/week4/Day20.jsx'))
 const Day21 = lazy(() => import('./months/month2/week5/Day21.jsx'))
+const Day22 = lazy(() => import('./months/month2/week5/Day22.jsx'))
 
 // Map of built day components. Add new days here as you create them (one folder per week).
 const DAY_COMPONENTS = {
@@ -49,6 +50,7 @@ const DAY_COMPONENTS = {
   19: Day19,
   20: Day20,
   21: Day21,
+  22: Day22,
 }
 
 function parseHash() {
