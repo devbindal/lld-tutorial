@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Code, C, Reveal, Note, Warn, Good, Quiz } from '../../components/ui.jsx'
+import { Code, C, Reveal, Note, Warn, Good, Quiz } from '../../../components/ui.jsx'
 
 /* ============ Interactive 1: Object Factory ============ */
 const PALETTE = { red:'#D9534F', blue:'#2D5BFF', green:'#2E9E6B', black:'#222', white:'#999', yellow:'#C9A227', orange:'#D97B29' }

@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Home from './components/Home.jsx'
-import Day1 from './weeks/week1/Day1.jsx'
-import Day2 from './weeks/week1/Day2.jsx'
-import Day3 from './weeks/week1/Day3.jsx'
-import Day4 from './weeks/week1/Day4.jsx'
-import Day5 from './weeks/week1/Day5.jsx'
-import Day6 from './weeks/week2/Day6.jsx'
-import Day7 from './weeks/week2/Day7.jsx'
-import Day8 from './weeks/week2/Day8.jsx'
-import Day9 from './weeks/week2/Day9.jsx'
-import Day10 from './weeks/week2/Day10.jsx'
+import Day1 from './months/month1/week1/Day1.jsx'
+import Day2 from './months/month1/week1/Day2.jsx'
+import Day3 from './months/month1/week1/Day3.jsx'
+import Day4 from './months/month1/week1/Day4.jsx'
+import Day5 from './months/month1/week1/Day5.jsx'
+import Day6 from './months/month1/week2/Day6.jsx'
+import Day7 from './months/month1/week2/Day7.jsx'
+import Day8 from './months/month1/week2/Day8.jsx'
+import Day9 from './months/month1/week2/Day9.jsx'
+import Day10 from './months/month1/week2/Day10.jsx'
 import { ALL_DAYS } from './data/roadmap.js'
 
 // Map of built day components. Add new days here as you create them (one folder per week).
@@ -46,7 +46,7 @@ function ComingSoon({ day }) {
       <section>
         <p style={{ marginTop: 30 }}>
           This tutorial hasn't been added yet. To build it, ask Claude for "Day {day}", drop the new
-          <code className="inline">Day{day}.jsx</code> file into <code className="inline">src/weeks/weekN/</code>,
+          <code className="inline">Day{day}.jsx</code> file into <code className="inline">src/months/monthM/weekN/</code>,
           register it in <code className="inline">App.jsx</code> and flip <code className="inline">ready: true</code> in
           <code className="inline">src/data/roadmap.js</code>.
         </p>
