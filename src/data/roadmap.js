@@ -22,7 +22,7 @@ export const COURSE = {
       label: 'Week 2 · Relationships, UML & Object Modeling',
       days: [
         { id: 6, slug: 'day6', title: 'Association, Aggregation & Composition', sub: 'has-a relationships, ownership, lifecycles — how objects connect', ready: true },
-        { id: 7, slug: 'day7', title: 'Dependency & Composition over Inheritance', sub: 'uses-a, coupling, why has-a beats is-a', ready: false },
+        { id: 7, slug: 'day7', title: 'Dependency & Composition over Inheritance', sub: 'uses-a, coupling, why has-a beats is-a', ready: true },
         { id: 8, slug: 'day8', title: 'UML Class Diagrams', sub: 'Boxes, arrows, multiplicity — drawing your design', ready: false },
         { id: 9, slug: 'day9', title: 'UML Sequence Diagrams', sub: 'Who calls whom, in what order', ready: false },
         { id: 10, slug: 'day10', title: 'Requirements → Entities', sub: 'Turning a problem statement into classes and relationships', ready: false },
