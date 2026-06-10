@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Home from './components/Home.jsx'
-import Day1 from './days/Day1.jsx'
-import Day2 from './days/Day2.jsx'
-import Day3 from './days/Day3.jsx'
-import Day4 from './days/Day4.jsx'
-import Day5 from './days/Day5.jsx'
+import Day1 from './weeks/week1/Day1.jsx'
+import Day2 from './weeks/week1/Day2.jsx'
+import Day3 from './weeks/week1/Day3.jsx'
+import Day4 from './weeks/week1/Day4.jsx'
+import Day5 from './weeks/week1/Day5.jsx'
+import Day6 from './weeks/week2/Day6.jsx'
 import { ALL_DAYS } from './data/roadmap.js'
 
-// Map of built day components. Add Day2, Day3... here as you create them.
+// Map of built day components. Add new days here as you create them (one folder per week).
 const DAY_COMPONENTS = {
   1: Day1,
   2: Day2,
   3: Day3,
   4: Day4,
   5: Day5,
+  6: Day6,
 }
 
 function parseHash() {
@@ -36,7 +38,7 @@ function ComingSoon({ day }) {
       <section>
         <p style={{ marginTop: 30 }}>
           This tutorial hasn't been added yet. To build it, ask Claude for "Day {day}", drop the new
-          <code className="inline">Day{day}.jsx</code> file into <code className="inline">src/days/</code>,
+          <code className="inline">Day{day}.jsx</code> file into <code className="inline">src/weeks/weekN/</code>,
           register it in <code className="inline">App.jsx</code> and flip <code className="inline">ready: true</code> in
           <code className="inline">src/data/roadmap.js</code>.
         </p>
@@ -47,7 +49,18 @@ function ComingSoon({ day }) {
 }
 
 export default function App() {
-  const [route, setRoute] = useState(parseHash())
+  // Fresh launch (new tab/session) → always land on the home page, even if the
+  // browser restored an old #/day/N hash. Refresh in the same tab → stay put.
+  const [route, setRoute] = useState(() => {
+    if (!sessionStorage.getItem('lld-visited')) {
+      sessionStorage.setItem('lld-visited', '1')
+      if (window.location.hash && window.location.hash !== '#/') {
+        window.location.hash = '#/'
+      }
+      return { name: 'home' }
+    }
+    return parseHash()
+  })
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {

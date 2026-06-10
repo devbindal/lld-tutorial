@@ -5,8 +5,8 @@ export default function Home() {
     <div className="scrollarea">
       <div className="home-hero">
         <div className="eyebrow">Java · Low-Level Design · Month 1</div>
-        <h1>Week 1 — Core OOP</h1>
-        <p>The foundation everything else is built on. Work through one concept per day.
+        <h1>OOP Mastery + Design Fundamentals</h1>
+        <p>The foundation everything else is built on. Work through one concept per day, week by week.
            Click any unlocked card to open its interactive tutorial. New days unlock as you build them.</p>
       </div>
 

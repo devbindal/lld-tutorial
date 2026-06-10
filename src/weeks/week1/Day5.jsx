@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Code, C, Reveal, Note, Warn, Good, Quiz } from '../components/ui.jsx'
+import { Code, C, Reveal, Note, Warn, Good, Quiz } from '../../components/ui.jsx'
 
 /* ============ Interactive 1: abstract class vs interface chooser ============ */
 const AVI_ROWS = [

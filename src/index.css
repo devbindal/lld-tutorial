@@ -19,6 +19,13 @@ a{color:inherit}
   text-transform:uppercase;margin-top:4px;margin-bottom:18px}
 .sidebar .weeklabel{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;
   color:#9aa3b5;margin:16px 0 8px;padding-left:6px}
+.weekbtn{display:flex;align-items:center;gap:7px;width:100%;background:none;border:none;cursor:pointer;text-align:left;
+  font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:#9aa3b5;margin:16px 0 8px;padding:4px 6px;border-radius:8px}
+.weekbtn:hover{background:#F1F4FF;color:var(--ink)}
+.weekarrow{display:inline-block;transition:transform .15s;flex:none}
+.weekarrow.down{transform:rotate(90deg)}
+.weekcount{margin-left:auto;font-size:10px;color:#b8bdc9}
 .navlink{display:block;text-decoration:none;border-radius:10px;padding:10px 12px;margin-bottom:4px;border:1px solid transparent}
 .navlink:hover{background:#F1F4FF}
 .navlink.active{background:#EEF2FF;border-color:#C9D6FF}
