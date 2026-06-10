@@ -47,7 +47,7 @@ export const COURSE = {
           id: 'w4',
           label: 'Week 4 · Beyond SOLID',
           days: [
-            { id: 16, slug: 'day16', title: 'DRY, KISS & YAGNI', sub: 'The three habits that keep code small and sane', ready: false },
+            { id: 16, slug: 'day16', title: 'DRY, KISS & YAGNI', sub: 'The three habits that keep code small and sane', ready: true },
             { id: 17, slug: 'day17', title: 'Coupling & Cohesion', sub: 'The two forces behind every design rule', ready: false },
             { id: 18, slug: 'day18', title: 'Law of Demeter', sub: 'Talk to friends, not strangers — no train wrecks', ready: false },
             { id: 19, slug: 'day19', title: 'Enums & Exception Design', sub: 'Modeling fixed sets and failures properly', ready: false },
