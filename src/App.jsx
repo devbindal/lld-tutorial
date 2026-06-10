@@ -5,6 +5,7 @@ import Day1 from './days/Day1.jsx'
 import Day2 from './days/Day2.jsx'
 import Day3 from './days/Day3.jsx'
 import Day4 from './days/Day4.jsx'
+import Day5 from './days/Day5.jsx'
 import { ALL_DAYS } from './data/roadmap.js'
 
 // Map of built day components. Add Day2, Day3... here as you create them.
@@ -13,6 +14,7 @@ const DAY_COMPONENTS = {
   2: Day2,
   3: Day3,
   4: Day4,
+  5: Day5,
 }
 
 function parseHash() {
