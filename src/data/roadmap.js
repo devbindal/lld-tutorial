@@ -36,7 +36,7 @@ export const COURSE = {
           id: 'w3',
           label: 'Week 3 · SOLID',
           days: [
-            { id: 11, slug: 'day11', title: 'Single Responsibility Principle', sub: 'One class, one reason to change', ready: false },
+            { id: 11, slug: 'day11', title: 'Single Responsibility Principle', sub: 'One class, one reason to change', ready: true },
             { id: 12, slug: 'day12', title: 'Open/Closed Principle', sub: 'Open for extension, closed for modification', ready: false },
             { id: 13, slug: 'day13', title: 'Liskov Substitution Principle', sub: 'Subtypes must honor the parent\'s promises', ready: false },
             { id: 14, slug: 'day14', title: 'Interface Segregation Principle', sub: 'Many small interfaces beat one fat one', ready: false },

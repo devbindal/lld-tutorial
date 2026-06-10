@@ -11,6 +11,7 @@ import Day7 from './months/month1/week2/Day7.jsx'
 import Day8 from './months/month1/week2/Day8.jsx'
 import Day9 from './months/month1/week2/Day9.jsx'
 import Day10 from './months/month1/week2/Day10.jsx'
+import Day11 from './months/month1/week3/Day11.jsx'
 import { ALL_DAYS } from './data/roadmap.js'
 
 // Map of built day components. Add new days here as you create them (one folder per week).
@@ -25,6 +26,7 @@ const DAY_COMPONENTS = {
   8: Day8,
   9: Day9,
   10: Day10,
+  11: Day11,
 }
 
 function parseHash() {
