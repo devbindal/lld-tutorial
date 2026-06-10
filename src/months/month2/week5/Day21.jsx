@@ -468,6 +468,55 @@ AppConfig second = c.newInstance();      <span class="cm">// 💥 instance #2 ex
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Explain the volatile in double-checked locking like I'm a compiler.">
+          <p><C>instance = new AppConfig()</C> is really three steps: allocate → run constructor → assign
+            reference. The JIT/CPU may REORDER to allocate → assign → construct. Another thread's fast-path
+            null-check then sees non-null and uses a HALF-CONSTRUCTED object. <C>volatile</C> forbids that
+            publication reordering (happens-before). Pre-Java-5 memory model, DCL was unfixable — bonus
+            trivia.</p>
+        </Reveal>
+        <Reveal summary="Q: Why exactly is the holder idiom thread-safe with no locks in YOUR code?">
+          <p>The JLS guarantees class initialization is atomic and happens once — the JVM internally locks
+            during first load of Holder. The inner class isn't loaded until <C>getInstance()</C> first touches
+            it → lazy. You outsourced the synchronization to the classloader, which has been correct since
+            1996.</p>
+        </Reveal>
+        <Reveal summary="Q: Spring beans are 'singletons' — same as the GoF pattern?">
+          <p>No — Spring's singleton SCOPE means one instance <em>per container</em>, managed by the framework
+            and injected (visible dependencies, fakeable). GoF singleton is self-enforcing via private
+            constructor + static access (hidden dependency). Spring's version is precisely the "modern
+            resolution" — oneness by wiring. Distinguishing these two is a very common senior question.</p>
+        </Reveal>
+        <Reveal summary="Q: Singleton vs a class with only static methods — when must it be a singleton?">
+          <p>When you need an INSTANCE: to implement an interface (plug into Day 12 slots), to be passed around,
+            lazily initialized, or swapped/mocked. All-static utility (Math) works only for stateless,
+            interface-free helpers. "Static can't implement an interface" is the crisp differentiator.</p>
+        </Reveal>
+        <Reveal summary="Q: How does serialization create a second instance — and the readResolve defense?">
+          <p>Deserialization builds a NEW object from bytes without calling getInstance(). Defense: add
+            <C> private Object readResolve() {'{'} return INSTANCE; {'}'}</C> — the JVM swaps the freshly
+            deserialized object for your canonical one (and the dupe is GC'd). Enum singletons get this
+            behavior from the serialization spec for free.</p>
+        </Reveal>
+        <Reveal summary="Q: Is the classic getInstance() also a known GoF pattern application?">
+          <p>Yes — it's a <strong>static factory method</strong> with instance control (Day 22 connects them).
+            GoF even notes Singleton is often used to implement Abstract Factories and registries. Patterns
+            nest: the answer "getInstance is a static factory that always returns the same product" ties three
+            days together.</p>
+        </Reveal>
+        <Reveal summary="Q: Name the THREE standard criticisms, with the principle each violates.">
+          <p>① Hidden dependencies — constructors lie about needs (violates DIP's explicit seams, Day 15).
+            ② Global mutable state — common coupling, the 2nd-worst rung (Day 17). ③ Untestability — no seam to
+            inject fakes (testability ⇔ swappability). Deliver these unprompted and the interviewer stops
+            probing.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

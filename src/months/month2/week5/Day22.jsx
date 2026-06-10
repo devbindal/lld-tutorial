@@ -439,6 +439,56 @@ LocalDate d = LocalDate.of(<span class="num">2026</span>, <span class="num">6</s
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary={<>Q: <C>Integer a = 127, b = 127;</C> then <C>a == b</C>? And with 128? (the classic!)</>}>
+          <p>127 → <strong>true</strong>; 128 → <strong>false</strong>! Autoboxing calls
+            <C> Integer.valueOf()</C>, which CACHES −128..127 — same object back. Outside the range, fresh
+            objects → different addresses. The exam point: a static factory silently controlling instances is
+            why <C>==</C> on wrappers is russian roulette. Always <C>.equals()</C>.</p>
+        </Reveal>
+        <Reveal summary="Q: Recite Effective Java Item 1 — the four advantages of static factories.">
+          <p>① They have NAMES (<C>Money.zero(INR)</C>) · ② not required to create a NEW object (caching,
+            singletons, flyweights) · ③ can return a SUBTYPE of the declared type (hidden implementations) ·
+            ④ the returned class can vary by arguments (EnumSet picks RegularEnumSet vs JumboEnumSet by size —
+            the showpiece example!). Disadvantage worth adding: classes without public constructors can't be
+            subclassed.</p>
+        </Reveal>
+        <Reveal summary="Q: Simple Factory is not in the GoF book — so what IS the GoF 'Factory Method'?">
+          <p>GoF Factory Method = <em>"define an interface for creating an object, but let SUBCLASSES decide
+            which class to instantiate."</em> The defining ingredient is the inherited creation HOOK
+            (createTransport()), not a switch. Calling a static create() "the Factory Method pattern" is the
+            most common pattern-vocabulary mistake — examiners listen for it.</p>
+        </Reveal>
+        <Reveal summary={<>Q: Is <C>Collection.iterator()</C> a factory method?</>}>
+          <p>Yes — a textbook GoF one: the abstract Collection algorithm needs an Iterator but each subclass
+            decides WHICH (ArrayList's, HashSet's…). Same with <C>Calendar.getInstance()</C>,
+            <C> NumberFormat.getInstance()</C>. Naming a JDK example unprompted beats defining the pattern
+            twice.</p>
+        </Reveal>
+        <Reveal summary="Q: How does a factory cooperate with constructors being private?">
+          <p>Make the constructor private and the factory (static method or sibling class in the same package)
+            the ONLY door — now you can enforce caching, validation, subtype choice, and even refuse creation.
+            Day 21's singleton, Day 20's Email.parse, Day 24's build() are all this one move with different
+            policies.</p>
+        </Reveal>
+        <Reveal summary="Q: The parallel-hierarchy criticism of Factory Method — explain + the escape.">
+          <p>Every new Product tends to demand a new Creator subclass (Truck+RoadLogistics, Drone+DroneLogistics)
+            — two class trees growing in lockstep, double maintenance. Escapes: simple factory (if only creation
+            varies), or parameterized factory method (one creator, argument picks product). Knowing a pattern's
+            COST is what separates reciting from understanding.</p>
+        </Reveal>
+        <Reveal summary="Q: When would you use a registry-based factory (map of suppliers) over a switch?">
+          <p>When variants must be added WITHOUT recompiling the factory: <C>Map&lt;String, Supplier&lt;Notification&gt;&gt;</C>
+            + <C>register("EMAIL", EmailNotification::new)</C>. Plugins self-register; create() is one map
+            lookup. Trade-off: registration order/discovery becomes runtime behavior — fail-fast on unknown
+            keys matters even more.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

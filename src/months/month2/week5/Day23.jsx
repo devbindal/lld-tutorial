@@ -441,6 +441,52 @@ GuiFactory f = OS.isMac() ? <span class="kw">new</span> MacFactory() : <span cla
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: GoF gave Abstract Factory an alternate name — what is it?">
+          <p><strong>Kit.</strong> The book lists "AKA: Kit" — because it delivers a kit of matching products.
+            Tiny trivia, disproportionate impressiveness, and it doubles as the best one-word summary of the
+            pattern.</p>
+        </Reveal>
+        <Reveal summary="Q: AF vs FM — give the STRUCTURAL distinction, not just intent.">
+          <p>Factory Method = ONE inherited hook method; variation via SUBCLASSING the creator. Abstract
+            Factory = an OBJECT with several creation methods; variation via COMPOSITION (inject a different
+            factory). GoF's own note: abstract factories are usually implemented USING factory methods. Object
+            vs method, composition vs inheritance — that's the structural answer.</p>
+        </Reveal>
+        <Reveal summary="Q: Name a JDK abstract factory and how you obtain it.">
+          <p><C>DocumentBuilderFactory.newInstance()</C> (and TransformerFactory, XPathFactory…): you get a
+            vendor-specific factory whose products (parsers, builders) are guaranteed mutually consistent.
+            Obtaining the factory itself via a static lookup is the classic bootstrap. Swing's
+            <C> UIManager.setLookAndFeel</C> is the themed-widgets version.</p>
+        </Reveal>
+        <Reveal summary="Q: How does the client get the right concrete factory without violating DIP?">
+          <p>It doesn't choose — the COMPOSITION ROOT does (config/env/OS check, once), and the abstract factory
+            is injected. One concrete name appears in one bootstrap file; everywhere else handles GuiFactory.
+            If clients run if(isMac) themselves, the pattern failed at the last step.</p>
+        </Reveal>
+        <Reveal summary="Q: Recite the trade-off axis from memory — and the shape of problem that fits it.">
+          <p>New FAMILY: cheap, pure addition (open axis). New PRODUCT TYPE: every factory signs a new method —
+            expensive (closed axis). Fits when the product lineup is stable and families multiply: UI themes,
+            platform kits, prod/test service kits. Inverted shape (products multiply, one family) → wrong
+            pattern.</p>
+        </Reveal>
+        <Reveal summary="Q: How do Abstract Factory and Singleton typically combine?">
+          <p>An app usually needs exactly ONE factory instance per family, so concrete factories are often
+            singletons (or container-managed single beans). GoF mentions this pairing explicitly. Modern
+            phrasing: "one factory instance per consistent scope, chosen at the root, injected" — oneness by
+            wiring (Day 21's resolution).</p>
+        </Reveal>
+        <Reveal summary="Q: Sketch the participants (GoF vocabulary) in 10 seconds.">
+          <p>AbstractFactory (GuiFactory) · ConcreteFactory (MacFactory, WinFactory) · AbstractProduct (Button,
+            Checkbox) · ConcreteProduct (MacButton…) · Client (talks only to the abstractions). Being able to
+            name-tag your own diagram with the book's role names is what written exams grade.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

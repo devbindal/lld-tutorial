@@ -421,6 +421,53 @@ export default function Day25() {
           exist — now how do we <em>compose</em> them?</p>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: What does implementing Cloneable ACTUALLY do, mechanically?">
+          <p>Nothing visible — it declares no methods. It flips a permission bit: <C>Object.clone()</C> checks
+            for it and throws <C>CloneNotSupportedException</C> if absent. The cloning logic lives in
+            Object.clone (a native field-by-field copy); Cloneable just unlocks it. "A marker that modifies a
+            superclass method's behavior" — Bloch calls this design "extralinguistic" and bizarre.</p>
+        </Reveal>
+        <Reveal summary="Q: Why is clone() protected on Object — what's the forced ritual?">
+          <p>So classes must OPT IN publicly: override clone(), widen to public, ideally narrow the return type
+            (covariant — Day 4) and swallow the impossible exception. Without your override, outside code can't
+            call it at all. The ritual's awkwardness is half the case against the mechanism.</p>
+        </Reveal>
+        <Reveal summary="Q: Do arrays support clone()? Shallow or deep?">
+          <p>Yes — arrays have a public clone() (no Cloneable dance needed), and it's <strong>shallow</strong>:
+            a new array, same element references. <C>matrix.clone()</C> on a 2D array copies only the outer
+            array — the rows are shared! The 2D-array trap is a beloved written-test puzzle.</p>
+        </Reveal>
+        <Reveal summary="Q: Cloning via serialization round-trip — pros and cons?">
+          <p>Serialize → deserialize = automatic deep copy of the whole graph (handles cycles!). Cons: slow
+            (~100x), everything must be Serializable, transient fields lost, and constructors skipped again.
+            Modern variants: copy via JSON mappers. Verdict: handy for tests/snapshots, rarely right in hot
+            production paths.</p>
+        </Reveal>
+        <Reveal summary="Q: clone() vs copy constructor — the four-point comparison?">
+          <p>Copy constructor: ① runs real constructor logic (invariants enforced) · ② final-field friendly ·
+            ③ explicit per-field policy you can read · ④ no interface/exception ritual. clone(): preserves the
+            RUNTIME class automatically in hierarchies (a copy constructor copies as the declared type) — the
+            one genuine advantage, solved with a polymorphic <C>copy()</C> method instead.</p>
+        </Reveal>
+        <Reveal summary="Q: Registry vs Factory — both create objects; the one-line difference?">
+          <p>A factory CONSTRUCTS from a recipe (code per variant — class or case). A prototype registry
+            COPIES stored exemplars (variants are DATA — tuned instances). Registry wins when variants are
+            configured/tweaked at runtime (level editors, A/B configs); factory wins when variants differ in
+            CODE.</p>
+        </Reveal>
+        <Reveal summary="Q: Which creational pattern would you use for ___? (the Week 5 lightning round)">
+          <p>One shared config → Singleton (or DI-wired instance). Hide which Notification subclass → Factory.
+            Matching prod/test service sets → Abstract Factory. 12-optional-field request object → Builder.
+            10,000 pre-tuned game entities → Prototype + registry. Practice until the mapping takes two
+            seconds per row — this exact lightning round is a real interview format.</p>
+        </Reveal>
+      </section>
+
       {/* 10 */}
       <section id="s10">
         <div className="sec-label">Section 10 · Test yourself</div>

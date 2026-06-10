@@ -446,6 +446,52 @@ Burger b = Burger.builder()
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary='Q: "Telescoping constructor" — whose coinage, which book/item?'>
+          <p>Joshua Bloch, <em>Effective Java</em> Item 2: "Consider a builder when faced with many constructor
+            parameters." His rule-of-thumb threshold: four or more parameters, especially with several optional.
+            Citing the item number is the flex.</p>
+        </Reveal>
+        <Reveal summary="Q: StringBuilder vs StringBuffer — the one-line exam answer?">
+          <p>Same API; StringBuffer's methods are <C>synchronized</C> (thread-safe, slower, legacy 1.0),
+            StringBuilder (1.5+) is unsynchronized — use it in the 99% single-threaded case. Bonus: both exist
+            because String concatenation in loops creates O(n²) garbage — the builder accumulates.</p>
+        </Reveal>
+        <Reveal summary="Q: Is a Builder thread-safe? Is its product?">
+          <p>Builders are deliberately MUTABLE scratch space → not thread-safe, and shouldn't be shared. The
+            PRODUCT (all-final, sealed at build()) is immutable → freely shareable across threads. "Confine the
+            builder, share the product" — one sentence covering both halves.</p>
+        </Reveal>
+        <Reveal summary="Q: In the GoF version, what exactly does the Director do — and who keeps the product?">
+          <p>The Director owns the RECIPE (order of buildPartA/buildPartB calls) and works against the Builder
+            interface; the ConcreteBuilder accumulates and exposes <C>getResult()</C> — the Director never
+            touches the product type. That separation lets one recipe produce HTML/PDF/Text. In the everyday EJ
+            flavor, the calling code IS the director.</p>
+        </Reveal>
+        <Reveal summary='Q: What is a "fluent interface" — and is every builder fluent / every fluent thing a builder?'>
+          <p>Fowler &amp; Evans' term for APIs designed to read as chained sentences via <C>return this</C>.
+            Builders are usually fluent, but fluency ≠ building: <C>stream().filter().map()</C> is fluent
+            transformation, mockito's <C>when().thenReturn()</C> is fluent stubbing. Builder = fluency +
+            accumulation + a terminal build() gate.</p>
+        </Reveal>
+        <Reveal summary="Q: How would you make REQUIRED fields compile-time-safe in a builder?">
+          <p>Staged (step) builders: each step returns a DIFFERENT interface —
+            <C> builder().size("M")</C> returns a type that only then offers toppings/build(). Skipping a
+            required step doesn't compile. Cost: lots of interfaces — used where misconstruction is expensive.
+            Knowing the name "staged builder" is usually enough.</p>
+        </Reveal>
+        <Reveal summary="Q: What does Lombok @Builder actually generate — and one thing to watch?">
+          <p>The whole EJ apparatus: static builder(), fluent setters, build(), optionally
+            <C> toBuilder()</C> (Prototype-flavored copies). Watch-outs: no validation unless you add it
+            (hollow-gate trap), and <C>@Singular</C> needed for collection fields to avoid sharing a caller's
+            list (defensive-copy concern, Day 2).</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>
