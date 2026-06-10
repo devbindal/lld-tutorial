@@ -67,7 +67,7 @@ export const COURSE = {
             { id: 21, slug: 'day21', title: 'Singleton', sub: 'One instance, global access — done right', ready: true },
             { id: 22, slug: 'day22', title: 'Factory Method', sub: 'Let subclasses decide what to create', ready: true },
             { id: 23, slug: 'day23', title: 'Abstract Factory', sub: 'Families of related objects', ready: true },
-            { id: 24, slug: 'day24', title: 'Builder', sub: 'Step-by-step construction of complex objects', ready: false },
+            { id: 24, slug: 'day24', title: 'Builder', sub: 'Step-by-step construction of complex objects', ready: true },
             { id: 25, slug: 'day25', title: 'Prototype', sub: 'Clone instead of construct', ready: false },
           ],
         },
