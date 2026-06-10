@@ -225,6 +225,22 @@ export default function Day2() {
           <li><strong>Hide the state:</strong> make fields <C>private</C> so outsiders cannot touch them directly.</li>
           <li><strong>Expose behavior:</strong> give <C>public</C> methods that do the job <em>and</em> enforce the rules.</li>
         </ul>
+        <Code html={`              OUTSIDE WORLD (other classes)
+              │                          │
+              │ ❌ acc.balance = -999    │ ✅ acc.deposit(500)
+              ▼                          ▼
+   ╔══════════ wall of private ══[ 🚪 public methods ]══╗
+   ║                          deposit()  withdraw()     ║
+   ║                              │          │          ║
+   ║   the tellers check the  →  ✓ rules    ✓ rules     ║
+   ║   rules BEFORE touching      │          │          ║
+   ║   the money                  ▼          ▼          ║
+   ║          ┌───────────────────────────────┐         ║
+   ║          │ 🔒 private double balance     │  VAULT  ║
+   ║          │ 🔒 private String owner       │         ║
+   ║          └───────────────────────────────┘         ║
+   ║                  class BankAccount                  ║
+   ╚═════════════════════════════════════════════════════╝`} />
         <Note><strong>One-line memory trick:</strong> Encapsulation = <em>data is private, behavior is public, and every change goes
           through a guard.</em> No object should ever be able to reach an impossible state.</Note>
         <Reveal summary={<>Is encapsulation the same as abstraction? Click to reveal.</>}>

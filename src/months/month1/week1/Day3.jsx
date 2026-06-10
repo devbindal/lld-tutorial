@@ -237,6 +237,18 @@ Dog d = <span class="kw">new</span> Dog();
 d.name = <span class="str">"Rex"</span>;     <span class="cm">// inherited field — Dog never declared it</span>
 d.eat();              <span class="cm">// inherited method → "Rex is eating"</span>
 d.fetch();            <span class="cm">// Dog’s own new method</span>`} />
+        <p>Drawn as a family tree (the arrow always points <strong>up</strong>, at the parent — remember this for the UML day):</p>
+        <Code html={`                 ┌──────────────────┐
+                 │      Animal      │   parent owns: name, eat(), breathe()
+                 └────────△─────────┘
+                          │  extends  ("is-a" — arrow points UP at the parent)
+              ┌───────────┴───────────┐
+       ┌──────┴──────┐         ┌──────┴──────┐
+       │     Dog     │         │     Cat     │
+       └─────────────┘         └─────────────┘
+       inherits: name,         inherits: name,
+       eat(), breathe()        eat(), breathe()
+       adds:  fetch()          adds:  meow()`} />
         <Note><strong>One-line memory trick:</strong> <C>extends</C> = "is a kind of." The child gets the parent’s members for free and
           may add more. If "X is a Y" sounds wrong, don’t use inheritance.</Note>
       </section>

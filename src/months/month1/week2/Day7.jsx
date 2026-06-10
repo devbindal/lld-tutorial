@@ -289,6 +289,21 @@ export default function Day7() {
             weapon, a mover, a battery. Any combination. Pull a part out, snap a different one in — <strong>even while
             the robot is running</strong>.</li>
         </ul>
+        <Code html={`   THE FAMILY-TREE WAY (welded)          THE LEGO WAY (sockets)
+
+   Robot                                 ┌────────────────────┐
+     △                                   │       Robot        │
+     │ extends                           │   ┌────────────┐   │
+   FlyingRobot                           │   │ weapon ○───┼───┼──▶ 🗡️ or 🔫
+     △                                   │   ├────────────┤   │
+     │ extends                           │   │ mover  ○───┼───┼──▶ 🛞 / 🦿 / 🚁
+   SwimmingFlyingRobot                   │   └────────────┘   │
+     △                                   └────────────────────┘
+     │ extends
+   LaserSwimmingFlyingRobot              ONE class. Parts snap in
+                                         and out — even at runtime.
+   every new mix = a NEW class,
+   parts welded on at birth`} />
         <p>Both reuse code. The difference is <strong>flexibility</strong> and <strong>coupling</strong> — how hard the
           pieces are glued to each other. Today's rule, straight from the Design Patterns book (the "Gang of Four",
           your Month 2 textbook):</p>
