@@ -25,7 +25,12 @@ export function Note({ children }) { return <div className="note">{children}</di
 export function Warn({ children }) { return <div className="warn">{children}</div> }
 export function Good({ children }) { return <div className="good">{children}</div> }
 
-// Reusable quiz. questions = [{ q, o:[...], a:index, e:"explanation" }]
+// Reusable quiz.
+// questions = [{
+//   q: 'question', o: ['options'], a: correctIndex, e: 'explanation',
+//   w: { [wrongIndex]: 'why this option tempts people / the misconception' },  // optional
+//   r: { id: 's5', label: 'Section 5 · Constructors' },                        // optional revisit pointer
+// }]
 export function Quiz({ questions }) {
   const [state, setState] = useState({}) // { [qi]: pickedIndex }
   const answeredCount = Object.keys(state).length
@@ -71,7 +76,33 @@ export function Quiz({ questions }) {
                 )
               })}
             </div>
-            {isAnswered && <div className="exp">💡 {item.e}</div>}
+            {isAnswered && (
+              <div className="exp">
+                {picked === item.a ? (
+                  <div>✅ <b>Correct!</b></div>
+                ) : (
+                  <div>
+                    <div>❌ <b>Not quite.</b> You picked: “{item.o[picked]}”</div>
+                    {item.w && item.w[picked] && (
+                      <div style={{ marginTop: 6 }}>
+                        🧠 <b>Why that one tempts people:</b> {item.w[picked]}
+                      </div>
+                    )}
+                    <div style={{ marginTop: 6 }}>✅ <b>Correct answer:</b> “{item.o[item.a]}”</div>
+                  </div>
+                )}
+                <div style={{ marginTop: 6 }}>💡 {item.e}</div>
+                {picked !== item.a && item.r && (
+                  <div style={{ marginTop: 8 }}>
+                    📖 <b>Shaky on this?</b>{' '}
+                    <button className="ghost act" style={{ fontSize: 12.5, padding: '4px 10px' }}
+                      onClick={() => document.getElementById(item.r.id)?.scrollIntoView({ behavior: 'smooth' })}>
+                      Revisit {item.r.label} ↑
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )
       })}
