@@ -444,6 +444,54 @@ export default function Day13() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Recite Liskov's formal 1987 definition (fill the blanks).">
+          <p><em>"If S is a subtype of T, then objects of type T may be replaced with objects of type S without
+            altering any of the desirable properties of the program."</em> Barbara Liskov, MIT, Turing Award
+            2008 (with the behavioral-subtyping paper co-authored by Jeannette Wing, 1994).</p>
+        </Reveal>
+        <Reveal summary="Q: The contract rules have fancy variance names — what are they?">
+          <p>Preconditions may only weaken = <strong>contravariance</strong> of requirements. Postconditions may
+            only strengthen = <strong>covariance</strong> of promises. Java enforces the return-type half
+            (covariant returns OK) but NOT parameter contravariance — changing a parameter type creates an
+            overload, not an override. Dropping these terms correctly is an instant level-up.</p>
+        </Reveal>
+        <Reveal summary='Q: What is the "history constraint" — the LSP rule everyone forgets?'>
+          <p>Liskov & Wing's extra rule: a subtype must not allow STATE CHANGES the parent's contract forbids.
+            A MutablePoint extending ImmutablePoint violates it even with identical method signatures — clients
+            of the parent assume the object never changes over time ("history"). Square/Rectangle is partly a
+            history-constraint story too.</p>
+        </Reveal>
+        <Reveal summary="Q: Give the three accepted resolutions of the square–rectangle paradox.">
+          <p>① Make both immutable values (no setters → no broken promise — preferred). ② Keep them as separate
+            types under a common Shape interface (no is-a between them). ③ Keep Rectangle-only and treat squares
+            as a runtime condition (width == height), not a type. "Inherit anyway and document it" is the one
+            WRONG answer.</p>
+        </Reveal>
+        <Reveal summary="Q: Java collections throw UnsupportedOperationException by DESIGN — defend or attack?">
+          <p>The framework calls add/remove "optional operations" so one List interface covers mutable AND
+            immutable implementations — pragmatic, but it trades away LSP (compile-time List ≠ guaranteed add).
+            Knowing it's a deliberate, documented, criticized trade-off — not an accident — is the senior take.
+            (C# chose differently with separate read-only interfaces.)</p>
+        </Reveal>
+        <Reveal summary="Q: Does LSP apply to interfaces too, or only class inheritance?">
+          <p>Fully applies — every implements is a substitutability claim against the interface's documented
+            contract. Arrays.asList's add() proves an interface can be "implemented" yet behaviorally violated.
+            LSP is about CONTRACTS, and interfaces are pure contract.</p>
+        </Reveal>
+        <Reveal summary="Q: An override is 10x slower than the parent's version. LSP violation?">
+          <p>Gray zone — and a great discussion answer: signatures and results comply, but if the parent's
+            contract implies performance characteristics (documented O(1) access, like RandomAccess lists),
+            grossly different complexity CAN break clients. Strict LSP says contracts include documented
+            behavior; in practice, flag extreme cases. The point is recognizing contracts go beyond
+            types.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

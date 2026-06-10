@@ -483,6 +483,51 @@ export default function Day11() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Recite BOTH official SRP formulations.">
+          <p>v1: <em>"A class should have only one reason to change."</em> v2 (the actor version):
+            <em> "A module should be responsible to one, and only one, actor."</em> Quoting v2 and defining
+            actor = a group of people requesting changes is the difference between a memorized answer and an
+            understood one.</p>
+        </Reveal>
+        <Reveal summary='Q: Is SRP just "high cohesion" with marketing?'>
+          <p>Essentially yes — SRP is the cohesion rule (Day 17) sharpened with a measurable test: count
+            ACTORS, not vibes. Functional cohesion = all members serve one responsibility = one reason to
+            change. Saying "SRP operationalizes cohesion" earns senior points.</p>
+        </Reveal>
+        <Reveal summary='Q: "So every class should have one METHOD?" — the bait question.'>
+          <p>No — SRP bounds REASONS TO CHANGE, not size. TaxCalculator with ten methods serving the accountant
+            is perfect SRP; a three-method class serving three departments is a violation. Method-counting is
+            the misunderstanding the interviewer is fishing for.</p>
+        </Reveal>
+        <Reveal summary="Q: What is the anemic domain model, and who called it an anti-pattern?">
+          <p>Entities reduced to getters/setters with ALL behavior exiled to Service classes — Martin Fowler
+            named it (2003). It's procedural code wearing objects; encapsulation dies and services become god
+            classes. The fix: behavior moves back to the data it guards (Information Expert).</p>
+        </Reveal>
+        <Reveal summary="Q: Divergent change vs shotgun surgery — which one is the SRP violation?">
+          <p><strong>Divergent change</strong> (one class edited for many unrelated reasons) = SRP violated in
+            that class. Shotgun surgery (one reason scattered over many classes) = the mirror disease, usually a
+            DRY/cohesion failure. Both from Fowler's smell catalog; mixing them up is common, distinguishing
+            them is memorable.</p>
+        </Reveal>
+        <Reveal summary="Q: Does SRP apply above classes?">
+          <p>Yes — it's fractal: methods (one job per method), classes, modules/packages, microservices
+            (one bounded responsibility per service). "Gather what changes together; separate what changes
+            apart" is scale-independent — same sentence, every level.</p>
+        </Reveal>
+        <Reveal summary="Q: How do you justify NOT splitting when an interviewer pushes SRP at you?">
+          <p>Name the actor count: "both these behaviors change at the request of the same actor, so splitting
+            adds files without removing any reason-to-change." Principles serve change-cost; if no second actor
+            exists, the split is speculative (YAGNI). Defending a non-split with the actor test shows mastery,
+            not laziness.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

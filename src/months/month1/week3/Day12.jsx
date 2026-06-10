@@ -483,6 +483,50 @@ export default function Day12() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Meyer's OCP vs Martin's OCP — what changed?">
+          <p>Bertrand Meyer (1988): extend a finished class via <strong>inheritance</strong>. Robert Martin's
+            "polymorphic OCP" (1996): keep a stable <strong>interface</strong>, plug in implementations — extend
+            via composition + abstraction. Same slogan, different mechanism; the modern answer is Martin's.</p>
+        </Reveal>
+        <Reveal summary="Q: Is fixing a bug inside a class an OCP violation?">
+          <p>No. OCP targets NEW FEATURES requiring edits to working code. Bug fixes correct the existing
+            behavior to its intended contract — they go in. (Also fine: refactoring before the design has
+            stabilized. OCP protects mature, shipped axes of change.)</p>
+        </Reveal>
+        <Reveal summary="Q: OCP has a GRASP twin — name it.">
+          <p><strong>Protected Variations</strong>: "identify points of predicted variation and create a stable
+            interface around them." Same idea, different catalog (Larman). Mentioning the pair shows you read
+            beyond one book.</p>
+        </Reveal>
+        <Reveal summary="Q: What language feature (Java 17) lets you have a CLOSED set of subclasses AND exhaustive switches?">
+          <p><strong>Sealed classes/interfaces</strong>: <C>sealed interface Shape permits Circle, Square</C>.
+            The compiler then checks switch exhaustiveness over the subtypes — pattern matching over a
+            deliberately closed hierarchy. It's the type-system answer to "this set will NOT grow"; OCP-style
+            open sets stay unsealed.</p>
+        </Reveal>
+        <Reveal summary='Q: "Speculative generality" — whose term, and the symptom list?'>
+          <p>From Fowler's refactoring smell catalog. Symptoms: interfaces with one forever-implementation,
+            abstract classes with one child, unused parameters/hooks "for the future", generic types never
+            instantiated twice. Cure: collapse it; re-abstract when the second variant ARRIVES (fool-me-once).</p>
+        </Reveal>
+        <Reveal summary="Q: Strategy vs Template Method as OCP tools — the one-line contrast?">
+          <p>Both carve a slot for variation. Strategy = the slot is an injected OBJECT (composition, swappable
+            at runtime). Template Method = the slot is an overridable METHOD (inheritance, fixed at construction).
+            Composition's flexibility usually wins (Day 7) — and both get full days in Week 7.</p>
+        </Reveal>
+        <Reveal summary="Q: Your factory still has a switch over types. Defend it against an OCP purist.">
+          <p>"The catalog must exist somewhere; OCP's win is that it exists ONCE, behind an interface, so N
+            clients stay closed. Adding a variant = one new class + one case line — O(1) edits instead of O(N)."
+            Bonus: mention registry/reflection-based factories as the zero-switch escalation if even that line
+            becomes contested.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

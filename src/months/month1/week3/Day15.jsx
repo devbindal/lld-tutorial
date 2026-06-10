@@ -474,6 +474,53 @@ export default function Day15() {
           exactly this.</p>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: Recite both clauses of DIP word-perfect.">
+          <p>① High-level modules should not depend on low-level modules; both should depend on abstractions.
+            ② Abstractions should not depend on details; details should depend on abstractions. Most candidates
+            only know clause ① — clause ② (the interface speaks POLICY language, owned by the policy side) is
+            the differentiator.</p>
+        </Reveal>
+        <Reveal summary="Q: Constructor vs setter vs field injection — rank them and justify.">
+          <p><strong>Constructor</strong> wins: dependencies are explicit, can be <C>final</C>, object is born
+            complete (no half-wired window), trivially testable with fakes. Setter injection: for genuinely
+            optional/reconfigurable deps only. <strong>Field injection</strong> (annotation directly on a
+            private field) loses: hides dependencies, needs reflection, can't be final, hard to construct in
+            plain tests.</p>
+        </Reveal>
+        <Reveal summary="Q: Why is Service Locator considered an anti-pattern next to DI?">
+          <p>It inverts visibility the WRONG way: the class's true dependencies vanish from its constructor into
+            lookup calls scattered in method bodies. Constructors lie, tests must bootstrap a global registry,
+            and compile-time checking of "is everything wired?" is lost. DI declares; a locator conceals.</p>
+        </Reveal>
+        <Reveal summary='Q: "We use Spring, so we follow DIP" — destroy this claim in two sentences.'>
+          <p>Spring automates INJECTION, not INVERSION: injecting a concrete MySqlRepository still points the
+            policy at a detail. DIP is satisfied by the TYPES in your signatures (depend on the abstraction),
+            regardless of who performs the wiring — framework or a hand-written main.</p>
+        </Reveal>
+        <Reveal summary="Q: Who should OWN the OrderStore interface — the orders package or the database package?">
+          <p>The <strong>orders (policy) package</strong>. If the persistence package owns it, the abstraction
+            belongs to the detail — clause ② violated, and the policy still transitively depends on the
+            detail's module. Interface ownership is the subtlest, most senior DIP question; the package-level
+            answer ("ports live with the domain") is the heart of hexagonal/clean architecture.</p>
+        </Reveal>
+        <Reveal summary="Q: DIP vs IoC vs DI — three terms, one breath.">
+          <p>DIP = the PRINCIPLE about dependency direction. IoC = the broader idea of frameworks calling your
+            code ("don't call us, we'll call you" — also covers event loops, templates). DI = one concrete IoC
+            technique: dependencies handed in from outside. DIP can be honored with zero frameworks; frameworks
+            can be used while violating DIP.</p>
+        </Reveal>
+        <Reveal summary='Q: Why do we say "testability and swappability are the same property"?'>
+          <p>Both are substitutions through the same seam: a test substitutes a Fake where production
+            substitutes a Mongo. If a fake can't be injected, a new vendor can't either — one seam, two
+            customers. Hence the diagnostic: "hard to unit test" ⇔ "arrows point at concretions."</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>

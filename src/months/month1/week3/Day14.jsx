@@ -451,6 +451,50 @@ export default function Day14() {
         </ul>
       </section>
 
+      {/* interview corner */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
+        <h2>🎤 The questions they actually ask</h2>
+        <p>Answer each in your head BEFORE revealing.</p>
+        <Reveal summary="Q: State ISP from the CLIENT's perspective (the official wording).">
+          <p><em>"No client should be forced to depend on methods it does not use"</em> — Robert Martin, born
+            from the Xerox printer consulting job. The client-centric phrasing matters: the fat interface is
+            judged by its CALLERS' needs, not by the implementer's convenience.</p>
+        </Reveal>
+        <Reveal summary='Q: "Role interface" — whose term, and the contrast term?'>
+          <p>Martin Fowler's: an interface defined by a ROLE a client needs (Printable), discovered from usage.
+            The contrast is the <strong>header interface</strong> — a 1:1 mirror of a class's full method list
+            (IUserService ↔ UserService), which serves nobody's role and is ISP theater.</p>
+        </Reveal>
+        <Reveal summary="Q: ISP vs SRP — they sound identical. Sharpen the difference.">
+          <p>SRP partitions a CLASS by reasons-to-change (actor-driven, implementation side). ISP partitions an
+            INTERFACE by client needs (consumer side). A class can satisfy SRP while publishing one fat
+            interface to disparate clients — that's an ISP-only violation. Different side of the contract,
+            different test.</p>
+        </Reveal>
+        <Reveal summary="Q: How does a fat interface hurt a client that compiles fine and ignores the extra methods?">
+          <p>Through CHANGE, not calls: any signature change anywhere in the contract forces recompile/retest of
+            every client; the client's mocks must stub the whole surface; and reading the dependency tells
+            maintainers nothing about what's truly used. Coupling is paid even on methods never invoked.</p>
+        </Reveal>
+        <Reveal summary="Q: Functional interfaces & ISP — the connection?">
+          <p>A @FunctionalInterface is ISP's logical extreme: one role, one method — which is exactly why
+            lambdas can target them and why Runnable/Comparator/Predicate compose everywhere. "Lambda-friendly"
+            and "perfectly segregated" are the same property.</p>
+        </Reveal>
+        <Reveal summary="Q: When are default methods a LEGITIMATE answer to interface problems?">
+          <p>For EVOLUTION: adding a method to a published interface without breaking implementers (why Java 8
+            added them — Collection.stream()). Illegitimate: defaults that throw UnsupportedOperationException
+            to paper over a fat contract — that hides the lie inside the interface itself.</p>
+        </Reveal>
+        <Reveal summary="Q: A legacy fat interface can't be changed. How do you ISP-protect YOUR code?">
+          <p>Define your own narrow role interface for what you actually need, and ADAPT the fat thing to it
+            (a thin adapter class). Your modules depend on the lean contract; the fat legacy stays at the
+            boundary. This is ISP + tomorrow's Adapter pattern working together — interviewers love hearing
+            the combo.</p>
+        </Reveal>
+      </section>
+
       {/* 11 */}
       <section id="s11">
         <div className="sec-label">Section 11 · Test yourself</div>
