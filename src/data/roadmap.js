@@ -97,7 +97,7 @@ export const COURSE = {
           id: 'w8',
           label: 'Week 8 · Behavioral Patterns II',
           days: [
-            { id: 36, slug: 'day36', title: 'Chain of Responsibility', sub: 'Pass the request down the line until someone handles it', ready: false },
+            { id: 36, slug: 'day36', title: 'Chain of Responsibility', sub: 'Pass the request down the line until someone handles it', ready: true },
             { id: 37, slug: 'day37', title: 'Iterator', sub: 'Walk any collection without knowing its insides', ready: false },
             { id: 38, slug: 'day38', title: 'Mediator', sub: 'Colleagues talk through the hub, never directly', ready: false },
             { id: 39, slug: 'day39', title: 'Memento', sub: 'Bottle an object\'s state; restore it later', ready: false },
