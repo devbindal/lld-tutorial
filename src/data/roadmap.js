@@ -86,7 +86,7 @@ export const COURSE = {
           id: 'w7',
           label: 'Week 7 · Behavioral Patterns I',
           days: [
-            { id: 31, slug: 'day31', title: 'Strategy', sub: 'Swap the algorithm behind one interface', ready: false },
+            { id: 31, slug: 'day31', title: 'Strategy', sub: 'Swap the algorithm behind one interface', ready: true },
             { id: 32, slug: 'day32', title: 'Observer', sub: 'Publish, subscribe, never poll', ready: false },
             { id: 33, slug: 'day33', title: 'Command', sub: 'Requests as objects — queues, undo, redo', ready: false },
             { id: 34, slug: 'day34', title: 'State', sub: 'Objects that change behavior as they change state', ready: false },
