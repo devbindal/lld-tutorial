@@ -89,7 +89,7 @@ export const COURSE = {
             { id: 31, slug: 'day31', title: 'Strategy', sub: 'Swap the algorithm behind one interface', ready: true },
             { id: 32, slug: 'day32', title: 'Observer', sub: 'Publish, subscribe, never poll', ready: true },
             { id: 33, slug: 'day33', title: 'Command', sub: 'Requests as objects — queues, undo, redo', ready: true },
-            { id: 34, slug: 'day34', title: 'State', sub: 'Objects that change behavior as they change state', ready: false },
+            { id: 34, slug: 'day34', title: 'State', sub: 'Objects that change behavior as they change state', ready: true },
             { id: 35, slug: 'day35', title: 'Template Method', sub: 'The fixed skeleton with pluggable steps', ready: false },
           ],
         },
