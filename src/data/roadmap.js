@@ -101,7 +101,24 @@ export const COURSE = {
             { id: 37, slug: 'day37', title: 'Iterator', sub: 'Walk any collection without knowing its insides', ready: true },
             { id: 38, slug: 'day38', title: 'Mediator', sub: 'Colleagues talk through the hub, never directly', ready: true },
             { id: 39, slug: 'day39', title: 'Memento', sub: 'Bottle an object\'s state; restore it later', ready: true },
-            { id: 40, slug: 'day40', title: 'Visitor', sub: 'New operations over old structures — without editing them', ready: false },
+            { id: 40, slug: 'day40', title: 'Visitor', sub: 'New operations over old structures — without editing them', ready: true },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'm3',
+      label: 'Month 3 · Classic LLD Problems',
+      weeks: [
+        {
+          id: 'w9',
+          label: 'Week 9 · First Classics',
+          days: [
+            { id: 41, slug: 'day41', title: 'Parking Lot — Part 1', sub: 'Requirements → entities → design, the famous interview opener', ready: false },
+            { id: 42, slug: 'day42', title: 'Parking Lot — Part 2', sub: 'Code walkthrough, pricing strategies, variations', ready: false },
+            { id: 43, slug: 'day43', title: 'Tic-Tac-Toe', sub: 'Board games done cleanly — turns, wins, extensibility', ready: false },
+            { id: 44, slug: 'day44', title: 'Snake & Ladder', sub: 'Dice, jumpers and the game-loop skeleton', ready: false },
+            { id: 45, slug: 'day45', title: 'Week 9 Machine-Coding Drill', sub: 'Timed practice + review checklist', ready: false },
           ],
         },
       ],
