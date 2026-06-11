@@ -76,7 +76,7 @@ export const COURSE = {
           label: 'Week 6 · Structural Patterns',
           days: [
             { id: 26, slug: 'day26', title: 'Adapter', sub: 'The travel plug — make incompatible interfaces fit', ready: true },
-            { id: 27, slug: 'day27', title: 'Decorator', sub: 'Wrap to add features, layer by layer', ready: false },
+            { id: 27, slug: 'day27', title: 'Decorator', sub: 'Wrap to add features, layer by layer', ready: true },
             { id: 28, slug: 'day28', title: 'Composite', sub: 'Treat trees of objects like single objects', ready: false },
             { id: 29, slug: 'day29', title: 'Facade & Proxy', sub: 'One simple front door; one guarding stand-in', ready: false },
             { id: 30, slug: 'day30', title: 'Flyweight & Bridge', sub: 'Share the heavy parts; split the hierarchies', ready: false },
