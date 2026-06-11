@@ -327,25 +327,30 @@ c2.showInfo();          <span class="cm">// Blue car at speed 0   ← c2 was not
       {/* 4 */}
       <section id="s4">
         <div className="sec-label">Section 4</div>
-        <h2>Where do things live? Stack vs Heap (simple version)</h2>
-        <p>Java keeps memory in two main areas. You do not need deep JVM knowledge for LLD, but this simple picture removes 90% of beginner confusion:</p>
-        <Code html={`        STACK (small, fast)                 HEAP (big)
-   ┌───────────────────────┐      ┌─────────────────────────────┐
-   │ main() frame          │      │  ┌───────────────┐          │
-   │  c1 ──────────────────┼──────┼─▶│ Car object #1 │          │
-   │  c2 ──────────────────┼──┐   │  │ color="Red"   │          │
-   │  x = 5                │  │   │  │ speed=10      │          │
-   └───────────────────────┘  │   │  └───────────────┘          │
-                              │   │  ┌───────────────┐          │
-   local variables &          └───┼─▶│ Car object #2 │          │
-   references live here           │  │ color="Blue"  │          │
-                                  │  │ speed=0       │          │
-                                  │  └───────────────┘          │
-                                  └─────────────────────────────┘`} />
+        <h2>Where do things live? Stack, Heap &amp; the Method Area</h2>
+        <p>Java keeps memory in <strong>three</strong> areas you should know. You do not need deep JVM knowledge for LLD, but this simple picture removes 90% of beginner confusion:</p>
+        <Code html={`     STACK (small, fast)           HEAP (big)                METHOD AREA (class land)
+   ┌─────────────────────┐   ┌────────────────────────┐   ┌──────────────────────────┐
+   │ main() frame        │   │  ┌───────────────┐     │   │ class Car (the blueprint)│
+   │  c1 ────────────────┼───┼─▶│ Car object #1 │     │   │  method code (once)      │
+   │  c2 ────────────────┼─┐ │  │ color="Red"   │     │   │  ⚡ static totalCars = 2  │
+   │  x = 5              │ │ │  │ speed=10      │     │   │    ONE copy, shared by   │
+   └─────────────────────┘ │ │  └───────────────┘     │   │    ALL objects           │
+                           │ │  ┌───────────────┐     │   └──────────────────────────┘
+   local variables &       └─┼─▶│ Car object #2 │     │   loaded ONCE, when the class
+   references live here      │  │ color="Blue"  │     │   is first used — lives as
+                             │  │ speed=0       │     │   long as the class itself
+                             │  └───────────────┘     │
+                             └────────────────────────┘`} />
         <ul>
           <li><strong>Stack:</strong> local variables and reference variables (<C>c1</C>, <C>c2</C>, <C>int x</C>). Cleared automatically when a method finishes.</li>
           <li><strong>Heap:</strong> every object created with <C>new</C>. Objects stay alive as long as <em>someone</em> points to them.</li>
-          <li><strong>Garbage Collector (GC):</strong> when no reference points to an object anymore, Java automatically deletes it. You never call <C>delete</C> in Java.</li>
+          <li><strong>Method area (class land):</strong> where the CLASS itself lives — the bytecode of methods and every
+            <C> static</C> variable. Loaded once, when the class is first used. Notice <C>totalCars</C> in the picture:
+            it is NOT inside any car object — there is exactly <strong>one copy</strong>, next to the blueprint, shared by
+            all objects (the full static story is in Section 8). In modern JVMs this area is implemented as
+            <strong> "metaspace"</strong> — that word wins interview points.</li>
+          <li><strong>Garbage Collector (GC):</strong> when no reference points to an object anymore, Java automatically deletes it. You never call <C>delete</C> in Java. (Static variables are GC roots — they are never collected while the class lives.)</li>
         </ul>
         <Reveal summary={<>What is <C>null</C> then? Click to reveal.</>}>
           <p><C>null</C> means a reference that points to <strong>nothing</strong>. <C>Car c3 = null;</C> makes the paper for the
