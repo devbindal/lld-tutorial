@@ -115,7 +115,7 @@ export const COURSE = {
           label: 'Week 9 · First Classics',
           days: [
             { id: 41, slug: 'day41', title: 'Parking Lot — Part 1', sub: 'Requirements → entities → design, the famous interview opener', ready: true },
-            { id: 42, slug: 'day42', title: 'Parking Lot — Part 2', sub: 'Code walkthrough, pricing strategies, variations', ready: false },
+            { id: 42, slug: 'day42', title: 'Parking Lot — Part 2', sub: 'Code walkthrough, pricing strategies, variations', ready: true },
             { id: 43, slug: 'day43', title: 'Tic-Tac-Toe', sub: 'Board games done cleanly — turns, wins, extensibility', ready: false },
             { id: 44, slug: 'day44', title: 'Snake & Ladder', sub: 'Dice, jumpers and the game-loop skeleton', ready: false },
             { id: 45, slug: 'day45', title: 'Week 9 Machine-Coding Drill', sub: 'Timed practice + review checklist', ready: false },
