@@ -126,7 +126,7 @@ export const COURSE = {
           label: 'Week 10 · Machines & Frameworks',
           days: [
             { id: 46, slug: 'day46', title: 'Elevator — Part 1', sub: 'Requirements, state machine, and the scheduling problem', ready: true },
-            { id: 47, slug: 'day47', title: 'Elevator — Part 2', sub: 'Scheduling strategies in code, multi-car dispatch', ready: false },
+            { id: 47, slug: 'day47', title: 'Elevator — Part 2', sub: 'Scheduling strategies in code, multi-car dispatch', ready: true },
             { id: 48, slug: 'day48', title: 'Vending Machine', sub: 'The State pattern’s flagship problem', ready: false },
             { id: 49, slug: 'day49', title: 'Logging Framework', sub: 'Chain of Responsibility + appenders done right', ready: false },
             { id: 50, slug: 'day50', title: 'Week 10 Machine-Coding Drill', sub: 'Timed practice + review checklist', ready: false },
