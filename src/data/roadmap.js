@@ -136,7 +136,7 @@ export const COURSE = {
           id: 'w11',
           label: 'Week 11 · Big Systems',
           days: [
-            { id: 51, slug: 'day51', title: 'BookMyShow — Part 1', sub: 'Movie/seat booking: entities and the concurrency problem', ready: false },
+            { id: 51, slug: 'day51', title: 'BookMyShow — Part 1', sub: 'Movie/seat booking: entities and the concurrency problem', ready: true },
             { id: 52, slug: 'day52', title: 'BookMyShow — Part 2', sub: 'Seat locking, payment, and booking expiry', ready: false },
             { id: 53, slug: 'day53', title: 'Splitwise', sub: 'Expense splitting, balances and settle-up', ready: false },
             { id: 54, slug: 'day54', title: 'ATM', sub: 'State machine, cash dispensing, transactions', ready: false },
