@@ -139,7 +139,7 @@ export const COURSE = {
             { id: 51, slug: 'day51', title: 'BookMyShow — Part 1', sub: 'Movie/seat booking: entities and the concurrency problem', ready: true },
             { id: 52, slug: 'day52', title: 'BookMyShow — Part 2', sub: 'Seat locking, payment, and booking expiry', ready: true },
             { id: 53, slug: 'day53', title: 'Splitwise', sub: 'Expense splitting, balances and settle-up', ready: true },
-            { id: 54, slug: 'day54', title: 'ATM', sub: 'State machine, cash dispensing, transactions', ready: false },
+            { id: 54, slug: 'day54', title: 'ATM', sub: 'State machine, cash dispensing, transactions', ready: true },
             { id: 55, slug: 'day55', title: 'Week 11 Machine-Coding Drill', sub: 'Timed practice + review checklist', ready: false },
           ],
         },
