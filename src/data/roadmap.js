@@ -147,7 +147,7 @@ export const COURSE = {
           id: 'w12',
           label: 'Week 12 · Data Structures & + buffer',
           days: [
-            { id: 56, slug: 'day56', title: 'LRU Cache', sub: 'O(1) get/put with HashMap + doubly-linked list', ready: false },
+            { id: 56, slug: 'day56', title: 'LRU Cache', sub: 'O(1) get/put with HashMap + doubly-linked list', ready: true },
             { id: 57, slug: 'day57', title: 'Notification System', sub: 'Channels, templates, and pluggable delivery', ready: false },
             { id: 58, slug: 'day58', title: 'Cab Booking — Part 1', sub: 'Matching riders & drivers, trip lifecycle', ready: false },
             { id: 59, slug: 'day59', title: 'Cab Booking — Part 2', sub: 'Pricing, dispatch strategies, surge', ready: false },
