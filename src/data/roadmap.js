@@ -25,7 +25,7 @@ export const COURSE = {
         {
           id: 'w2',
           label: 'Week 2 · Relationships, UML & Object Modeling',
-          recap: { slug: 'w2', sub: 'Relationships, UML & turning requirements into entities', ready: false },
+          recap: { slug: 'w2', sub: 'Relationships, UML & turning requirements into entities', ready: true },
           days: [
             { id: 6, slug: 'day6', title: 'Association, Aggregation & Composition', sub: 'has-a relationships, ownership, lifecycles — how objects connect', ready: true },
             { id: 7, slug: 'day7', title: 'Dependency & Composition over Inheritance', sub: 'uses-a, coupling, why has-a beats is-a', ready: true },
@@ -37,7 +37,7 @@ export const COURSE = {
         {
           id: 'w3',
           label: 'Week 3 · SOLID',
-          recap: { slug: 'w3', sub: 'SOLID — the five principles, with refactors', ready: false },
+          recap: { slug: 'w3', sub: 'SOLID — the five principles, with refactors', ready: true },
           days: [
             { id: 11, slug: 'day11', title: 'Single Responsibility Principle', sub: 'One class, one reason to change', ready: true },
             { id: 12, slug: 'day12', title: 'Open/Closed Principle', sub: 'Open for extension, closed for modification', ready: true },
@@ -49,7 +49,7 @@ export const COURSE = {
         {
           id: 'w4',
           label: 'Week 4 · Beyond SOLID',
-          recap: { slug: 'w4', sub: 'Beyond SOLID — DRY/KISS/YAGNI, coupling, Demeter, enums, value objects', ready: false },
+          recap: { slug: 'w4', sub: 'Beyond SOLID — DRY/KISS/YAGNI, coupling, Demeter, enums, value objects', ready: true },
           days: [
             { id: 16, slug: 'day16', title: 'DRY, KISS & YAGNI', sub: 'The three habits that keep code small and sane', ready: true },
             { id: 17, slug: 'day17', title: 'Coupling & Cohesion', sub: 'The two forces behind every design rule', ready: true },

@@ -66,8 +66,14 @@ const Day58 = lazy(() => import('./months/month3/week12/Day58.jsx'))
 // Revision: a recap page per week + a master hub.
 const RevisionHub = lazy(() => import('./recaps/RevisionHub.jsx'))
 const RecapW1 = lazy(() => import('./recaps/RecapW1.jsx'))
+const RecapW2 = lazy(() => import('./recaps/RecapW2.jsx'))
+const RecapW3 = lazy(() => import('./recaps/RecapW3.jsx'))
+const RecapW4 = lazy(() => import('./recaps/RecapW4.jsx'))
 const RECAP_COMPONENTS = {
   w1: RecapW1,
+  w2: RecapW2,
+  w3: RecapW3,
+  w4: RecapW4,
 }
 
 // Map of built day components. Add new days here as you create them (one folder per week).
