@@ -121,7 +121,7 @@ export const COURSE = {
         {
           id: 'w9',
           label: 'Week 9 · First Classics',
-          recap: { slug: 'w9', sub: 'First classics — Parking Lot, Tic-Tac-Toe, Snake & Ladder', ready: false },
+          recap: { slug: 'w9', sub: 'First classics — Parking Lot, Tic-Tac-Toe, Snake & Ladder', ready: true },
           days: [
             { id: 41, slug: 'day41', title: 'Parking Lot — Part 1', sub: 'Requirements → entities → design, the famous interview opener', ready: true },
             { id: 42, slug: 'day42', title: 'Parking Lot — Part 2', sub: 'Code walkthrough, pricing strategies, variations', ready: true },
@@ -133,7 +133,7 @@ export const COURSE = {
         {
           id: 'w10',
           label: 'Week 10 · Machines & Frameworks',
-          recap: { slug: 'w10', sub: 'Machines & frameworks — Elevator, Vending Machine, Logging', ready: false },
+          recap: { slug: 'w10', sub: 'Machines & frameworks — Elevator, Vending Machine, Logging', ready: true },
           days: [
             { id: 46, slug: 'day46', title: 'Elevator — Part 1', sub: 'Requirements, state machine, and the scheduling problem', ready: true },
             { id: 47, slug: 'day47', title: 'Elevator — Part 2', sub: 'Scheduling strategies in code, multi-car dispatch', ready: true },
@@ -145,7 +145,7 @@ export const COURSE = {
         {
           id: 'w11',
           label: 'Week 11 · Big Systems',
-          recap: { slug: 'w11', sub: 'Big systems — BookMyShow, Splitwise, ATM', ready: false },
+          recap: { slug: 'w11', sub: 'Big systems — BookMyShow, Splitwise, ATM', ready: true },
           days: [
             { id: 51, slug: 'day51', title: 'BookMyShow — Part 1', sub: 'Movie/seat booking: entities and the concurrency problem', ready: true },
             { id: 52, slug: 'day52', title: 'BookMyShow — Part 2', sub: 'Seat locking, payment, and booking expiry', ready: true },
