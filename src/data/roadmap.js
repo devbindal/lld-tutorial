@@ -162,7 +162,7 @@ export const COURSE = {
             { id: 57, slug: 'day57', title: 'Notification System', sub: 'Channels, templates, and pluggable delivery', ready: true },
             { id: 58, slug: 'day58', title: 'Cab Booking — Part 1', sub: 'Matching riders & drivers, trip lifecycle', ready: true },
             { id: 59, slug: 'day59', title: 'Cab Booking — Part 2', sub: 'Pricing, dispatch strategies, surge', ready: true },
-            { id: 60, slug: 'day60', title: 'Week 12 Machine-Coding Drill', sub: 'Timed practice + Month 3 recap', ready: false },
+            { id: 60, slug: 'day60', title: 'Week 12 Machine-Coding Drill', sub: 'Timed practice + Month 3 recap', ready: true },
           ],
         },
       ],
