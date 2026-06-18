@@ -176,7 +176,7 @@ export const COURSE = {
           id: 'w13',
           label: 'Week 13 · Concurrency',
           days: [
-            { id: 61, slug: 'day61', title: 'Concurrency — Part 1', sub: 'Threads, race conditions, and what goes wrong', ready: false },
+            { id: 61, slug: 'day61', title: 'Concurrency — Part 1', sub: 'Threads, race conditions, and what goes wrong', ready: true },
             { id: 62, slug: 'day62', title: 'Concurrency — Part 2', sub: 'Locks, synchronized, atomics, volatile', ready: false },
             { id: 63, slug: 'day63', title: 'Producer–Consumer', sub: 'Blocking queues, wait/notify, thread pools', ready: false },
             { id: 64, slug: 'day64', title: 'Optimistic vs Pessimistic Locking', sub: 'Versioning, CAS, and the atomic claim built for real', ready: false },
