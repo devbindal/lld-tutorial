@@ -157,12 +157,30 @@ export const COURSE = {
         {
           id: 'w12',
           label: 'Week 12 · Data Structures & + buffer',
+          recap: { slug: 'w12', sub: 'Data structures & frameworks — LRU Cache, Notification, Cab Booking', ready: true },
           days: [
             { id: 56, slug: 'day56', title: 'LRU Cache', sub: 'O(1) get/put with HashMap + doubly-linked list', ready: true },
             { id: 57, slug: 'day57', title: 'Notification System', sub: 'Channels, templates, and pluggable delivery', ready: true },
             { id: 58, slug: 'day58', title: 'Cab Booking — Part 1', sub: 'Matching riders & drivers, trip lifecycle', ready: true },
             { id: 59, slug: 'day59', title: 'Cab Booking — Part 2', sub: 'Pricing, dispatch strategies, surge', ready: true },
             { id: 60, slug: 'day60', title: 'Week 12 Machine-Coding Drill', sub: 'Timed practice + Month 3 recap', ready: true },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'm4',
+      label: 'Month 4 · Advanced LLD',
+      weeks: [
+        {
+          id: 'w13',
+          label: 'Week 13 · Concurrency',
+          days: [
+            { id: 61, slug: 'day61', title: 'Concurrency — Part 1', sub: 'Threads, race conditions, and what goes wrong', ready: false },
+            { id: 62, slug: 'day62', title: 'Concurrency — Part 2', sub: 'Locks, synchronized, atomics, volatile', ready: false },
+            { id: 63, slug: 'day63', title: 'Producer–Consumer', sub: 'Blocking queues, wait/notify, thread pools', ready: false },
+            { id: 64, slug: 'day64', title: 'Optimistic vs Pessimistic Locking', sub: 'Versioning, CAS, and the atomic claim built for real', ready: false },
+            { id: 65, slug: 'day65', title: 'Rate Limiter', sub: 'Token bucket, sliding window, thread-safe', ready: false },
           ],
         },
       ],

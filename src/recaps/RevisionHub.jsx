@@ -13,6 +13,7 @@ const HEADLINE = {
   w9: 'First classics: the interview ritual, then Parking Lot, Tic-Tac-Toe, Snake & Ladder.',
   w10: 'Machines & frameworks: Elevator (scheduling), Vending Machine (State), Logging (Chain + appenders).',
   w11: 'Big systems: the recurring race (atomic claim) — BookMyShow, Splitwise, ATM.',
+  w12: 'Data structures & frameworks: LRU (HashMap+DLL), Notification (5 axes + reliability), Cab Booking (the capstone) — and Month 3\'s seven shapes.',
 }
 
 export default function RevisionHub() {
