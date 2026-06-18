@@ -188,7 +188,7 @@ export const COURSE = {
           id: 'w14',
           label: 'Week 14 · Advanced Problems',
           days: [
-            { id: 66, slug: 'day66', title: 'Chess', sub: 'Piece movement as strategies, board state, check/checkmate', ready: false },
+            { id: 66, slug: 'day66', title: 'Chess', sub: 'Piece movement as strategies, board state, check/checkmate', ready: true },
             { id: 67, slug: 'day67', title: 'Food Delivery', sub: 'Orders, restaurants, delivery matching & tracking', ready: false },
             { id: 68, slug: 'day68', title: 'Amazon Locker', sub: 'Locker assignment, sizes, pickup codes, expiry', ready: false },
             { id: 69, slug: 'day69', title: 'Pub-Sub Message Queue', sub: 'Topics, subscribers, delivery & offsets', ready: false },
