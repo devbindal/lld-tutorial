@@ -14,6 +14,7 @@ const HEADLINE = {
   w10: 'Machines & frameworks: Elevator (scheduling), Vending Machine (State), Logging (Chain + appenders).',
   w11: 'Big systems: the recurring race (atomic claim) — BookMyShow, Splitwise, ATM.',
   w12: 'Data structures & frameworks: LRU (HashMap+DLL), Notification (5 axes + reliability), Cab Booking (the capstone) — and Month 3\'s seven shapes.',
+  w13: 'Concurrency end to end: races & the JMM, synchronized/volatile/atomics/locks, producer-consumer, optimistic vs pessimistic, the rate limiter.',
 }
 
 export default function RevisionHub() {

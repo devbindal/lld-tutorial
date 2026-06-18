@@ -175,12 +175,24 @@ export const COURSE = {
         {
           id: 'w13',
           label: 'Week 13 · Concurrency',
+          recap: { slug: 'w13', sub: 'Concurrency — races, locks/atomics/volatile, producer-consumer, locking strategies, rate limiter', ready: true },
           days: [
             { id: 61, slug: 'day61', title: 'Concurrency — Part 1', sub: 'Threads, race conditions, and what goes wrong', ready: true },
             { id: 62, slug: 'day62', title: 'Concurrency — Part 2', sub: 'Locks, synchronized, atomics, volatile', ready: true },
             { id: 63, slug: 'day63', title: 'Producer–Consumer', sub: 'Blocking queues, wait/notify, thread pools', ready: true },
             { id: 64, slug: 'day64', title: 'Optimistic vs Pessimistic Locking', sub: 'Versioning, CAS, and the atomic claim built for real', ready: true },
             { id: 65, slug: 'day65', title: 'Rate Limiter', sub: 'Token bucket, sliding window, thread-safe', ready: true },
+          ],
+        },
+        {
+          id: 'w14',
+          label: 'Week 14 · Advanced Problems',
+          days: [
+            { id: 66, slug: 'day66', title: 'Chess', sub: 'Piece movement as strategies, board state, check/checkmate', ready: false },
+            { id: 67, slug: 'day67', title: 'Food Delivery', sub: 'Orders, restaurants, delivery matching & tracking', ready: false },
+            { id: 68, slug: 'day68', title: 'Amazon Locker', sub: 'Locker assignment, sizes, pickup codes, expiry', ready: false },
+            { id: 69, slug: 'day69', title: 'Pub-Sub Message Queue', sub: 'Topics, subscribers, delivery & offsets', ready: false },
+            { id: 70, slug: 'day70', title: 'Week 14 Machine-Coding Drill', sub: 'Timed practice + review checklist', ready: false },
           ],
         },
       ],
