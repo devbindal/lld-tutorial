@@ -356,11 +356,58 @@ export default function Day6() {
         </Reveal>
       </section>
 
+      {/* dependency */}
+      <section id="s-dep">
+        <div className="sec-label">The weakest bond · Dependency (uses-a)</div>
+        <h2>Dependency — "uses-a, for a moment"</h2>
+        <p>The bottom rung of the ladder, and the odd one out: it is the only bond that is <strong>not stored as
+          a field</strong>. An object simply <strong>receives</strong> another (usually as a method parameter),
+          uses it for a single call, and forgets it. No reference is kept — so there is no ownership and no
+          lifecycle link at all. An <C>Order</C> doesn't <em>keep</em> an email service; it just borrows one to
+          send a confirmation.</p>
+        <Code html={`<span class="kw">public class</span> EmailService {
+    <span class="kw">public void</span> send(String to, String body) { <span class="cm">/* … */</span> }
+}
+
+<span class="kw">public class</span> Order {
+    <span class="kw">private</span> List&lt;Item&gt; items;          <span class="cm">// the order's OWN data (real fields)</span>
+    <span class="cm">// 🚫 there is NO EmailService field here</span>
+
+    <span class="kw">public void</span> checkout(EmailService mailer) {   <span class="cm">// ⚡ uses-a: handed in for ONE call</span>
+        <span class="cm">// … finalize the order …</span>
+        mailer.send(customerEmail, <span class="str">"Order confirmed"</span>);  <span class="cm">// used once, then forgotten</span>
+    }
+}
+
+Order order = <span class="kw">new</span> Order(<span class="cm">/* … */</span>);
+order.checkout(<span class="kw">new</span> EmailService());   <span class="cm">// the mailer exists only for this call</span>
+<span class="cm">// order keeps NO reference to it → no ownership, no lifecycle bond</span>`} />
+        <p>UML draws dependency as a <strong>dashed arrow</strong> — dashed precisely because the link is
+          temporary, not a solid, stored relationship:</p>
+        <Code html={`  DEPENDENCY = a DASHED arrow ┄┄▶   (temporary "uses", NOT a stored field)
+
+  ┌────────────────────┐                          ┌──────────────────┐
+  │       Order        │ ┄┄┄┄┄┄┄ uses ┄┄┄┄┄┄┄┄┄┄▶ │   EmailService   │
+  ├────────────────────┤   (EmailService is a      ├──────────────────┤
+  │ - items : List     │    METHOD PARAMETER,      │ + send(to, body) │
+  ├────────────────────┤    not a field)           └──────────────────┘
+  │ + checkout(mailer) │
+  └────────────────────┘
+
+  no diamond, no solid line — the dashed arrow says "needs it briefly, owns nothing."
+  contrast: an ASSOCIATION would STORE it →  - mailer : EmailService  (a field).`} />
+        <Note><strong>How to spot a dependency:</strong> the collaborator shows up only in a <strong>method
+          signature</strong> — a parameter, a local variable, or a return type — never as a field. Quick test:
+          if you deleted every field and the class still needs that type <em>somewhere</em>, that "somewhere" is
+          a dependency. Today we keep it brief; <strong>Day 7</strong> zooms right in — coupling, and the famous
+          rule "favor composition over inheritance".</Note>
+      </section>
+
       {/* 2 */}
       <section id="s2">
         <div className="sec-label">Section 2</div>
         <h2>Association — "knows-a"</h2>
-        <p>The simplest bond. One object keeps a <strong>reference</strong> to another, so it can call its methods.
+        <p>The simplest of the bonds you <strong>store</strong>. One object keeps a <strong>reference</strong> to another, so it can call its methods.
           Both objects are created independently, live independently, and die independently. A student knows a teacher;
           neither owns the other.</p>
         <Code html={`<span class="kw">public class</span> Teacher {
