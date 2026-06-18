@@ -388,6 +388,21 @@ Teacher t = <span class="kw">new</span> Teacher(<span class="str">"Dr. Rao"</spa
 Student s = <span class="kw">new</span> Student(<span class="str">"Asha"</span>);
 s.setMentor(t);                       <span class="cm">// now they are associated</span>
 s = <span class="kw">null</span>;                             <span class="cm">// student gone… teacher t is perfectly fine ✅</span>`} />
+        <p>Now the same thing <strong>drawn as a UML class diagram</strong> — this is exactly how you'd sketch it
+          on a whiteboard:</p>
+        <Code html={`  ASSOCIATION = a plain line with an arrow (the arrow shows DIRECTION)
+
+  ┌────────────────────┐      mentor              ┌──────────────────┐
+  │      Student       │ 1 ──────────────────▶ 0..1│     Teacher      │
+  ├────────────────────┤      "knows-a"            ├──────────────────┤
+  │ - name : String    │                           │ - name : String  │
+  │ - mentor : Teacher │      plain line + arrow   ├──────────────────┤
+  ├────────────────────┤      = ONE-directional    │ + getName()      │
+  │ + askDoubt()       │                           └──────────────────┘
+  └────────────────────┘
+
+  read it:  "a Student knows AT MOST ONE Teacher (its mentor); the Teacher
+             does NOT point back — no list of students = one-directional."`} />
         <p>Two details interviewers ask about:</p>
         <ul>
           <li><strong>Direction.</strong> Above, Student → Teacher is <strong>one-directional</strong>: the student knows the
@@ -448,6 +463,22 @@ mumbai.addPlayer(p1);                   <span class="cm">// joins the team</span
 
 mumbai = <span class="kw">null</span>;                          <span class="cm">// 💥 team garbage-collected…</span>
 <span class="cm">// …but p1 still points to the Player. He is alive ✅ and can join Chennai.</span>`} />
+        <p>The same relationship <strong>as a UML diagram</strong> — note the <strong>hollow diamond ◇</strong>
+          sitting on the owner (Team):</p>
+        <Code html={`  AGGREGATION = a HOLLOW diamond ◇  (drawn on the OWNER / whole side)
+
+  ┌────────────────────┐                          ┌──────────────────┐
+  │       Team         │ 1                      *  │     Player       │
+  │                    │◇─────────────────────────│                  │
+  ├────────────────────┤      "has-a" (weak)       ├──────────────────┤
+  │ - players : List   │      parts come from      │ - name : String  │
+  ├────────────────────┤      OUTSIDE & survive    └──────────────────┘
+  │ + addPlayer(p)     │
+  └────────────────────┘
+
+  ◇ on Team = "Team owns the grouping, NOT the players' lives."
+  read it:  "a Team has MANY (*) Players; one Player can belong to
+             many Teams over a career, and outlives any single Team."`} />
         <p>The fingerprints of aggregation in code:</p>
         <ul>
           <li>The part arrives through a <strong>constructor parameter or setter/add method</strong> — the whole never calls <C>new</C> for it.</li>
@@ -486,6 +517,24 @@ mumbai = <span class="kw">null</span>;                          <span class="cm"
 
 House h = <span class="kw">new</span> House(<span class="num">2</span>);   <span class="cm">// house + its 3 rooms are born together</span>
 h = <span class="kw">null</span>;                  <span class="cm">// house unreachable → its rooms unreachable → GC takes ALL of them ⚰️</span>`} />
+        <p>As a UML diagram — same shape as aggregation, but a <strong>filled diamond ◆</strong> (and notice the
+          multiplicity: a Room belongs to <em>exactly one</em> House):</p>
+        <Code html={`  COMPOSITION = a FILLED diamond ◆  (drawn on the OWNER / whole side)
+
+  ┌────────────────────┐                          ┌──────────────────┐
+  │       House        │ 1                    1..* │      Room        │
+  │                    │◆─────────────────────────│                  │
+  ├────────────────────┤      "part-of" (strong)  ├──────────────────┤
+  │ - rooms : List     │      built INSIDE,        │ - type : String  │
+  ├────────────────────┤      dies TOGETHER        └──────────────────┘
+  │ + roomCount()      │
+  └────────────────────┘
+
+  ◆ on House = "House owns the rooms' very existence."
+  read it:  "a House is made of 1-or-more (1..*) Rooms; a Room belongs to
+             EXACTLY ONE House and is destroyed with it."
+
+  ◇ vs ◆ at a glance:   hollow = parts survive (club) · filled = parts die (body)`} />
         <p>How does "the parts die" actually work in Java? There is no <C>delete</C> keyword. It is pure
           <strong> reachability</strong> (remember GC from Day 1): the rooms were only ever referenced by the house.
           When the house becomes unreachable, the rooms automatically become unreachable too, and the garbage
@@ -536,6 +585,34 @@ h = <span class="kw">null</span>;                  <span class="cm">// house unr
   multiplicity examples:
   Team ◇──── <span class="num">11</span> Player      a team has 11 players
   House ◆──── <span class="num">1</span>..* Room     a house has 1 or more rooms`} />
+        <p>And here is the whole <strong>campus from Section 1, drawn as one UML picture</strong> — every bond in
+          play at once. This is the kind of diagram you sketch in a design interview:</p>
+        <Code html={`  THE CAMPUS — ALL FOUR BONDS IN ONE DIAGRAM
+
+                         ┌────────────────┐
+                         │   University   │
+                         └──┬──────────┬──┘
+            ◆ composition   │          │   ◇ aggregation
+            (owns; dies     │ 1..*     │ *  (enrolls; students
+             together)      ▼          ▼     live independently)
+                  ┌────────────┐   ┌────────────┐   knows   ┌───────────┐
+                  │ Department │   │  Student   │──────────▶│  Teacher  │
+                  └─────┬──────┘   └────────────┘   0..1    └───────────┘
+        ◇ aggregation   │ *        (association: plain arrow, one-way)
+                  ┌─────▼──────┐
+                  │ Professor  │      ┌────────┐  ┄┄ uses ┄┄▶ ┌───────────────┐
+                  └────────────┘      │ Office │              │ CourierService│
+                                      └────────┘  (dependency: dashed arrow,
+                                                   a method parameter — not stored)
+
+  LEGEND   ◆ filled diamond = composition   ◇ hollow diamond = aggregation
+           ──▶ plain arrow = association     ┄▶ dashed arrow = dependency
+           diamonds always touch the OWNER · numbers (1, *, 1..*, 0..1) = multiplicity`} />
+        <Good><strong>Read the picture aloud:</strong> "a University <em>is composed of</em> Departments (◆, they
+          die with it) and <em>aggregates</em> Students (◇, they live on); a Department <em>aggregates</em>
+          Professors; a Student <em>knows</em> a Teacher (plain arrow); the Office merely <em>uses</em> a
+          CourierService (dashed)." If you can narrate the diamonds and arrows like that, you can both read and
+          draw any LLD class diagram.</Good>
         <table className="matrix">
           <thead>
             <tr><th></th><th>association</th><th>aggregation</th><th>composition</th></tr>
