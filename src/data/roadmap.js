@@ -67,7 +67,7 @@ export const COURSE = {
         {
           id: 'w5',
           label: 'Week 5 · Creational Patterns',
-          recap: { slug: 'w5', sub: 'Creational patterns — Singleton, Factory, Abstract Factory, Builder, Prototype', ready: false },
+          recap: { slug: 'w5', sub: 'Creational patterns — Singleton, Factory, Abstract Factory, Builder, Prototype', ready: true },
           days: [
             { id: 21, slug: 'day21', title: 'Singleton', sub: 'One instance, global access — done right', ready: true },
             { id: 22, slug: 'day22', title: 'Factory Method', sub: 'Let subclasses decide what to create', ready: true },
@@ -79,7 +79,7 @@ export const COURSE = {
         {
           id: 'w6',
           label: 'Week 6 · Structural Patterns',
-          recap: { slug: 'w6', sub: 'Structural patterns — Adapter, Decorator, Composite, Facade/Proxy, Flyweight/Bridge', ready: false },
+          recap: { slug: 'w6', sub: 'Structural patterns — Adapter, Decorator, Composite, Facade/Proxy, Flyweight/Bridge', ready: true },
           days: [
             { id: 26, slug: 'day26', title: 'Adapter', sub: 'The travel plug — make incompatible interfaces fit', ready: true },
             { id: 27, slug: 'day27', title: 'Decorator', sub: 'Wrap to add features, layer by layer', ready: true },
@@ -91,7 +91,7 @@ export const COURSE = {
         {
           id: 'w7',
           label: 'Week 7 · Behavioral Patterns I',
-          recap: { slug: 'w7', sub: 'Behavioral I — Strategy, Observer, Command, State, Template Method', ready: false },
+          recap: { slug: 'w7', sub: 'Behavioral I — Strategy, Observer, Command, State, Template Method', ready: true },
           days: [
             { id: 31, slug: 'day31', title: 'Strategy', sub: 'Swap the algorithm behind one interface', ready: true },
             { id: 32, slug: 'day32', title: 'Observer', sub: 'Publish, subscribe, never poll', ready: true },
@@ -103,7 +103,7 @@ export const COURSE = {
         {
           id: 'w8',
           label: 'Week 8 · Behavioral Patterns II',
-          recap: { slug: 'w8', sub: 'Behavioral II — Chain, Iterator, Mediator, Memento, Visitor', ready: false },
+          recap: { slug: 'w8', sub: 'Behavioral II — Chain, Iterator, Mediator, Memento, Visitor', ready: true },
           days: [
             { id: 36, slug: 'day36', title: 'Chain of Responsibility', sub: 'Pass the request down the line until someone handles it', ready: true },
             { id: 37, slug: 'day37', title: 'Iterator', sub: 'Walk any collection without knowing its insides', ready: true },

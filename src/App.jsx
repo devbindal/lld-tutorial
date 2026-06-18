@@ -69,11 +69,19 @@ const RecapW1 = lazy(() => import('./recaps/RecapW1.jsx'))
 const RecapW2 = lazy(() => import('./recaps/RecapW2.jsx'))
 const RecapW3 = lazy(() => import('./recaps/RecapW3.jsx'))
 const RecapW4 = lazy(() => import('./recaps/RecapW4.jsx'))
+const RecapW5 = lazy(() => import('./recaps/RecapW5.jsx'))
+const RecapW6 = lazy(() => import('./recaps/RecapW6.jsx'))
+const RecapW7 = lazy(() => import('./recaps/RecapW7.jsx'))
+const RecapW8 = lazy(() => import('./recaps/RecapW8.jsx'))
 const RECAP_COMPONENTS = {
   w1: RecapW1,
   w2: RecapW2,
   w3: RecapW3,
   w4: RecapW4,
+  w5: RecapW5,
+  w6: RecapW6,
+  w7: RecapW7,
+  w8: RecapW8,
 }
 
 // Map of built day components. Add new days here as you create them (one folder per week).
