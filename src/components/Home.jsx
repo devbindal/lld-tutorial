@@ -8,6 +8,9 @@ export default function Home() {
         <h1>From OOP Basics to LLD Mastery</h1>
         <p>The foundation everything else is built on. Work through one concept per day, week by week.
            Click any unlocked card to open its interactive tutorial. New days unlock as you build them.</p>
+        <a className="homelink" href="#/revise" style={{ fontSize: 15, display: 'inline-block', marginTop: 6 }}>
+          ★ Revision Hub — one-page recaps of every week →
+        </a>
       </div>
 
       {COURSE.months.map((month) => (
@@ -29,6 +32,18 @@ export default function Home() {
                     </span>
                   </a>
                 ))}
+                {week.recap && (
+                  <a className={'daycard' + (week.recap.ready ? '' : ' locked')}
+                     href={week.recap.ready ? `#/recap/${week.recap.slug}` : '#/'}
+                     style={{ borderStyle: 'dashed' }}>
+                    <div className="dc-num">★ RECAP</div>
+                    <div className="dc-title">{week.label.replace(/·.*$/, '').trim()} · Revision</div>
+                    <div className="dc-sub">{week.recap.sub}</div>
+                    <span className={'dc-tag ' + (week.recap.ready ? 'ready' : 'soon')}>
+                      {week.recap.ready ? '★ Revise' : 'Coming soon'}
+                    </span>
+                  </a>
+                )}
               </div>
             </div>
           ))}

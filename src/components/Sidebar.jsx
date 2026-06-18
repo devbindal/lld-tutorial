@@ -49,6 +49,8 @@ export default function Sidebar({ route, onNavigate }) {
       <div className="brandsub">{COURSE.subtitle}</div>
 
       <a className="homelink" href="#/" onClick={() => onNavigate()}>← All concepts (home)</a>
+      <a className={'homelink' + (route.name === 'hub' ? ' active' : '')} href="#/revise"
+         onClick={() => onNavigate()} style={{ marginTop: 2 }}>★ Revision Hub (weekly recaps)</a>
 
       {COURSE.months.map((month) => {
         const mExpanded = !!openM[month.id]
@@ -90,6 +92,23 @@ export default function Sidebar({ route, onNavigate }) {
                           </a>
                         )
                       })}
+                      {wExpanded && week.recap && (() => {
+                        const r = week.recap
+                        const active = route.name === 'recap' && route.week === r.slug
+                        const cls = 'navlink' + (active ? ' active' : '') + (r.ready ? '' : ' locked')
+                        const href = r.ready ? `#/recap/${r.slug}` : '#/'
+                        return (
+                          <a className={cls} href={href}
+                             onClick={() => r.ready && onNavigate()} aria-disabled={!r.ready}>
+                            <div className="nt">
+                              <span className="daynum">★</span>
+                              {week.label.replace(/·.*$/, '').trim()} · Recap
+                              {!r.ready && <span className="lockicon">🔒 soon</span>}
+                            </div>
+                            <div className="ns">{r.sub}</div>
+                          </a>
+                        )
+                      })()}
                     </div>
                   )
                 })}

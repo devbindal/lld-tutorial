@@ -13,6 +13,7 @@ export const COURSE = {
         {
           id: 'w1',
           label: 'Week 1 · Core OOP',
+          recap: { slug: 'w1', sub: 'Core OOP — classes, encapsulation, inheritance, polymorphism, abstraction', ready: true },
           days: [
             { id: 1, slug: 'day1', title: 'Classes & Objects', sub: 'Blueprint vs building, constructors, this, access modifiers, static vs instance', ready: true },
             { id: 2, slug: 'day2', title: 'Encapsulation', sub: 'Getters/setters, immutability, defensive copying', ready: true },
@@ -24,6 +25,7 @@ export const COURSE = {
         {
           id: 'w2',
           label: 'Week 2 · Relationships, UML & Object Modeling',
+          recap: { slug: 'w2', sub: 'Relationships, UML & turning requirements into entities', ready: false },
           days: [
             { id: 6, slug: 'day6', title: 'Association, Aggregation & Composition', sub: 'has-a relationships, ownership, lifecycles — how objects connect', ready: true },
             { id: 7, slug: 'day7', title: 'Dependency & Composition over Inheritance', sub: 'uses-a, coupling, why has-a beats is-a', ready: true },
@@ -35,6 +37,7 @@ export const COURSE = {
         {
           id: 'w3',
           label: 'Week 3 · SOLID',
+          recap: { slug: 'w3', sub: 'SOLID — the five principles, with refactors', ready: false },
           days: [
             { id: 11, slug: 'day11', title: 'Single Responsibility Principle', sub: 'One class, one reason to change', ready: true },
             { id: 12, slug: 'day12', title: 'Open/Closed Principle', sub: 'Open for extension, closed for modification', ready: true },
@@ -46,6 +49,7 @@ export const COURSE = {
         {
           id: 'w4',
           label: 'Week 4 · Beyond SOLID',
+          recap: { slug: 'w4', sub: 'Beyond SOLID — DRY/KISS/YAGNI, coupling, Demeter, enums, value objects', ready: false },
           days: [
             { id: 16, slug: 'day16', title: 'DRY, KISS & YAGNI', sub: 'The three habits that keep code small and sane', ready: true },
             { id: 17, slug: 'day17', title: 'Coupling & Cohesion', sub: 'The two forces behind every design rule', ready: true },
@@ -63,6 +67,7 @@ export const COURSE = {
         {
           id: 'w5',
           label: 'Week 5 · Creational Patterns',
+          recap: { slug: 'w5', sub: 'Creational patterns — Singleton, Factory, Abstract Factory, Builder, Prototype', ready: false },
           days: [
             { id: 21, slug: 'day21', title: 'Singleton', sub: 'One instance, global access — done right', ready: true },
             { id: 22, slug: 'day22', title: 'Factory Method', sub: 'Let subclasses decide what to create', ready: true },
@@ -74,6 +79,7 @@ export const COURSE = {
         {
           id: 'w6',
           label: 'Week 6 · Structural Patterns',
+          recap: { slug: 'w6', sub: 'Structural patterns — Adapter, Decorator, Composite, Facade/Proxy, Flyweight/Bridge', ready: false },
           days: [
             { id: 26, slug: 'day26', title: 'Adapter', sub: 'The travel plug — make incompatible interfaces fit', ready: true },
             { id: 27, slug: 'day27', title: 'Decorator', sub: 'Wrap to add features, layer by layer', ready: true },
@@ -85,6 +91,7 @@ export const COURSE = {
         {
           id: 'w7',
           label: 'Week 7 · Behavioral Patterns I',
+          recap: { slug: 'w7', sub: 'Behavioral I — Strategy, Observer, Command, State, Template Method', ready: false },
           days: [
             { id: 31, slug: 'day31', title: 'Strategy', sub: 'Swap the algorithm behind one interface', ready: true },
             { id: 32, slug: 'day32', title: 'Observer', sub: 'Publish, subscribe, never poll', ready: true },
@@ -96,6 +103,7 @@ export const COURSE = {
         {
           id: 'w8',
           label: 'Week 8 · Behavioral Patterns II',
+          recap: { slug: 'w8', sub: 'Behavioral II — Chain, Iterator, Mediator, Memento, Visitor', ready: false },
           days: [
             { id: 36, slug: 'day36', title: 'Chain of Responsibility', sub: 'Pass the request down the line until someone handles it', ready: true },
             { id: 37, slug: 'day37', title: 'Iterator', sub: 'Walk any collection without knowing its insides', ready: true },
@@ -113,6 +121,7 @@ export const COURSE = {
         {
           id: 'w9',
           label: 'Week 9 · First Classics',
+          recap: { slug: 'w9', sub: 'First classics — Parking Lot, Tic-Tac-Toe, Snake & Ladder', ready: false },
           days: [
             { id: 41, slug: 'day41', title: 'Parking Lot — Part 1', sub: 'Requirements → entities → design, the famous interview opener', ready: true },
             { id: 42, slug: 'day42', title: 'Parking Lot — Part 2', sub: 'Code walkthrough, pricing strategies, variations', ready: true },
@@ -124,6 +133,7 @@ export const COURSE = {
         {
           id: 'w10',
           label: 'Week 10 · Machines & Frameworks',
+          recap: { slug: 'w10', sub: 'Machines & frameworks — Elevator, Vending Machine, Logging', ready: false },
           days: [
             { id: 46, slug: 'day46', title: 'Elevator — Part 1', sub: 'Requirements, state machine, and the scheduling problem', ready: true },
             { id: 47, slug: 'day47', title: 'Elevator — Part 2', sub: 'Scheduling strategies in code, multi-car dispatch', ready: true },
@@ -135,6 +145,7 @@ export const COURSE = {
         {
           id: 'w11',
           label: 'Week 11 · Big Systems',
+          recap: { slug: 'w11', sub: 'Big systems — BookMyShow, Splitwise, ATM', ready: false },
           days: [
             { id: 51, slug: 'day51', title: 'BookMyShow — Part 1', sub: 'Movie/seat booking: entities and the concurrency problem', ready: true },
             { id: 52, slug: 'day52', title: 'BookMyShow — Part 2', sub: 'Seat locking, payment, and booking expiry', ready: true },

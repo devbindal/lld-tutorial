@@ -63,6 +63,13 @@ const Day56 = lazy(() => import('./months/month3/week12/Day56.jsx'))
 const Day57 = lazy(() => import('./months/month3/week12/Day57.jsx'))
 const Day58 = lazy(() => import('./months/month3/week12/Day58.jsx'))
 
+// Revision: a recap page per week + a master hub.
+const RevisionHub = lazy(() => import('./recaps/RevisionHub.jsx'))
+const RecapW1 = lazy(() => import('./recaps/RecapW1.jsx'))
+const RECAP_COMPONENTS = {
+  w1: RecapW1,
+}
+
 // Map of built day components. Add new days here as you create them (one folder per week).
 const DAY_COMPONENTS = {
   1: Day1,
@@ -126,9 +133,12 @@ const DAY_COMPONENTS = {
 }
 
 function parseHash() {
-  const h = window.location.hash.replace(/^#/, '') // e.g. "/day/1"
+  const h = window.location.hash.replace(/^#/, '') // e.g. "/day/1" or "/recap/w1" or "/revise"
   const m = h.match(/^\/day\/(\d+)/)
   if (m) return { name: 'day', day: parseInt(m[1], 10) }
+  const r = h.match(/^\/recap\/(\w+)/)
+  if (r) return { name: 'recap', week: r[1] }
+  if (/^\/revise/.test(h)) return { name: 'hub' }
   return { name: 'home' }
 }
 
@@ -179,6 +189,11 @@ export default function App() {
   if (route.name === 'day') {
     const Comp = DAY_COMPONENTS[route.day]
     page = Comp ? <Comp /> : <ComingSoon day={route.day} />
+  } else if (route.name === 'recap') {
+    const Comp = RECAP_COMPONENTS[route.week]
+    page = Comp ? <Comp /> : <Home />
+  } else if (route.name === 'hub') {
+    page = <RevisionHub />
   } else {
     page = <Home />
   }
