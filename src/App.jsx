@@ -70,6 +70,20 @@ const Day63 = lazy(() => import('./months/month4/week13/Day63.jsx'))
 const Day64 = lazy(() => import('./months/month4/week13/Day64.jsx'))
 const Day65 = lazy(() => import('./months/month4/week13/Day65.jsx'))
 const Day66 = lazy(() => import('./months/month4/week14/Day66.jsx'))
+const Day67 = lazy(() => import('./months/month4/week14/Day67.jsx'))
+const Day68 = lazy(() => import('./months/month4/week14/Day68.jsx'))
+const Day69 = lazy(() => import('./months/month4/week14/Day69.jsx'))
+const Day70 = lazy(() => import('./months/month4/week14/Day70.jsx'))
+const Day71 = lazy(() => import('./months/month4/week15/Day71.jsx'))
+const Day72 = lazy(() => import('./months/month4/week15/Day72.jsx'))
+const Day73 = lazy(() => import('./months/month4/week15/Day73.jsx'))
+const Day74 = lazy(() => import('./months/month4/week15/Day74.jsx'))
+const Day75 = lazy(() => import('./months/month4/week15/Day75.jsx'))
+const Day76 = lazy(() => import('./months/month4/week16/Day76.jsx'))
+const Day77 = lazy(() => import('./months/month4/week16/Day77.jsx'))
+const Day78 = lazy(() => import('./months/month4/week16/Day78.jsx'))
+const Day79 = lazy(() => import('./months/month4/week16/Day79.jsx'))
+const Day80 = lazy(() => import('./months/month4/week16/Day80.jsx'))
 
 // Revision: a recap page per week + a master hub.
 const RevisionHub = lazy(() => import('./recaps/RevisionHub.jsx'))
@@ -86,6 +100,9 @@ const RecapW10 = lazy(() => import('./recaps/RecapW10.jsx'))
 const RecapW11 = lazy(() => import('./recaps/RecapW11.jsx'))
 const RecapW12 = lazy(() => import('./recaps/RecapW12.jsx'))
 const RecapW13 = lazy(() => import('./recaps/RecapW13.jsx'))
+const RecapW14 = lazy(() => import('./recaps/RecapW14.jsx'))
+const RecapW15 = lazy(() => import('./recaps/RecapW15.jsx'))
+const RecapW16 = lazy(() => import('./recaps/RecapW16.jsx'))
 const RECAP_COMPONENTS = {
   w1: RecapW1,
   w2: RecapW2,
@@ -100,6 +117,9 @@ const RECAP_COMPONENTS = {
   w11: RecapW11,
   w12: RecapW12,
   w13: RecapW13,
+  w14: RecapW14,
+  w15: RecapW15,
+  w16: RecapW16,
 }
 
 // Map of built day components. Add new days here as you create them (one folder per week).
@@ -170,6 +190,20 @@ const DAY_COMPONENTS = {
   64: Day64,
   65: Day65,
   66: Day66,
+  67: Day67,
+  68: Day68,
+  69: Day69,
+  70: Day70,
+  71: Day71,
+  72: Day72,
+  73: Day73,
+  74: Day74,
+  75: Day75,
+  76: Day76,
+  77: Day77,
+  78: Day78,
+  79: Day79,
+  80: Day80,
 }
 
 function parseHash() {
