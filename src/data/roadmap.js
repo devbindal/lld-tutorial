@@ -229,7 +229,7 @@ export const COURSE = {
         {
           id: 'w17',
           label: 'Week 17 · Bonus Days',
-          recap: { slug: 'w17', sub: 'Bonus advanced topics — distributed cache, autocomplete, file storage, resilience', ready: false },
+          recap: { slug: 'w17', sub: 'Bonus advanced topics — distributed cache, autocomplete, file storage, resilience', ready: true },
           days: [
             { id: 81, slug: 'day81', title: 'Distributed Cache', sub: 'Redis patterns — cache-aside, write-through, TTL, hot-key eviction at scale', ready: true },
             { id: 82, slug: 'day82', title: 'Search Autocomplete', sub: 'Trie data structure, prefix matching, top-K suggestions by frequency', ready: true },
