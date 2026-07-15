@@ -261,6 +261,36 @@ export default function Day32() {
         <Note><strong>Observer's intent:</strong> define a <strong>one-to-many</strong> dependency between
           objects, so that when the SUBJECT changes state, all its registered OBSERVERS are notified
           automatically — without the subject knowing who they are.</Note>
+        <Code html={`<span class="cm">// Observer pattern — core mental model</span>
+
+┌─────────────────────────────────┐
+│  Subject (Channel)              │
+│─────────────────────────────────│
+│ - subscribers: List&lt;Observer&gt;  │
+│─────────────────────────────────│
+│ + subscribe(o: Observer)        │
+│ + unsubscribe(o: Observer)      │
+│ + notifyAll(event: Event)       │  ← calls o.update(event) on each
+└────────────┬────────────────────┘
+             │ notifies (1 → many)
+             ▼
+    ┌────────────────────┐
+    │  &lt;&lt;interface&gt;&gt;     │
+    │  Observer          │
+    │────────────────────│
+    │ + update(e: Event) │
+    └────────┬───────────┘
+             │ implements
+    ┌────────┴────────────────────────────────┐
+    ▼                    ▼                    ▼
+┌──────────┐      ┌───────────┐       ┌────────────┐
+│ EmailFan │      │ AppNotify │       │  NewsBot   │
+│──────────│      │───────────│       │────────────│
+│update(e) │      │update(e)  │       │update(e)   │
+└──────────┘      └───────────┘       └────────────┘
+
+Key: Subject does NOT import EmailFan, AppNotify, or NewsBot.
+     Each depends on the Observer INTERFACE — not on each other.`} />
       </section>
 
       {/* 2 */}

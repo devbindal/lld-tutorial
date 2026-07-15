@@ -84,6 +84,10 @@ const Day77 = lazy(() => import('./months/month4/week16/Day77.jsx'))
 const Day78 = lazy(() => import('./months/month4/week16/Day78.jsx'))
 const Day79 = lazy(() => import('./months/month4/week16/Day79.jsx'))
 const Day80 = lazy(() => import('./months/month4/week16/Day80.jsx'))
+const Day81 = lazy(() => import('./months/month5/week17/Day81.jsx'))
+const Day82 = lazy(() => import('./months/month5/week17/Day82.jsx'))
+const Day83 = lazy(() => import('./months/month5/week17/Day83.jsx'))
+const Day84 = lazy(() => import('./months/month5/week17/Day84.jsx'))
 
 // Revision: a recap page per week + a master hub.
 const RevisionHub = lazy(() => import('./recaps/RevisionHub.jsx'))
@@ -204,6 +208,10 @@ const DAY_COMPONENTS = {
   78: Day78,
   79: Day79,
   80: Day80,
+  81: Day81,
+  82: Day82,
+  83: Day83,
+  84: Day84,
 }
 
 function parseHash() {

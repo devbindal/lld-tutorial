@@ -222,6 +222,23 @@ export const COURSE = {
         },
       ],
     },
+    {
+      id: 'm5',
+      label: 'Bonus · Advanced Topics',
+      weeks: [
+        {
+          id: 'w17',
+          label: 'Week 17 · Bonus Days',
+          recap: { slug: 'w17', sub: 'Bonus advanced topics — distributed cache, autocomplete, file storage, resilience', ready: false },
+          days: [
+            { id: 81, slug: 'day81', title: 'Distributed Cache', sub: 'Redis patterns — cache-aside, write-through, TTL, hot-key eviction at scale', ready: true },
+            { id: 82, slug: 'day82', title: 'Search Autocomplete', sub: 'Trie data structure, prefix matching, top-K suggestions by frequency', ready: true },
+            { id: 83, slug: 'day83', title: 'File Storage System', sub: 'Chunking, dedup by hash, block store vs metadata, versioning, sync', ready: true },
+            { id: 84, slug: 'day84', title: 'Circuit Breaker & Resilience', sub: 'CLOSED→OPEN→HALF_OPEN, retry, backoff, bulkhead, timeout', ready: true },
+          ],
+        },
+      ],
+    },
   ],
 }
 
