@@ -903,9 +903,9 @@ res.slot.free()                          <span class="cm">// mark AVAILABLE</spa
 return res.pkg                           <span class="cm">// hand over the package</span>`} />
       </section>
 
-      {/* S12 — INTERVIEW CORNER */}
-      <section id="s12">
-        <div className="sec-label">Section 12</div>
+      {/* INTERVIEW CORNER */}
+      <section id="interview">
+        <div className="sec-label">Interview corner · Rapid fire</div>
         <h2>Interview corner · Rapid fire</h2>
         <p>Six tricky questions. Click each to reveal the model answer.</p>
 

@@ -492,6 +492,16 @@ export default function Day60() {
             dead-letter queue after N retries, and a duplicate id delivered once. Because time and I/O are
             seams, the hard parts are testable — the whole reason for ports and an injected Clock (Days 47/52/57).</p>
         </Reveal>
+        <Reveal summary='Q: "How would you implement an O(1) LFU cache? Why is it harder than LRU?"'>
+          <p>LRU just needs a doubly-linked list (recency order) + HashMap — O(1) because you only ever
+            move to the front or evict from the back. LFU must track FREQUENCY: the classic O(1) solution
+            uses a HashMap of frequency → doubly-linked list of keys at that frequency, plus a
+            HashMap of key → (value, freq), plus a minFreq pointer. On access: increment key's freq,
+            move it from the freq-N list to the freq-(N+1) list; if the new list is now the minimum,
+            update minFreq. On eviction: remove the LRU key from the minFreq list. Three HashMaps +
+            minFreq pointer = O(1) get and put. The extra complexity vs LRU is why LFU caches are
+            rarer in practice — approximate LFU (count-min sketch) is often preferred at scale.</p>
+        </Reveal>
         <Reveal summary='Q: "You&apos;ve finished Month 3. Are you ready for the advanced problems and mocks?"'>
           <p>You\'re ready if a fresh prompt triggers shape-recognition fast (the Section 8 table) and you name
             the defining problem + the right structure/pattern in the first few minutes, with the rubric going
