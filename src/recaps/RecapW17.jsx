@@ -90,6 +90,24 @@ const DRILL = [
     a: 1,
     why: 'Timeout is per-call (innermost): it caps how long one attempt takes. Retry wraps Timeout: it retries failed/timed-out attempts. Circuit Breaker wraps Retry: it counts failures across attempts and fast-fails when tripped. Bulkhead is outermost per-downstream: it caps total concurrent calls to a service. Fallback is the catch-all around everything.'
   },
+  {
+    q: 'How many keys move when you add 1 server to a 4-server consistent hash ring (making 5 servers)?',
+    o: ['All keys are redistributed equally across all 5 servers', 'Approximately 1/N = 1/5 of keys — only the arc stolen from the adjacent server moves', 'Half the keys move because two arcs are affected', 'No keys move — the ring is immutable once built'],
+    a: 1,
+    why: 'The new server steals only the arc immediately counter-clockwise from its ring position. Keys in that arc move to the new server. Keys in all other arcs stay put. With N=5 servers, each arc is roughly 1/5 of the ring, so ~1/5 of all keys move. Compare with modulo hashing where adding 1 server moves ~(N-1)/N = 80% of keys.'
+  },
+  {
+    q: 'Why use 302 redirect instead of 301 for a URL shortener?',
+    o: ['302 is faster because it skips the DNS lookup', '301 is permanently cached by browsers — all future visits bypass your service, breaking click analytics; 302 is temporary so browsers always check your server', '302 works for HTTPS while 301 only works for HTTP', '301 requires a matching Content-Type header that is hard to set'],
+    a: 1,
+    why: '301 = Moved Permanently. Browsers cache 301 responses indefinitely. After the first visit, the browser goes directly to the long URL without contacting your shortener — you never see the click. 302 = Found (Temporary). The browser always checks your server, so you record every click and can update the destination without browser-cache problems.'
+  },
+  {
+    q: 'What does preprocessing symmetry mean in a search engine?',
+    o: ['The crawler and the indexer use the same number of machines for symmetric load', 'Index-time and query-time must apply the same tokenization, lowercasing, stop-word removal, and stemming — or query terms will not match stored terms', 'Documents and queries must have the same maximum length', 'TF and IDF are computed with symmetric formulas that cancel each other out'],
+    a: 1,
+    why: 'If you stem "running" to "run" at index time but do not stem the query "running" at query time, the query term "running" does not match the indexed term "run" — zero results for a valid query. Both pipelines must be identical: tokenize → lowercase → remove stop words → stem. Same transformations, same order, both sides.'
+  },
 ]
 
 const QUESTIONS = [
@@ -229,6 +247,57 @@ const QUESTIONS = [
     },
     r: { id: 's2', label: 'Section 2 — Day 83 cheat sheet' }
   },
+  {
+    q: 'A 4-server consistent hash ring uses modulo hashing instead. You add a 5th server. Roughly what fraction of keys must move?',
+    o: [
+      '1/5 of keys — only the new server\'s slice moves',
+      '4/5 of keys — almost all keys are remapped because the modulo base changed from 4 to 5',
+      '1/2 of keys — the ring is split in half',
+      'No keys move — the existing four arcs stay intact'
+    ],
+    a: 1,
+    e: 'With modulo hashing, key i goes to server (hash(i) % N). Changing N from 4 to 5 changes the result of the modulo for almost every key — roughly (N-1)/N = 4/5 = 80% of keys must move to a different server. This is why modulo hashing is catastrophic for cache clusters: adding one server causes a cache miss storm. Consistent hashing moves only 1/N ≈ 20% of keys.',
+    w: {
+      0: '1/5 moving is the consistent hashing result — the question is about modulo hashing, where the base N change invalidates nearly all mappings.',
+      2: 'Half is not the modulo formula. The fraction is (N-1)/N regardless of ring size.',
+      3: 'With modulo hashing, the divisor changes from 4 to 5, so hash(key) % 4 ≠ hash(key) % 5 for the vast majority of keys.'
+    },
+    r: { id: 's2', label: 'Section 2 — Day 85 cheat sheet' }
+  },
+  {
+    q: 'A URL shortener uses 301 redirect instead of 302. What breaks?',
+    o: [
+      'The short URL stops working after 24 hours',
+      'Browsers permanently cache the destination — every subsequent visit goes directly to the long URL, bypassing the shortener entirely and making click analytics impossible',
+      'Search engines de-index the short URL',
+      'The redirect only works on the first visit and returns 404 afterwards'
+    ],
+    a: 1,
+    e: '301 Moved Permanently tells the browser: "cache this redirect forever." After the first click, the browser navigates directly to the long URL without contacting the shortener — zero analytics recorded. You also cannot update the destination URL because browsers will keep using the cached mapping. 302 Found (temporary) forces the browser to check the shortener on every visit.',
+    w: {
+      0: '301 does not expire — it is permanent. The short URL keeps working but you lose the ability to track clicks or update destinations.',
+      2: 'Search engines do follow 301 redirects and may transfer page rank to the destination, but that is not the analytics problem being asked about.',
+      3: '301 does not cause 404 — the redirect is cached correctly. The problem is that it is cached too aggressively.'
+    },
+    r: { id: 's2', label: 'Section 2 — Day 86 cheat sheet' }
+  },
+  {
+    q: 'In a search engine index, what is the difference between a forward index and an inverted index?',
+    o: [
+      'Forward index = doc → word list; inverted index = word → doc list. Inverted enables O(1) lookup for "which docs contain this word?"',
+      'Forward index = word → doc list; inverted index = doc → word list. They are mirror images',
+      'Forward index is used for ranking; inverted index is used for crawling',
+      'They are the same structure stored on different servers for redundancy'
+    ],
+    a: 0,
+    e: 'Forward index maps each document to the words it contains — useful for "what words are in document X?" Inverted index maps each word to the documents that contain it — exactly what search needs: "which docs contain the query word?" Building a search engine without an inverted index would require scanning every document for every query — O(N) per query. The inverted index makes it O(1) per term lookup followed by a postings merge.',
+    w: {
+      1: 'The mapping is the opposite: forward goes doc → words, inverted goes word → docs. Swapping them produces the forward index definition, not the inverted one.',
+      2: 'Both indexes are used at index time; ranking (TF-IDF scoring) happens after the inverted index lookup, not in a separate index.',
+      3: 'They are genuinely different structures with opposite key-value directions, not redundant copies.'
+    },
+    r: { id: 's2', label: 'Section 2 — Day 87 cheat sheet' }
+  },
 ]
 
 export default function RecapW17() {
@@ -236,18 +305,19 @@ export default function RecapW17() {
     <div className="scrollarea">
       <div className="hero">
         <div className="eyebrow">Bonus · Week 17 · Revision</div>
-        <h1>Week 17 Recap:<br />Distributed Cache, Autocomplete, File Storage &amp; Resilience</h1>
-        <p>Days 81–84 in one place: cache invalidation patterns, Trie top-K design, content-addressed
-           chunk deduplication, and the full resilience stack. Cheat-sheet, rapid review, recap quiz.</p>
+        <h1>Week 17 Recap:<br />Cache, Autocomplete, File Storage, Resilience, Consistent Hashing, URL Shortener &amp; Search</h1>
+        <p>Days 81–87 in one place: cache invalidation patterns, Trie top-K design, content-addressed
+           chunk deduplication, the full resilience stack, consistent hashing ring mechanics, URL redirect
+           types, and inverted-index search engines. Cheat-sheet, rapid review, recap quiz.</p>
         <div className="chips">
-          {['cache-aside invalidate', 'Trie top-K at node', 'SHA-256 chunk IDs', 'refCount GC', 'circuit breaker states', 'retry + idempotency', 'bulkhead isolation', 'resilience stack'].map((c) => <span className="chip" key={c}>{c}</span>)}
+          {['cache-aside invalidate', 'Trie top-K at node', 'SHA-256 chunk IDs', 'refCount GC', 'circuit breaker states', 'retry + idempotency', 'bulkhead isolation', 'consistent hash ring', 'virtual nodes', '302 not 301', 'inverted index', 'TF-IDF'].map((c) => <span className="chip" key={c}>{c}</span>)}
         </div>
       </div>
 
       <section id="s1">
         <div className="sec-label">Section 1</div>
         <h2>The week in one picture</h2>
-        <Code html={`  WEEK 17 (BONUS) — four advanced topics, four complementary muscles
+        <Code html={`  WEEK 17 (BONUS) — seven advanced topics, seven complementary muscles
 
   Day 81  DISTRIBUTED  Cache-aside: read-miss→DB→cache; write→DB→DELETE key   (caching patterns)
   CACHE               Write-through: write cache AND DB synchronously (fresh/slow)
@@ -279,11 +349,44 @@ export default function RecapW17() {
                       Fallback: stale cache / default / degraded — always plan B
                       Bulkhead: separate thread pools per downstream (blast radius limit)
                       Stack (inside-out): Timeout → Retry → CB → Bulkhead → Fallback
-                      Retry INSIDE CB: each retry counts toward trip threshold`} />
-        <Note><strong>The big idea:</strong> All four days share one meta-theme — <em>protect shared state under load</em>.
+                      Retry INSIDE CB: each retry counts toward trip threshold
+
+  Day 85  CONSISTENT   Modulo: add 1 server → (N-1)/N ≈ 80% of keys must move (BAD) (hash ring)
+  HASHING             Ring: TreeMap&lt;Integer,String&gt; position→server
+                      Lookup: ceilingEntry(hash(key)); wrap if null → O(log N)
+                      Add server: insert V virtual-node entries; only next-clockwise arc moves
+                      Remove server: delete V entries; same arc moves to next server
+                      V=1 → skewed arcs; V=150+ → approximately equal distribution
+                      Use cases: Cassandra, Redis Cluster (16384 slots), CDN, sticky LB
+                      Bounded load: if server load &gt; avg×threshold → route clockwise
+
+  Day 86  URL          Short code options: random base-62 (collision risk) /           (redirect+scale)
+  SHORTENER           counter+base-62 (no collisions, production default) /
+                      hash (deterministic, no per-user analytics)
+                      Base-62: [0-9a-zA-Z]; 62^6 ≈ 56 billion codes
+                      Redirect: ALWAYS 302 (temporary) — 301 cached forever, breaks analytics
+                      Redis cache-aside: GET shortCode→longUrl; never hit DB on every click
+                      Analytics: async ClickEvent to queue → consumer → analytics DB
+                      Custom alias: store as normal code; check uniqueness first
+                      Expiry: expiresAt field; 410 Gone on redirect; background sweeper GC
+
+  Day 87  SEARCH       Forward index: docId → words. Inverted: word → [(docId, positions)]  (IR engine)
+  ENGINE              Inverted = O(1) lookup vs O(N) scan
+                      Preprocessing SYMMETRY: tokenize/lowercase/stop-words/stem
+                        BOTH at index time AND query time — or queries won't match
+                      TF = termCount / docLength
+                      IDF = log(totalDocs / docsWithTerm)
+                      TF-IDF = TF × IDF; high = frequent in doc + rare across corpus
+                      AND query: sorted postings merge O(m+n) — same as merge sort
+                      Phrase query: requires position list ("java tutorial" = K and K+1)
+                      Crawl: seed URLs → fetch → parse links → frontier (Bloom dedup)
+                      Sharding: hash(term) % N_SHARDS; fan-out all shards per query`} />
+        <Note><strong>The big idea:</strong> All seven days share one meta-theme — <em>protect shared state under load</em>.
           Caching protects the DB. The Trie's top-K stores protect query latency. Chunk deduplication protects
-          storage under concurrent uploads. The resilience stack protects services from each other. Week 17
-          is about designing systems that degrade gracefully instead of collapsing.</Note>
+          storage under concurrent uploads. The resilience stack protects services from each other. Consistent
+          hashing protects the cache cluster from redistribution storms. URL shortener redirect type protects
+          click analytics. Preprocessing symmetry protects search relevance. Week 17 is about designing systems
+          that degrade gracefully instead of collapsing.</Note>
       </section>
 
       <section id="s2">
@@ -337,6 +440,45 @@ export default function RecapW17() {
           <li><strong>Retry inside CB:</strong> each retry attempt is a separate call — it counts as a failure toward the CB trip threshold. Retry outside CB means the breaker sees only the final logical failure, which makes it much slower to detect outages.</li>
           <li><strong>Resilience4j:</strong> Java library — <C>@CircuitBreaker</C>, <C>@Retry</C>, <C>@TimeLimiter</C>, <C>@Bulkhead</C> annotations apply the same concepts declaratively.</li>
         </ul>
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 85 · Consistent Hashing</h3>
+        <ul>
+          <li><strong>Problem with modulo hashing:</strong> adding 1 server changes N in <C>hash(key) % N</C> — roughly (N-1)/N ≈ 80% of all keys must move to a different server. Causes a cache miss storm.</li>
+          <li><strong>Consistent hashing:</strong> adding or removing 1 server moves only ~1/N of keys. All other keys stay on their current server.</li>
+          <li><strong>Hash ring structure:</strong> <C>TreeMap&lt;Integer, String&gt;</C> mapping ring position → server name. The ring is the TreeMap.</li>
+          <li><strong>Lookup:</strong> <C>map.ceilingEntry(hash(key))</C> → returns the first server at or clockwise from the key's position. If null (key is past the last entry), wrap around to <C>map.firstEntry()</C>. Time: O(log N).</li>
+          <li><strong>Add server:</strong> insert V virtual node entries (<C>hash("ServerA#0")</C> … <C>hash("ServerA#149")</C>). Only the next-clockwise arc's keys move to the new server. Nothing else changes.</li>
+          <li><strong>Remove server:</strong> delete V entries. Keys in those arcs move clockwise to the next real server. Everything else is undisturbed.</li>
+          <li><strong>Virtual nodes:</strong> V=1 gives unequal arc sizes (one server owns a large arc, another a tiny one). V=150+ gives approximately equal distribution. More virtual nodes = smoother load distribution but more memory.</li>
+          <li><strong>Use cases:</strong> Cassandra (data partitioning), Redis Cluster (16,384 hash slots = very fine-grained ring), CDN request routing, sticky load balancing.</li>
+          <li><strong>Bounded load extension:</strong> if a server's current load exceeds avg × threshold, route the key to the next clockwise server instead. Prevents one server from becoming a hotspot even with virtual nodes.</li>
+        </ul>
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 86 · URL Shortener</h3>
+        <ul>
+          <li><strong>Three short-code strategies:</strong> random base-62 (simple but collision risk grows), counter+base-62 (no collisions by construction — production default), hash of long URL (deterministic but no per-user or per-click analytics).</li>
+          <li><strong>Base-62 encoding:</strong> charset = [0-9a-zA-Z]. Encode N: build digits right-to-left with <C>N % 62</C>, divide by 62. 62^6 ≈ 56 billion unique codes from 6 characters.</li>
+          <li><strong>Counter approach:</strong> use a Snowflake-style distributed ID: timestamp(41 bits) + machineId(10 bits) + sequence(12 bits). Encode the 64-bit result in base-62. No coordination needed between machines.</li>
+          <li><strong>Redirect latency:</strong> must be under 10 ms. Use Redis cache-aside: <C>GET shortCode → longUrl</C>. Never hit the DB on every click request.</li>
+          <li><strong>302 not 301:</strong> 302 = Found (temporary). The browser checks your server on every visit. 301 = Moved Permanently — browsers cache it forever. After one visit, the browser skips your shortener entirely, breaking all click analytics and making destination updates impossible.</li>
+          <li><strong>Analytics:</strong> async fire-and-forget: on redirect, publish a <C>ClickEvent</C> (shortCode, timestamp, IP, referrer) to a queue. A consumer writes to an analytics DB. Never block the redirect on analytics.</li>
+          <li><strong>Custom aliases:</strong> user-chosen short codes (e.g. <C>/mylink</C>). Store as a normal short-code entry. Check uniqueness before inserting — reject with 409 if already taken.</li>
+          <li><strong>Expiry:</strong> store <C>expiresAt</C> timestamp. On redirect, check it — return 410 Gone if expired. A background sweeper periodically GCs expired entries from DB and cache.</li>
+        </ul>
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 87 · Search Engine</h3>
+        <ul>
+          <li><strong>Forward index:</strong> docId → list of words. Useful for "what words are in this doc?" Not useful for search.</li>
+          <li><strong>Inverted index:</strong> word → list of (docId, positions). Makes "which docs contain this word?" an O(1) lookup. This is what search engines are built on.</li>
+          <li><strong>Preprocessing symmetry:</strong> tokenize → lowercase → remove stop words → stem — applied BOTH at index time AND at query time. If "running" is indexed as "run" but the query "running" is not stemmed, it will never match. Both pipelines must be identical.</li>
+          <li><strong>TF (Term Frequency):</strong> <C>termCountInDoc / totalWordsInDoc</C>. High TF = this word appears a lot in this document.</li>
+          <li><strong>IDF (Inverse Document Frequency):</strong> <C>log(totalDocs / docsContainingTerm)</C>. High IDF = this word is rare across the corpus. Common words like "the" have IDF ≈ 0.</li>
+          <li><strong>TF-IDF score:</strong> TF × IDF. High score = the term is frequent in this doc AND rare overall = strong relevance signal.</li>
+          <li><strong>AND query postings merge:</strong> sort each term's postings list by docId. Walk both lists with two pointers, emit docIds that appear in both. O(m + n) — same algorithm as merging two sorted arrays.</li>
+          <li><strong>Phrase query:</strong> requires position lists. "java tutorial" means: find docs where "java" appears at position K and "tutorial" appears at position K+1 in the same doc.</li>
+          <li><strong>Crawl pipeline:</strong> seed URLs → fetch HTML → parse &lt;a href&gt; links → add unseen URLs to frontier (dedup via Bloom filter) → fetch → index. Robots.txt and politeness delays apply.</li>
+          <li><strong>Index sharding:</strong> <C>hash(term) % N_SHARDS</C> sends each term's postings to one shard. A query fans out to all shards that hold its terms, then merges and re-ranks results.</li>
+        </ul>
       </section>
 
       <section id="s3">
@@ -376,6 +518,24 @@ export default function RecapW17() {
               <td>Timeout→Retry→CB→Bulkhead→Fallback stack; retry inside CB</td>
               <td>"Retry goes inside the circuit breaker so each attempt counts toward the trip"</td>
             </tr>
+            <tr>
+              <td>85 · Consistent Hashing</td>
+              <td>Add/remove 1 server moves only 1/N keys — nothing else is disturbed</td>
+              <td>TreeMap ring + virtual nodes (V=150+); ceilingEntry() lookup O(log N)</td>
+              <td>"TreeMap.ceilingEntry() is the ring lookup — O(log N)"</td>
+            </tr>
+            <tr>
+              <td>86 · URL Shortener</td>
+              <td>Counter+base-62 = no collisions by construction</td>
+              <td>Redis cache-aside for redirect; 302 not 301; async analytics queue</td>
+              <td>"302 not 301 — browsers cache 301 forever, breaking analytics"</td>
+            </tr>
+            <tr>
+              <td>87 · Search Engine</td>
+              <td>Inverted index: word → doc list, not doc → word list</td>
+              <td>Preprocessing symmetry; TF-IDF scoring; postings sorted merge</td>
+              <td>"TF-IDF: high when frequent in doc AND rare across all docs"</td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -392,6 +552,9 @@ export default function RecapW17() {
           <li><strong>Retry + jitter:</strong> without jitter, all clients retry at exactly t = 100 ms together — thundering herd of retries. Jitter adds a random offset (e.g. 0–50 ms) to spread them out.</li>
           <li><strong>RefCount GC:</strong> a chunk is never deleted while any FileVersion references it. decrement → delete only when count == 0. Same as JVM garbage collection.</li>
           <li><strong>Resilience stack order:</strong> Timeout is innermost (per call). Retry wraps it (per intent). Circuit Breaker wraps that (across intents). Bulkhead is outermost (across services). Fallback catches everything.</li>
+          <li><strong>Consistent hashing add rule:</strong> only the next clockwise arc's keys move — nothing else is disturbed. Compare with modulo where ~80% of keys move when N changes.</li>
+          <li><strong>302 vs 301:</strong> 301 = browser caches forever = analytics broken forever. Always 302 for any link where you want to track clicks or update the destination.</li>
+          <li><strong>Preprocessing symmetry:</strong> tokenize query the same way you tokenized documents — or "running" will never match "run" in the index. Both pipelines must be identical.</li>
         </ul>
       </section>
 
@@ -404,6 +567,9 @@ export default function RecapW17() {
         <Warn><strong>Storing chunk bytes in the metadata DB.</strong> BLOBs in the metadata store kill query performance and prevent independent scaling of file bytes vs file records. The block store is separate for exactly this reason.</Warn>
         <Warn><strong>One global Redis connection pool for all services.</strong> Like one global thread pool, it becomes a bottleneck. Use a connection pool per downstream service, or at minimum use connection pooling (Lettuce, Jedis pool) with sensible per-service limits.</Warn>
         <Warn><strong>Skipping jitter on retry backoff.</strong> All service instances fail at the same time and retry at the same intervals — thundering-herd retries amplify the original outage. Add random jitter to each backoff interval.</Warn>
+        <Warn><strong>Modulo hashing on resize.</strong> Adding 1 server to a 4-server modulo cluster invalidates ~(N-1)/N = 75–80% of the cache. The entire cluster warms from scratch — massive DB load spike. Always use consistent hashing for distributed caches where nodes come and go.</Warn>
+        <Warn><strong>Storing long URL as the cache key.</strong> Cache <C>shortCode → longUrl</C>, not the reverse. The long URL is the value, not the lookup key. Getting the direction wrong makes the cache useless for redirects.</Warn>
+        <Warn><strong>Indexing without stemming query terms.</strong> If "running" is indexed as "run" at index time but the query "running" is not stemmed at query time, the term will not match anything in the index. Preprocessing must be symmetric — same pipeline, both directions.</Warn>
       </section>
 
       <section id="s6">
@@ -427,6 +593,15 @@ export default function RecapW17() {
         <Reveal summary="Retry + idempotency key implementation">
           <p>Idempotency key = client-generated UUID tied to one logical intent (e.g. "charge this card for this order"). On the server side: before processing, check a table: <C>idempotency_keys(key, status, response_body)</C>. If key exists and status = COMPLETED, return the cached response. If key exists and status = IN_PROGRESS, return 409. If key does not exist, insert it (IN_PROGRESS), process, update to COMPLETED. This makes any endpoint safe to retry regardless of verb.</p>
         </Reveal>
+        <Reveal summary="Consistent hashing: why virtual nodes matter (worked example)">
+          <p>3 real servers, V=1. Server A lands at position 100, Server B at 300, Server C at 700 on a ring of 1000. Arc sizes: A owns 400 units (700→100 wrap-around), B owns 200 units (100→300), C owns 400 units (300→700). B handles half the load of A and C — badly skewed. With V=150, each server has 150 random positions across the ring. The arc sizes average out to ~333 each. Adding a 4th server inserts 150 more positions; each of the other three servers loses about 1/4 of its arcs. Load rebalances smoothly.</p>
+        </Reveal>
+        <Reveal summary="URL shortener: counter approach vs hash approach trade-offs">
+          <p>Counter+base-62 is sequential: codes come out as aaaaaa, aaaaab, aaaaac... A scraper can enumerate all your short URLs by iterating. Fix: shuffle the counter with a reversible bijection (e.g. multiply by a large coprime, mod 62^6) before encoding. Hash approach (MD5/SHA-256 of long URL, take 6 chars): deterministic so the same long URL always gets the same code — useful for dedup, but collisions require fallback (append counter, rehash). Hash also reveals that two users shortened the same URL (same code).</p>
+        </Reveal>
+        <Reveal summary="Search: BM25 vs TF-IDF and why BM25 is used in production">
+          <p>TF-IDF has a saturation problem: a document that mentions "java" 100 times scores 10× a document that mentions it 10 times, even if the 100-mention doc is just stuffing the keyword. BM25 adds a saturation parameter k1 (typically 1.2–2.0): score grows with TF but plateaus. It also adds b (0–1) for document-length normalization — a shorter document that mentions "java" 5 times is more relevant than a longer one that mentions it 5 times among 10,000 words. BM25 is the default in Elasticsearch and Lucene.</p>
+        </Reveal>
       </section>
 
       <section id="s7">
@@ -438,17 +613,19 @@ export default function RecapW17() {
 
       <section id="s8">
         <div className="sec-label">Section 8 · Test yourself</div>
-        <h2>🧠 Recap quiz — 8 questions</h2>
-        <p>Integrative questions across all four days of Week 17.</p>
+        <h2>🧠 Recap quiz — 11 questions</h2>
+        <p>Integrative questions across all seven days of Week 17.</p>
         <Quiz questions={QUESTIONS} />
       </section>
 
       <div className="footer">
         <strong>Week 17 revised?</strong> You can now explain the cache-aside invalidation rule and why
         you delete instead of update, describe the Trie top-K design and why autocomplete speeds up as you
-        type, model a content-addressed chunk store with reference-count GC, and layer the full resilience
+        type, model a content-addressed chunk store with reference-count GC, layer the full resilience
         stack — Timeout → Retry → Circuit Breaker → Bulkhead → Fallback — with retry placed inside the
-        circuit breaker. That is the Week 17 muscle in full.
+        circuit breaker, explain why consistent hashing moves only 1/N keys on a server change, choose
+        302 over 301 for trackable redirects, and describe the preprocessing symmetry rule that makes
+        inverted-index search queries actually match.
         <br /><br />
         ← <a className="homelink" href="#/revise" style={{ display: 'inline' }}>Revision Hub</a> ·
         You have completed the bonus week. Review any day that felt shaky and then tackle mock interviews
