@@ -241,7 +241,7 @@ export const COURSE = {
             { id: 88, slug: 'day88', title: 'Real-time Chat', sub: 'WebSocket, presence, message ordering, fan-out at scale', ready: true },
             { id: 89, slug: 'day89', title: 'Leaderboard & Top-K', sub: 'Sorted set, sliding window ranking, distributed leaderboard', ready: true },
             { id: 90, slug: 'day90', title: 'Event-Driven Architecture', sub: 'Event sourcing, CQRS, saga pattern, compensating transactions', ready: true },
-            { id: 91, slug: 'day91', title: 'Database Sharding', sub: 'Horizontal partitioning, shard keys, hotspots, resharding', ready: false },
+            { id: 91, slug: 'day91', title: 'Database Sharding', sub: 'Horizontal partitioning, shard keys, hotspots, resharding', ready: true },
             { id: 92, slug: 'day92', title: 'API Gateway & Service Mesh', sub: 'Auth, rate limiting, routing, load balancing, circuit breaker at the edge', ready: false },
             { id: 93, slug: 'day93', title: 'Observability & Distributed Tracing', sub: 'Traces, metrics, logs, correlation IDs, OpenTelemetry', ready: false },
           ],
