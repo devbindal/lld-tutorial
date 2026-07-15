@@ -245,7 +245,7 @@ export const COURSE = {
             { id: 92, slug: 'day92', title: 'API Gateway & Service Mesh', sub: 'Auth, rate limiting, routing, load balancing, circuit breaker at the edge', ready: true },
             { id: 93, slug: 'day93', title: 'Observability & Distributed Tracing', sub: 'Traces, metrics, logs, correlation IDs, OpenTelemetry', ready: true },
             { id: 94, slug: 'day94', title: 'Kafka & Distributed Messaging', sub: 'Topics, partitions, consumer groups, offsets, exactly-once, log compaction', ready: true },
-            { id: 95, slug: 'day95', title: 'Distributed Transactions', sub: '2PC, Saga vs 2PC, outbox pattern, idempotency keys, at-least-once guarantees', ready: false },
+            { id: 95, slug: 'day95', title: 'Distributed Transactions', sub: '2PC, Saga vs 2PC, outbox pattern, idempotency keys, at-least-once guarantees', ready: true },
             { id: 96, slug: 'day96', title: 'CDN & Edge Caching', sub: 'PoPs, cache headers, TTL vs invalidation, edge computing, origin shield', ready: false },
           ],
         },
