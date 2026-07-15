@@ -1,24 +1,29 @@
 import { useState } from 'react'
 import { Code, C, Reveal, Note, Warn, Good, Quiz } from '../components/ui.jsx'
 
+/* ===== Rapid-review widget ===== */
 function ReviewDrill({ items }) {
   const [idx, setIdx] = useState(0)
   const [picked, setPicked] = useState(null)
   const [score, setScore] = useState(0)
   const done = idx >= items.length
   const cur = items[idx]
-  function pick(i) { if (picked !== null) return; setPicked(i); if (i === cur.a) setScore((s) => s + 1) }
+  function pick(i) {
+    if (picked !== null) return
+    setPicked(i)
+    if (i === cur.a) setScore((s) => s + 1)
+  }
   return (
     <div className="panel">
-      <div className="ptitle">Rapid review · recall the answer before you reveal it</div>
+      <div className="ptitle">Rapid review · recall the concept before you read the answer</div>
       {done ? (
         <div>
-          <p style={{ fontSize: 15 }}>🎯 Score: <b>{score} / {items.length}</b>. Anything you missed → reopen that day.</p>
+          <p style={{ fontSize: 15 }}>Score: <b>{idx + 1 > items.length ? items.length : score} / {items.length}</b>. Anything you missed — reopen that day. Re-run until it is automatic.</p>
           <button className="act" onClick={() => { setIdx(0); setPicked(null); setScore(0) }}>Review again</button>
         </div>
       ) : (
         <div>
-          <div className="statbar" style={{ marginBottom: 10 }}>🔁 <span>question {idx + 1} of {items.length} · score {score}</span></div>
+          <div className="statbar" style={{ marginBottom: 10 }}>question {idx + 1} of {items.length} · score {score}</div>
           <p style={{ fontSize: 15, fontWeight: 600 }}>{cur.q}</p>
           <div className="modbtns">
             {cur.o.map((o, i) => (
@@ -43,260 +48,291 @@ function ReviewDrill({ items }) {
 
 const DRILL = [
   {
-    q: 'Cache-aside write rule: what do you do to the cache after writing to the DB?',
-    o: ['Update the cache entry to match what you wrote to the DB', 'Delete (invalidate) the cache entry', 'Leave the cache alone — it will expire via TTL eventually', 'Write to the cache first, then the DB'],
+    q: 'Cache-aside write rule: after writing to the DB, what do you do to the cache?',
+    o: ['Update the cache to match what you wrote', 'Delete (invalidate) the cache key', 'Leave it — TTL will expire it eventually', 'Write cache first, then DB'],
     a: 1,
-    why: 'Delete, never update. If two threads race to update the cache after a DB write, they can write values out of order — one stale value wins and sits in cache until TTL. Deleting is safe: the next read will miss, go to DB, and get the fresh value. TTL alone is acceptable staleness tolerance, not an invalidation strategy.'
+    why: 'Delete, never update. Two threads can race to update the cache after a DB write and land out of order — one stale value wins until TTL. Deleting is always safe: the next read misses, hits DB, and caches the fresh value.'
   },
   {
-    q: 'Why does autocomplete get FASTER as the user types more characters?',
-    o: ['The server caches the full word list and returns faster on repeat queries', 'A longer prefix walks deeper into the Trie — the subtree below the prefix node is smaller, so DFS collects fewer results', 'The network payload is smaller for longer prefixes', 'The browser handles completion locally after the first character'],
+    q: 'What fixes a cache stampede when a hot key expires?',
+    o: ['Increase the TTL so it expires less often', 'Use SET NX EX to acquire a mutex — only one thread rebuilds; the rest wait', 'Switch to write-through so the key never expires', 'Add more Redis nodes'],
     a: 1,
-    why: 'Trie search time is proportional to the size of the subtree below the prefix node. Typing one character leaves a large subtree (all words starting with that letter). Typing six characters leaves a tiny subtree. Fewer nodes to visit = fewer steps = faster.'
+    why: 'A hot key expiring causes every concurrent reader to miss and flood the DB simultaneously. Redis SET NX EX (set if not exists with expiry) gives the first thread a "rebuild lock"; all others see the lock exists and wait or serve a stale value until the key is rebuilt.'
   },
   {
-    q: 'What is content-addressable storage?',
-    o: ['Storage where content is sorted alphabetically for fast lookup', 'The storage key IS the hash of the content — same bytes anywhere produce the same key, making deduplication automatic', 'A storage system that indexes files by their MIME type', 'Storage that compresses content before writing'],
+    q: 'Why does autocomplete get faster as the user types more characters?',
+    o: ['The server caches popular prefixes after the first call', 'A longer prefix walks deeper into the Trie — the subtree below is smaller, so DFS visits fewer nodes', 'The network payload is smaller for longer prefixes', 'The browser handles it locally after the first character'],
     a: 1,
-    why: 'SHA-256(content) produces a unique fingerprint. If two different users upload the same 4 MB chunk, both get back the same chunk ID — the block store only holds one copy. No dedup logic needed: identity is content identity.'
+    why: 'Trie search is proportional to the subtree size below the prefix node. One character leaves a huge subtree; six characters leave a tiny one. Fewer nodes to visit = faster.'
   },
   {
-    q: 'Why does retry go INSIDE the circuit breaker, not outside?',
-    o: ['Because retry is faster when placed before the circuit breaker in the stack', 'Retry attempts count as failure attempts toward the circuit breaker trip threshold — retry inside means the breaker sees all attempts', 'Because circuit breakers only work on the final attempt', 'Retry outside would cause infinite retries when the circuit is OPEN'],
+    q: 'What is content-addressable storage (used in the file storage system)?',
+    o: ['Files stored sorted alphabetically for fast lookup', 'The storage key IS the hash of the content — same bytes anywhere produce the same key, making dedup automatic', 'Files compressed before writing', 'Files indexed by MIME type'],
     a: 1,
-    why: 'If retry is outside the circuit breaker, the breaker only sees one logical "attempt" per call — after all retries are exhausted. An outage would need N×retries failures before the breaker trips, which is dangerously slow. Retry inside means each individual retry counts, so the breaker trips much faster when a service is down.'
+    why: 'SHA-256(content) is deterministic. Two users uploading the same 4 MB chunk get back the same chunk ID — the block store holds one copy. No dedup logic needed: identity is content identity.'
   },
   {
-    q: 'What is HALF_OPEN in a circuit breaker and why can you not skip it?',
-    o: ['A degraded mode where the circuit passes 50% of requests', 'A probe state: after resetTimeout, let a small number of requests through to test if the service recovered', 'A logging mode that records failures without blocking requests', 'A synonym for bulkhead isolation'],
+    q: 'When is a chunk deleted from the block store?',
+    o: ['When all versions of a file that reference it are deleted', 'Only when its refCount reaches zero — no FileVersion anywhere points to that chunk hash', 'After 30 days without access', 'When the owning user deletes their account'],
     a: 1,
-    why: 'You cannot jump from OPEN straight back to CLOSED because you would be guessing the service is healthy. HALF_OPEN lets a single probe request through. If it succeeds → CLOSED (service recovered). If it fails → back to OPEN (still down). Without HALF_OPEN, a recovered service stays blocked forever or an unrecovered service lets traffic through immediately.'
+    why: 'Chunks are shared across FileVersions (and across users via dedup). Decrement refCount on every version delete; remove the chunk only when refCount hits exactly 0. Same as JVM garbage collection.'
   },
   {
-    q: 'When is a file chunk deleted from the block store?',
-    o: ['When all FileVersions that reference it are deleted', 'Only when its reference count reaches zero — no FileVersion anywhere points to that chunk hash', 'When it has not been accessed for 30 days', 'When the owning user deletes their account'],
+    q: 'What is HALF_OPEN in a circuit breaker?',
+    o: ['A degraded mode passing 50% of requests', 'A probe state: after resetTimeout, let a small number of requests through to test if the service recovered', 'A logging mode that records failures without blocking', 'A synonym for bulkhead'],
     a: 1,
-    why: 'Chunks are shared across FileVersions (possibly across users via dedup). Deleting on the last FileVersion reference could delete a chunk another FileVersion still needs. The safe rule: decrement refCount on every delete; only remove from block store when refCount hits exactly 0.'
+    why: 'You cannot jump from OPEN straight to CLOSED — that would be guessing recovery. HALF_OPEN lets a single probe through. Success → CLOSED. Failure → back to OPEN.'
   },
   {
-    q: 'What is the thundering herd problem in a distributed cache?',
-    o: ['Many servers competing to write to the same database row', 'A popular cache key expires and thousands of concurrent requests all miss, flooding the DB at the same moment', 'A circuit breaker that opens for too many services at once', 'Too many Trie nodes being created during peak traffic'],
+    q: 'Resilience stack order — innermost to outermost?',
+    o: ['Circuit Breaker → Retry → Timeout → Bulkhead → Fallback', 'Timeout → Retry → Circuit Breaker → Bulkhead → Fallback', 'Bulkhead → Circuit Breaker → Retry → Timeout → Fallback', 'Fallback → Bulkhead → Circuit Breaker → Retry → Timeout'],
     a: 1,
-    why: 'When a hot key\'s TTL expires, every request that was relying on it gets a cache miss simultaneously. All of them call the DB to rebuild the value at the same instant. The fix: a mutex (Redis SET NX EX) so only one thread rebuilds; the rest wait. Probabilistic early recompute (refresh before expiry) also prevents the thundering moment.'
+    why: 'Timeout is per-call (innermost). Retry wraps it (per intent). Circuit Breaker wraps Retry (across intents). Bulkhead is outermost per-downstream (caps concurrent calls). Fallback catches everything.'
   },
   {
-    q: 'Resilience stack order — which is innermost and which is outermost?',
-    o: ['Circuit Breaker → Retry → Timeout → Bulkhead → Fallback', 'Timeout → Retry → Circuit Breaker → Bulkhead → Fallback (innermost to outermost)', 'Bulkhead → Circuit Breaker → Retry → Timeout → Fallback', 'Fallback → Bulkhead → Circuit Breaker → Retry → Timeout'],
+    q: 'Adding 1 server to a 4-server consistent hash ring: how many keys move?',
+    o: ['All keys are redistributed equally', 'Approximately 1/5 of keys — only the arc stolen from the adjacent server', 'Half the keys move', 'No keys move'],
     a: 1,
-    why: 'Timeout is per-call (innermost): it caps how long one attempt takes. Retry wraps Timeout: it retries failed/timed-out attempts. Circuit Breaker wraps Retry: it counts failures across attempts and fast-fails when tripped. Bulkhead is outermost per-downstream: it caps total concurrent calls to a service. Fallback is the catch-all around everything.'
+    why: 'The new server steals only the arc immediately counter-clockwise from its ring position. With 5 servers, each arc is ~1/5 of the ring. Compare with modulo hashing where adding 1 server moves ~(N-1)/N = 80% of all keys.'
   },
   {
-    q: 'How many keys move when you add 1 server to a 4-server consistent hash ring (making 5 servers)?',
-    o: ['All keys are redistributed equally across all 5 servers', 'Approximately 1/N = 1/5 of keys — only the arc stolen from the adjacent server moves', 'Half the keys move because two arcs are affected', 'No keys move — the ring is immutable once built'],
+    q: 'Why use 302 redirect instead of 301 in a URL shortener?',
+    o: ['302 is faster because it skips DNS', '301 is permanently cached by browsers — all future visits bypass your service, breaking click analytics; 302 forces the browser to check your server every time', '302 works for HTTPS while 301 only works for HTTP', '301 requires a Content-Type header that is hard to set'],
     a: 1,
-    why: 'The new server steals only the arc immediately counter-clockwise from its ring position. Keys in that arc move to the new server. Keys in all other arcs stay put. With N=5 servers, each arc is roughly 1/5 of the ring, so ~1/5 of all keys move. Compare with modulo hashing where adding 1 server moves ~(N-1)/N = 80% of keys.'
+    why: '301 = Moved Permanently. Browsers cache it indefinitely. After the first visit the browser goes straight to the long URL — you never see the click and cannot update the destination. 302 = Found (temporary), always checks your server.'
   },
   {
-    q: 'Why use 302 redirect instead of 301 for a URL shortener?',
-    o: ['302 is faster because it skips the DNS lookup', '301 is permanently cached by browsers — all future visits bypass your service, breaking click analytics; 302 is temporary so browsers always check your server', '302 works for HTTPS while 301 only works for HTTP', '301 requires a matching Content-Type header that is hard to set'],
+    q: 'What is preprocessing symmetry in a search engine?',
+    o: ['Crawlers and indexers using the same number of machines', 'Index-time and query-time must apply the same tokenization, lowercasing, stop-word removal, and stemming — or query terms will not match stored terms', 'Documents and queries must have the same maximum length', 'TF and IDF being computed with symmetric formulas'],
     a: 1,
-    why: '301 = Moved Permanently. Browsers cache 301 responses indefinitely. After the first visit, the browser goes directly to the long URL without contacting your shortener — you never see the click. 302 = Found (Temporary). The browser always checks your server, so you record every click and can update the destination without browser-cache problems.'
+    why: 'If you stem "running" to "run" at index time but not at query time, the query "running" never matches the indexed token "run". Both pipelines must be identical: same steps, same order.'
   },
   {
-    q: 'What does preprocessing symmetry mean in a search engine?',
-    o: ['The crawler and the indexer use the same number of machines for symmetric load', 'Index-time and query-time must apply the same tokenization, lowercasing, stop-word removal, and stemming — or query terms will not match stored terms', 'Documents and queries must have the same maximum length', 'TF and IDF are computed with symmetric formulas that cancel each other out'],
+    q: 'In the inverted index, what is the key and what is the value?',
+    o: ['docId → list of words (forward index)', 'word → list of (docId, positions) (inverted index)', 'word → IDF score', 'docId → TF-IDF score'],
     a: 1,
-    why: 'If you stem "running" to "run" at index time but do not stem the query "running" at query time, the query term "running" does not match the indexed term "run" — zero results for a valid query. Both pipelines must be identical: tokenize → lowercase → remove stop words → stem. Same transformations, same order, both sides.'
+    why: 'Forward index (docId → words) answers "what words are in doc X?" Inverted index (word → doc list) answers "which docs contain this word?" — exactly what search needs. O(1) term lookup vs O(N) full scan without it.'
+  },
+  {
+    q: 'WebSocket vs long polling: what is the key structural difference?',
+    o: ['WebSocket is stateless; long polling is stateful', 'WebSocket is a persistent full-duplex TCP connection; long polling is repeated HTTP requests that the server holds open until it has data', 'WebSocket works only on HTTP/2; long polling works on HTTP/1.1', 'They are the same at the transport level'],
+    a: 1,
+    why: 'WebSocket upgrades an HTTP request to a persistent, bidirectional TCP connection — one connection, messages flow both ways. Long polling makes a new HTTP request each cycle and the server holds it until data arrives. WebSocket is far more efficient for real-time chat.'
+  },
+  {
+    q: 'Redis ZADD / ZINCRBY / ZREVRANGE: what data structure do these commands target?',
+    o: ['Redis Hash (field → value)', 'Redis Sorted Set (member → score, kept sorted by score)', 'Redis List (doubly-linked queue)', 'Redis Bloom Filter'],
+    a: 1,
+    why: 'Sorted Set = each member has a floating-point score; members are kept in sorted order. ZADD adds a member with a score. ZINCRBY increments a score atomically. ZREVRANGE returns top-K members by score descending — perfect for leaderboards.'
+  },
+  {
+    q: 'What is the difference between Event Sourcing and CQRS?',
+    o: ['They are the same pattern with different names', 'Event Sourcing = the state IS the append-only log of events (replay to rebuild); CQRS = read model and write model are separate services/tables optimized independently', 'Event Sourcing = the command side; CQRS = the query side', 'CQRS requires Event Sourcing to work'],
+    a: 1,
+    why: 'Event Sourcing stores every state change as an immutable event; current state is computed by replaying events. CQRS splits the write path (commands that mutate state) from the read path (queries that project state). They complement each other but are independent patterns.'
+  },
+  {
+    q: 'What is a hot shard in database sharding and how do you prevent it?',
+    o: ['A shard that runs on a physically hot machine', 'A shard that receives disproportionately more traffic because the shard key maps many popular rows to it — fix by choosing a high-cardinality shard key or adding virtual shards', 'A shard that holds more rows than the others', 'A shard that is replicated more frequently'],
+    a: 1,
+    why: 'If your shard key is low-cardinality (e.g. country) or a popular user ID, one shard gets much more traffic than others. Fix: use a high-cardinality key (user_id hash), add a random suffix for extreme hot-spots, or use virtual shards to spread load.'
+  },
+  {
+    q: 'API Gateway filter chain: which design pattern does it implement?',
+    o: ['Strategy — the gateway picks one filter per request', 'Chain of Responsibility — each filter processes the request and calls next, or short-circuits', 'Observer — filters subscribe to request events', 'Facade — one filter handles everything'],
+    a: 1,
+    why: 'Each filter (auth, rate-limit, logging, routing) has a handle(request, next) method. It does its work and either calls next to pass along or short-circuits (e.g. returns 401). This is CoR from Day 36: a chain of handlers, each deciding pass-along or stop.'
+  },
+  {
+    q: 'RED method for metrics: what does each letter stand for?',
+    o: ['Reliability, Efficiency, Durability', 'Rate (requests/sec), Errors (error rate), Duration (latency distribution)', 'Requests, Events, Data', 'Response time, Error budget, Demand'],
+    a: 1,
+    why: 'RED = Rate (how many requests per second), Errors (what fraction fail), Duration (how long they take, ideally as a histogram with P50/P99). These three metrics describe the health of any service from the caller\'s perspective.'
+  },
+  {
+    q: 'What is a distributed trace and what does a span represent?',
+    o: ['A trace is a single log line; a span is a field within it', 'A trace is the end-to-end journey of one request across all services; a span is one unit of work within that trace (e.g. one service call or DB query)', 'A trace is an error stack; a span is one stack frame', 'A trace is a metrics histogram; a span is one bucket'],
+    a: 1,
+    why: 'One trace = one request ID that follows a request from the browser through API gateway, service A, service B, and DB. Each hop or sub-operation creates a span with start time, duration, parent span ID, and tags. Assembling all spans for a trace ID shows the full call graph.'
+  },
+  {
+    q: 'Saga pattern vs two-phase commit (2PC): when do you choose Saga?',
+    o: ['2PC is always preferred because it is simpler', 'Saga when services are owned by different teams or when 2PC availability cost is too high — each step has a compensating transaction; 2PC when you need strict synchronous atomicity across a small number of services you own', 'Saga only works with Event Sourcing', 'They solve different problems: 2PC is for reads, Saga is for writes'],
+    a: 1,
+    why: '2PC blocks all participants until the coordinator decides commit/abort — high availability cost, coordinator is a SPOF. Saga breaks the transaction into local steps each with a compensating action (undo). If step 3 fails, compensations run in reverse. Saga trades strict atomicity for availability and independence.'
   },
 ]
 
 const QUESTIONS = [
   {
-    q: 'After updating a user\'s profile in the database, what should you do to the cache entry?',
+    q: 'After updating a user profile in the DB, what should you do to the Redis cache entry in a cache-aside setup?',
     o: [
-      'Update the cache entry to match the DB write — keep them in sync',
-      'Delete (invalidate) the cache entry so the next read fetches fresh data from DB',
-      'Leave the cache alone until TTL expires — it is close enough',
-      'Write a new cache entry with a versioned key (e.g. profile:v2:userId)'
+      'Update the cache entry to match the DB write immediately',
+      'Delete (invalidate) the cache key — the next read will re-populate it from DB',
+      'Leave it alone and let TTL expire it naturally',
+      'Write a versioned key so old and new coexist'
     ],
     a: 1,
-    e: 'In cache-aside, the application controls cache reads (miss → DB → cache) and invalidations (write DB → delete cache key). Updating the cache at write time risks a race: two threads writing different values can land out of order, leaving a stale value that outlasts any TTL. Delete is always safe: the worst case is one extra DB read on the next cache miss.',
+    e: 'In cache-aside, delete on write is always safe. If two threads race to update the cache after a DB write, they can land in the wrong order and a stale value wins until TTL. Deleting is atomic and race-safe: the worst case is one extra DB read on the next miss.',
     w: {
-      0: 'Write-through (updating both atomically) is a different pattern and requires both writes to succeed together. In cache-aside you do NOT control cache writes — only invalidation. Updating after a DB write creates a race where stale values can win.',
-      2: 'TTL is a staleness safety net, not an invalidation strategy. Leaving a stale entry until TTL means users see wrong data for the entire TTL window after every write.',
-      3: 'A versioned key is useful for rolling deploys but not for cache invalidation. The old key stays in cache indefinitely; code that still reads the old key will get stale data forever.'
+      0: 'Updating cache at write time introduces a race: thread A reads V1 from DB, thread B writes V2 to DB and deletes cache, thread A writes stale V1 back to cache. Now cache holds V1 while DB holds V2.',
+      2: 'TTL is a staleness safety net, not an invalidation strategy. Stale data sits in cache for the entire TTL window after every write.',
+      3: 'Versioned keys require all readers to use the new key. Old code reading the old key gets stale data indefinitely.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 81 cheat sheet' }
+    r: { id: 'day81', label: 'Day 81 — Distributed Cache' }
   },
   {
-    q: 'A Trie stores words: "cat", "car", "card", "care". The user has typed "car". How many Trie nodes must the DFS visit to collect all completions?',
+    q: 'A Trie stores top-K completions at every node instead of running DFS at query time. What is the trade-off?',
     o: [
-      'All nodes in the entire Trie (the DFS always starts from root)',
-      'Only the nodes in the subtree below the "car" prefix node — 4 nodes for "d", "e", and the "car" isEnd node itself',
-      'Exactly 3 nodes (one per character in "car")',
-      'The number of nodes equals the number of words in the dictionary'
+      'Reads are O(1) per suggestion but every insert/frequency update must update stored top-K at all ancestor nodes',
+      'Reads and writes are both O(1) — no trade-off',
+      'Reads are slower because you must sort the stored list before returning it',
+      'Writes are O(1) but reads require a full DFS of the prefix subtree'
     ],
-    a: 1,
-    e: 'Trie search first walks to the prefix node in O(prefix length). Then DFS only explores the subtree rooted at that node — completely ignoring the rest of the Trie. For "car": the subtree contains "car" (isEnd), "card", and "care" — a small sub-tree. The longer the prefix the smaller the subtree and the faster the completion.',
+    a: 0,
+    e: 'Storing top-K at each node makes reads O(K) — just return the pre-sorted list. But writes must propagate: a frequency change to a word may update the top-K list of every ancestor node from leaf to root. That is O(K × word-length) per write. Acceptable because reads vastly outnumber writes.',
     w: {
-      0: 'The root-to-prefix walk is O(prefix length) but then DFS is confined to the subtree below the prefix node. The rest of the Trie is never visited.',
-      2: '3 nodes are walked during the prefix descent. DFS then continues from the "r" node into its children — more nodes are visited during collection.',
-      3: 'DFS visits nodes in the subtree, not all words. If the prefix filters to a small subtree, DFS visits far fewer nodes than the total dictionary size.'
+      1: 'There is a real trade-off: writes become more expensive when you push sorting work to write time instead of read time.',
+      2: 'The list is already sorted at each node — that is the point. No sort at read time.',
+      3: 'This describes the naive DFS approach, which is what storing top-K is designed to replace.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 82 cheat sheet' }
+    r: { id: 'day82', label: 'Day 82 — Search Autocomplete' }
   },
   {
-    q: 'Two users upload the exact same 4 MB PDF file. How many times is the chunk stored in the block store?',
+    q: 'Two users upload the exact same 4 MB chunk. How many times is it stored in the block store?',
     o: [
-      'Twice — one copy per user for isolation and quota accounting',
-      'Once — the chunk hash is the same for identical content; the block store deduplicates automatically',
-      'Once per version — if either user uploads a new version, a second copy is stored',
+      'Twice — one per user for isolation',
+      'Once — SHA-256(same bytes) produces the same key; the block store keeps one copy and increments refCount',
+      'Once per FileVersion that references it',
       'It depends on whether the users are in the same organization'
     ],
     a: 1,
-    e: 'SHA-256(content) is deterministic. Both uploads produce the same chunk ID. The block store\'s write path checks: does a chunk with this ID already exist? Yes → skip the write, increment the refCount. The single copy is shared. Both users\' FileVersion records point to the same chunk hash. Quota is charged only for the NEW bytes each user adds.',
+    e: 'SHA-256 is deterministic. Both uploads hash to the same chunk ID. The block store checks: does a chunk with this ID exist? Yes — skip the write, bump refCount. The metadata layer enforces who can see what; the block store only knows hashes.',
     w: {
-      0: 'Storing per-user would break the whole point of content-addressing. Isolation is handled by the metadata layer (FileVersion, refCount, permissions), not by duplicating bytes in the block store.',
-      2: 'New versions only store chunks whose hash CHANGED from the previous version. Unchanged chunks (same hash) are reused at zero extra storage cost.',
-      3: 'Deduplication is purely content-based (hash equality). Organization membership is a permission concept, not a storage concept.'
+      0: 'Per-user copies would defeat the whole point of content-addressing. Isolation is a metadata concern (permissions, FileVersion rows), not a storage concern.',
+      2: 'The chunk is stored once regardless of how many FileVersions reference it. refCount tracks the number of references.',
+      3: 'Dedup is purely content-based (hash equality). Organization membership is irrelevant.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 83 cheat sheet' }
+    r: { id: 'day83', label: 'Day 83 — File Storage System' }
   },
   {
-    q: 'A circuit breaker is OPEN. A request arrives. What happens?',
+    q: 'A circuit breaker is OPEN. A new request arrives. What happens?',
     o: [
       'The request is queued until the circuit closes',
       'The request is fast-failed immediately without calling the downstream service',
-      'The request is forwarded to a backup service automatically',
-      'The circuit transitions to HALF_OPEN and lets this request through as a probe'
+      'The circuit transitions to HALF_OPEN and lets this request through as a probe',
+      'The request is forwarded to a fallback service automatically'
     ],
     a: 1,
-    e: 'When OPEN the circuit breaker short-circuits: it throws an exception (or invokes the fallback) immediately without making the downstream call. This is the entire point — protect both the caller (no wasted wait time) and the downstream service (no extra load while it is struggling). The circuit stays OPEN until resetTimeout expires, then moves to HALF_OPEN for a single probe.',
+    e: 'When OPEN, the circuit breaker short-circuits: it throws or invokes the fallback immediately, without making the downstream call. The circuit stays OPEN until resetTimeout expires, then moves to HALF_OPEN for a single probe request.',
     w: {
-      0: 'Queueing would accumulate work and still hammer the downstream service when it recovers, potentially causing a second outage. Fast-fail is the correct response.',
-      2: 'Fallback is a separate layer outside the circuit breaker. The CB itself only fast-fails; what the caller does with that failure (fallback, stale cache, error response) is the fallback layer\'s concern.',
-      3: 'Transition to HALF_OPEN happens after resetTimeout, not on the very next request. While OPEN, every request is fast-failed.'
+      0: 'Queueing still accumulates work and risks hammering the downstream service when it recovers. Fast-fail is the correct response.',
+      2: 'Transition to HALF_OPEN happens only after resetTimeout, not on the very next request. While OPEN, every request is fast-failed.',
+      3: 'Fallback is a separate layer wrapping the circuit breaker. The CB itself only fast-fails; the fallback is what the caller does with that failure.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 84 cheat sheet' }
+    r: { id: 'day84', label: 'Day 84 — Circuit Breaker and Resilience' }
   },
   {
-    q: 'Which retry scenario is DANGEROUS without an idempotency key?',
+    q: 'You add a 5th server to a 4-server consistent hash ring. With modulo hashing instead, what fraction of keys would have moved?',
     o: [
-      'Retrying a GET /user/profile endpoint after a network timeout',
-      'Retrying a POST /payments/charge endpoint after a network timeout',
-      'Retrying a GET /search?q=coffee after a 503 response',
-      'Retrying a DELETE /cache/key after a timeout'
+      '1/5 — the same as consistent hashing',
+      '4/5 — the modulo base changed from 4 to 5, remapping almost all keys',
+      '1/2 — only keys above the midpoint move',
+      '0 — existing keys stay on existing servers'
     ],
     a: 1,
-    e: 'POST /payments/charge is non-idempotent: calling it twice charges the user twice. A network timeout means the server may have already processed the first request — retrying blindly causes a double charge. The fix: include an idempotency key (unique per intent) so the server can detect and ignore the duplicate. GET and DELETE /cache/key are safe to retry (GET is read-only; a cache key delete is naturally idempotent).',
+    e: 'With modulo hashing, changing N from 4 to 5 changes hash(key) % N for ~(N-1)/N = 80% of all keys. This causes a massive cache miss storm. Consistent hashing moves only ~1/N = 20% of keys by stealing only the adjacent arc.',
     w: {
-      0: 'GET requests are read-only and idempotent by HTTP spec. Retrying a GET is always safe.',
-      2: 'GET /search is also read-only. Retrying on 503 is correct and safe — the server explicitly said it is unavailable.',
-      3: 'Deleting a cache key that is already gone is a no-op. DELETE /cache/key is idempotent: same result whether called once or N times.'
+      0: '1/5 is the consistent hashing result. Modulo hashing is much worse because the divisor itself changes.',
+      2: 'There is no "midpoint" concept in modulo hashing — the fraction is (N-1)/N for any N.',
+      3: 'Changing the modulo base invalidates the mapping for nearly all keys.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 84 cheat sheet' }
+    r: { id: 'day85', label: 'Day 85 — Consistent Hashing' }
   },
   {
-    q: 'You need to serve autocomplete suggestions in under 10 ms for millions of queries per second. Which Trie design is correct?',
+    q: 'A URL shortener uses 301 redirect instead of 302. What is the most serious consequence?',
     o: [
-      'Walk to the prefix node, then run DFS and sort the results by frequency at query time',
-      'Store the top-K words by frequency at every Trie node; return the stored list in O(K) without DFS at query time',
-      'Rebuild the Trie on every request from a sorted word list',
-      'Use a flat HashMap from prefix string to word list — the Trie is only for learning'
+      'The short URL stops resolving after 24 hours',
+      'Browsers permanently cache the destination — click analytics are lost and destination updates are impossible',
+      'Search engines de-index the short URL immediately',
+      'The redirect stops working for HTTPS URLs'
     ],
     a: 1,
-    e: 'Storing top-K at each node trades write cost for read speed. A query walks the prefix (O(prefix length)) then reads the pre-sorted list directly (O(K)). No DFS, no sorting at query time. Writes (new word or frequency update) must update stored top-K at every ancestor node on the path — acceptable because reads vastly outnumber writes in a search product.',
+    e: '301 = Moved Permanently. Browsers cache it forever. After the first visit, the browser navigates directly to the long URL without contacting your shortener — zero analytics recorded, and you cannot change the destination. 302 = Found (temporary), always checks your server.',
     w: {
-      0: 'DFS + sort at query time is O(M log M) where M is the subtree size. Too slow at millions of QPS. This is the naive solution that motivates storing top-K.',
-      2: 'Rebuilding the Trie per request is O(dictionary size) — completely impractical for any production workload.',
-      3: 'A flat HashMap works for exact prefix lookup but uses more memory (one entry per distinct prefix) and does not support prefix completion efficiently the way a Trie does.'
+      0: '301 does not expire — it is permanent and works indefinitely. The problem is that it is cached too aggressively.',
+      2: 'Search engines may transfer page rank via 301, but that is not an analytics problem.',
+      3: '301 and 302 both work for HTTPS. The issue is browser caching behavior, not protocol.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 82 cheat sheet' }
+    r: { id: 'day86', label: 'Day 86 — URL Shortener' }
   },
   {
-    q: 'The bulkhead pattern uses separate thread pools per downstream service. What failure does this prevent?',
+    q: 'A user sends a chat message and goes offline. The recipient is also offline. How does a real-time chat system deliver the message later?',
     o: [
-      'It prevents the downstream service from receiving too many requests',
-      'It prevents one slow downstream service from exhausting the shared thread pool and starving unrelated services',
-      'It prevents duplicate requests from being sent to the same service',
-      'It prevents the circuit breaker from tripping too quickly'
+      'The message is lost — WebSocket delivery is best-effort only',
+      'The message is stored in an offline delivery queue (e.g. per-user inbox in DB); when the recipient reconnects, the server flushes undelivered messages',
+      'The sender must retry when the recipient comes online',
+      'The message is stored in Redis pub/sub and delivered within 24 hours'
     ],
     a: 1,
-    e: 'Without bulkhead, all downstream calls share one thread pool. If the payment service becomes slow, all threads are busy waiting on it — the search service, the recommendation service, and every other downstream call also starve, even though they are healthy. Separate pools (bulkheads) limit the blast radius: payment slowness can only consume the payment pool. The naming comes from watertight compartments on ships.',
+    e: 'Redis Pub/Sub is ephemeral — if no subscriber is listening, the message is dropped. For offline delivery, messages are written to a persistent store (DB or message queue) keyed by recipient. On reconnect, the client requests messages since its last ack. This is the SENT/DELIVERED/READ receipt flow.',
     w: {
-      0: 'Rate limiting controls how many requests a downstream receives. Bulkhead controls how many threads the CALLER allocates to a given downstream — it protects the caller from self-inflicted thread exhaustion, not the downstream from overload.',
-      2: 'Idempotency keys prevent duplicate processing. Bulkhead is about thread isolation, not deduplication.',
-      3: 'The circuit breaker trip threshold is a separate concern. Bulkhead prevents thread starvation; the circuit breaker prevents repeated calls to a failing service. They are complementary layers.'
+      0: 'Best-effort applies only if you use only Pub/Sub without a persistent store. A production chat system writes to a durable store before acknowledging the sender.',
+      2: 'Retrying is the sender\'s fallback, not the design. The server stores messages so the sender does not need to know the recipient is offline.',
+      3: 'Redis Pub/Sub is in-memory and not persistent. Messages not consumed at publish time are lost. It is used for fan-out to online users, not for offline delivery.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 84 cheat sheet' }
+    r: { id: 'day88', label: 'Day 88 — Real-time Chat' }
   },
   {
-    q: 'A user deletes version 3 of a file. Version 3 and Version 4 share two chunks (A and B). Version 3 alone owns chunk C. What is deleted from the block store?',
+    q: 'What is the difference between Event Sourcing and CQRS?',
     o: [
-      'Chunks A, B, and C — all chunks owned by version 3',
-      'Only chunk C — its refCount reaches 0; chunks A and B still have refCount ≥ 1 from version 4',
-      'Nothing — file chunks are never deleted, only marked inactive',
-      'Chunks A and C — the shared chunk B is kept because it appears in multiple versions'
+      'They are the same pattern with different names',
+      'Event Sourcing stores state as an append-only log of events (replay to rebuild); CQRS splits read and write models into separate paths optimized independently',
+      'Event Sourcing is the command side; CQRS is the query side',
+      'CQRS requires Event Sourcing to function'
     ],
     a: 1,
-    e: 'On version 3 deletion, the system decrements the refCount of each chunk it references. Chunks A and B each had refCount ≥ 2 (referenced by versions 3 and 4); after decrement they are ≥ 1 — not deleted. Chunk C had refCount = 1 (only version 3 referenced it); after decrement it reaches 0 — deleted from the block store. This is the same algorithm as JVM garbage collection.',
+    e: 'Event Sourcing: every state change is an immutable event in a log; current state = replay of all events. CQRS: the write side accepts commands and updates the write model; the read side maintains denormalized read projections. They complement each other but are independent. You can use CQRS without Event Sourcing.',
     w: {
-      0: 'Deleting shared chunks would corrupt version 4, which still references A and B. The refCount system exists precisely to prevent this.',
-      2: 'Block store GC does delete chunks — when their refCount hits 0. The system does not keep chunks forever; that would defeat the purpose of deletion.',
-      3: 'The logic is symmetric for all chunks: decrement refCount, delete only if it reaches 0. Chunk B follows the same rule as A — both are kept because version 4 still references them.'
+      0: 'They are genuinely different. Event Sourcing is about how state is stored; CQRS is about how reads and writes are separated.',
+      2: 'Event Sourcing covers both command processing AND state storage. CQRS defines the read/write split, not a side.',
+      3: 'CQRS can be used with a traditional mutable database. Event Sourcing is one common implementation strategy for the write side of CQRS.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 83 cheat sheet' }
+    r: { id: 'day90', label: 'Day 90 — Event-Driven Architecture' }
   },
   {
-    q: 'A 4-server consistent hash ring uses modulo hashing instead. You add a 5th server. Roughly what fraction of keys must move?',
+    q: 'What is a hot shard in database sharding and what is the primary fix?',
     o: [
-      '1/5 of keys — only the new server\'s slice moves',
-      '4/5 of keys — almost all keys are remapped because the modulo base changed from 4 to 5',
-      '1/2 of keys — the ring is split in half',
-      'No keys move — the existing four arcs stay intact'
+      'A shard running on an overheating server — fix by moving it to a cooler rack',
+      'A shard receiving disproportionately more traffic because the shard key maps many popular rows to it — fix by choosing a high-cardinality shard key or adding virtual shards',
+      'A shard that holds more rows than the others — fix by redistributing rows evenly',
+      'A shard with more replicas than others — fix by removing extra replicas'
     ],
     a: 1,
-    e: 'With modulo hashing, key i goes to server (hash(i) % N). Changing N from 4 to 5 changes the result of the modulo for almost every key — roughly (N-1)/N = 4/5 = 80% of keys must move to a different server. This is why modulo hashing is catastrophic for cache clusters: adding one server causes a cache miss storm. Consistent hashing moves only 1/N ≈ 20% of keys.',
+    e: 'If the shard key is low-cardinality (e.g. country) or maps to a single celebrity user, one shard gets a huge fraction of traffic. Fix: use a high-cardinality key (hashed user_id), add a random suffix for extreme hot spots, or use virtual shards (fine-grained partitions) so hot partitions can be moved independently.',
     w: {
-      0: '1/5 moving is the consistent hashing result — the question is about modulo hashing, where the base N change invalidates nearly all mappings.',
-      2: 'Half is not the modulo formula. The fraction is (N-1)/N regardless of ring size.',
-      3: 'With modulo hashing, the divisor changes from 4 to 5, so hash(key) % 4 ≠ hash(key) % 5 for the vast majority of keys.'
+      0: 'Hot shard is a traffic/load imbalance problem, not a thermal one.',
+      2: 'Hot shard is about traffic, not row count. A shard can have few rows but receive enormous traffic (e.g. a celebrity account).',
+      3: 'Replication topology is unrelated to the hot shard problem.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 85 cheat sheet' }
+    r: { id: 'day91', label: 'Day 91 — Database Sharding' }
   },
   {
-    q: 'A URL shortener uses 301 redirect instead of 302. What breaks?',
+    q: 'The API Gateway filter chain implements which classic design pattern?',
     o: [
-      'The short URL stops working after 24 hours',
-      'Browsers permanently cache the destination — every subsequent visit goes directly to the long URL, bypassing the shortener entirely and making click analytics impossible',
-      'Search engines de-index the short URL',
-      'The redirect only works on the first visit and returns 404 afterwards'
+      'Strategy — the gateway picks one filter per request type',
+      'Chain of Responsibility — each filter does its work and either calls next or short-circuits the chain',
+      'Observer — filters subscribe to request events',
+      'Composite — all filters run in parallel and results are merged'
     ],
     a: 1,
-    e: '301 Moved Permanently tells the browser: "cache this redirect forever." After the first click, the browser navigates directly to the long URL without contacting the shortener — zero analytics recorded. You also cannot update the destination URL because browsers will keep using the cached mapping. 302 Found (temporary) forces the browser to check the shortener on every visit.',
+    e: 'Each filter (auth, rate-limit, logging, routing) has a handle(request, chain) method. It does its work and either calls chain.next() to pass along or returns early (e.g. 401 Unauthorized). This is Chain of Responsibility from Day 36: a chain of handlers, each deciding pass-along or stop.',
     w: {
-      0: '301 does not expire — it is permanent. The short URL keeps working but you lose the ability to track clicks or update destinations.',
-      2: 'Search engines do follow 301 redirects and may transfer page rank to the destination, but that is not the analytics problem being asked about.',
-      3: '301 does not cause 404 — the redirect is cached correctly. The problem is that it is cached too aggressively.'
+      0: 'Strategy picks one algorithm from a set. The gateway runs ALL filters in sequence — a chain, not a selection.',
+      2: 'Observer is event notification. Filters are not notified of events; they are invoked sequentially in a chain.',
+      3: 'Composite aggregates children of the same type. The filter chain is sequential processing, not parallel aggregation.'
     },
-    r: { id: 's2', label: 'Section 2 — Day 86 cheat sheet' }
-  },
-  {
-    q: 'In a search engine index, what is the difference between a forward index and an inverted index?',
-    o: [
-      'Forward index = doc → word list; inverted index = word → doc list. Inverted enables O(1) lookup for "which docs contain this word?"',
-      'Forward index = word → doc list; inverted index = doc → word list. They are mirror images',
-      'Forward index is used for ranking; inverted index is used for crawling',
-      'They are the same structure stored on different servers for redundancy'
-    ],
-    a: 0,
-    e: 'Forward index maps each document to the words it contains — useful for "what words are in document X?" Inverted index maps each word to the documents that contain it — exactly what search needs: "which docs contain the query word?" Building a search engine without an inverted index would require scanning every document for every query — O(N) per query. The inverted index makes it O(1) per term lookup followed by a postings merge.',
-    w: {
-      1: 'The mapping is the opposite: forward goes doc → words, inverted goes word → docs. Swapping them produces the forward index definition, not the inverted one.',
-      2: 'Both indexes are used at index time; ranking (TF-IDF scoring) happens after the inverted index lookup, not in a separate index.',
-      3: 'They are genuinely different structures with opposite key-value directions, not redundant copies.'
-    },
-    r: { id: 's2', label: 'Section 2 — Day 87 cheat sheet' }
+    r: { id: 'day92', label: 'Day 92 — API Gateway and Service Mesh' }
   },
 ]
 
@@ -304,91 +340,67 @@ export default function RecapW17() {
   return (
     <div className="scrollarea">
       <div className="hero">
-        <div className="eyebrow">Bonus · Week 17 · Revision</div>
-        <h1>Week 17 Recap:<br />Cache, Autocomplete, File Storage, Resilience, Consistent Hashing, URL Shortener &amp; Search</h1>
-        <p>Days 81–87 in one place: cache invalidation patterns, Trie top-K design, content-addressed
-           chunk deduplication, the full resilience stack, consistent hashing ring mechanics, URL redirect
-           types, and inverted-index search engines. Cheat-sheet, rapid review, recap quiz.</p>
+        <div className="eyebrow">Bonus · Week 17</div>
+        <h1>Week 17 Recap:<br />13 Days of Advanced System Design</h1>
+        <p>Days 81–93 in one place: caching, search, file storage, resilience, consistent hashing, URL shortener,
+           search engine, real-time chat, leaderboards, event-driven architecture, sharding, API gateway, and
+           observability. Cheat-sheet, rapid review, recap quiz.</p>
         <div className="chips">
-          {['cache-aside invalidate', 'Trie top-K at node', 'SHA-256 chunk IDs', 'refCount GC', 'circuit breaker states', 'retry + idempotency', 'bulkhead isolation', 'consistent hash ring', 'virtual nodes', '302 not 301', 'inverted index', 'TF-IDF'].map((c) => <span className="chip" key={c}>{c}</span>)}
+          {[
+            'Distributed Cache', 'Search Autocomplete', 'File Storage', 'Circuit Breaker',
+            'Consistent Hashing', 'URL Shortener', 'Search Engine', 'Real-time Chat',
+            'Leaderboard & Top-K', 'Event Sourcing', 'CQRS', 'Sagas',
+            'Database Sharding', 'API Gateway', 'Service Mesh', 'Observability'
+          ].map((c) => <span className="chip" key={c}>{c}</span>)}
         </div>
       </div>
 
+      {/* ===== SECTION 1 — Week in one picture ===== */}
       <section id="s1">
         <div className="sec-label">Section 1</div>
         <h2>The week in one picture</h2>
-        <Code html={`  WEEK 17 (BONUS) — seven advanced topics, seven complementary muscles
+        <Code html={`  WEEK 17 (BONUS) — 13 advanced system-design topics, grouped by concern
 
-  Day 81  DISTRIBUTED  Cache-aside: read-miss→DB→cache; write→DB→DELETE key   (caching patterns)
-  CACHE               Write-through: write cache AND DB synchronously (fresh/slow)
-                      TTL = staleness budget; eviction = allkeys-lru (pure cache)
-                      Hot-key: L1 in-process LRU + L2 Redis (95% bypass)
-                      Stampede: Redis SET NX EX mutex → one filler, rest wait
-                      Race: thread A reads stale → B invalidates → A writes stale back
-                      Fix: always DELETE on write (never update cache in cache-aside)
+  ┌─────────────────────────── CACHING LAYER ───────────────────────────────┐
+  │  Day 81  DISTRIBUTED CACHE  cache-aside / write-through / TTL           │
+  │                              eviction (LRU/LFU) / hot-key / stampede    │
+  │  Day 82  SEARCH AUTOCOMPLETE Trie + top-K at node / radix tree          │
+  │  Day 86  URL SHORTENER       base-62 counter / 302 / async analytics    │
+  └─────────────────────────────────────────────────────────────────────────┘
 
-  Day 82  SEARCH       Trie node: Map&lt;Char,TrieNode&gt; children + isEnd + frequency  (Trie + top-K)
-  AUTO-               Insert O(len); prefix walk O(len); DFS collect O(subtree)
-  COMPLETE            Top-K at each node = production: O(K) read, O(K×L) write
-                      Radix/compressed Trie: collapse single-child chains → space
-                      Scale: prefix sharding by first char(s); nightly offline rebuild
-                      Personalization = Decorator wrapping global Trie result
+  ┌─────────────────────────── DATA TIER ───────────────────────────────────┐
+  │  Day 83  FILE STORAGE        chunking / SHA-256 CAS / refCount GC       │
+  │  Day 85  CONSISTENT HASHING  TreeMap ring / virtual nodes / 1/N move    │
+  │  Day 87  SEARCH ENGINE       inverted index / TF-IDF / postings merge   │
+  │  Day 89  LEADERBOARD &amp; TOP-K  Redis sorted set / min-heap / time bucket│
+  │  Day 91  DATABASE SHARDING   range/hash/directory / virtual shards      │
+  └─────────────────────────────────────────────────────────────────────────┘
 
-  Day 83  FILE         Chunk = fixed-size slice (e.g. 4 MB); ID = SHA-256(content) (content-CAS)
-  STORAGE             Dedup: client sends hashes on init; upload only missing chunks
-  SYSTEM              Two stores: metadata DB (File/Folder/Version rows) + block store
-                      Upload commit: quota on NEW chunks only; create FileVersion; bump refCounts
-                      Delta sync: compare hash manifest; transfer only changed chunks
-                      RefCount GC: decrement on version delete; block delete when refCount = 0
-                      Versioning is free: unchanged chunks reuse same hash → 0 extra bytes
+  ┌─────────────────────────── RESILIENCE ──────────────────────────────────┐
+  │  Day 84  CIRCUIT BREAKER     CLOSED→OPEN→HALF_OPEN / retry+jitter       │
+  │                              bulkhead / timeout / resilience stack       │
+  │  Day 92  API GATEWAY         filter chain (CoR) / JWT / rate limit      │
+  │          SERVICE MESH        sidecar / mTLS / observability              │
+  └─────────────────────────────────────────────────────────────────────────┘
 
-  Day 84  CIRCUIT      Timeout: P99 × 3 rule of thumb; every remote call must have one  (resilience)
-  BREAKER             Retry: transient only; exponential backoff + jitter; never non-idempotent
-  &amp;                   CB states: CLOSED (count fails) → OPEN at threshold (fast-fail)
-  RESILIENCE            → HALF_OPEN after resetTimeout (probe) → CLOSED on success
-                      Fallback: stale cache / default / degraded — always plan B
-                      Bulkhead: separate thread pools per downstream (blast radius limit)
-                      Stack (inside-out): Timeout → Retry → CB → Bulkhead → Fallback
-                      Retry INSIDE CB: each retry counts toward trip threshold
+  ┌─────────────────────────── ASYNC / EVENT-DRIVEN ────────────────────────┐
+  │  Day 88  REAL-TIME CHAT      WebSocket / Redis Pub-Sub / offline queue  │
+  │  Day 90  EVENT-DRIVEN ARCH   Event Sourcing (log+replay) / CQRS         │
+  │                              Saga + compensating transactions            │
+  └─────────────────────────────────────────────────────────────────────────┘
 
-  Day 85  CONSISTENT   Modulo: add 1 server → (N-1)/N ≈ 80% of keys must move (BAD) (hash ring)
-  HASHING             Ring: TreeMap&lt;Integer,String&gt; position→server
-                      Lookup: ceilingEntry(hash(key)); wrap if null → O(log N)
-                      Add server: insert V virtual-node entries; only next-clockwise arc moves
-                      Remove server: delete V entries; same arc moves to next server
-                      V=1 → skewed arcs; V=150+ → approximately equal distribution
-                      Use cases: Cassandra, Redis Cluster (16384 slots), CDN, sticky LB
-                      Bounded load: if server load &gt; avg×threshold → route clockwise
-
-  Day 86  URL          Short code options: random base-62 (collision risk) /           (redirect+scale)
-  SHORTENER           counter+base-62 (no collisions, production default) /
-                      hash (deterministic, no per-user analytics)
-                      Base-62: [0-9a-zA-Z]; 62^6 ≈ 56 billion codes
-                      Redirect: ALWAYS 302 (temporary) — 301 cached forever, breaks analytics
-                      Redis cache-aside: GET shortCode→longUrl; never hit DB on every click
-                      Analytics: async ClickEvent to queue → consumer → analytics DB
-                      Custom alias: store as normal code; check uniqueness first
-                      Expiry: expiresAt field; 410 Gone on redirect; background sweeper GC
-
-  Day 87  SEARCH       Forward index: docId → words. Inverted: word → [(docId, positions)]  (IR engine)
-  ENGINE              Inverted = O(1) lookup vs O(N) scan
-                      Preprocessing SYMMETRY: tokenize/lowercase/stop-words/stem
-                        BOTH at index time AND query time — or queries won't match
-                      TF = termCount / docLength
-                      IDF = log(totalDocs / docsWithTerm)
-                      TF-IDF = TF × IDF; high = frequent in doc + rare across corpus
-                      AND query: sorted postings merge O(m+n) — same as merge sort
-                      Phrase query: requires position list ("java tutorial" = K and K+1)
-                      Crawl: seed URLs → fetch → parse links → frontier (Bloom dedup)
-                      Sharding: hash(term) % N_SHARDS; fan-out all shards per query`} />
-        <Note><strong>The big idea:</strong> All seven days share one meta-theme — <em>protect shared state under load</em>.
-          Caching protects the DB. The Trie's top-K stores protect query latency. Chunk deduplication protects
-          storage under concurrent uploads. The resilience stack protects services from each other. Consistent
-          hashing protects the cache cluster from redistribution storms. URL shortener redirect type protects
-          click analytics. Preprocessing symmetry protects search relevance. Week 17 is about designing systems
-          that degrade gracefully instead of collapsing.</Note>
+  ┌─────────────────────────── OBSERVABILITY ───────────────────────────────┐
+  │  Day 93  OBSERVABILITY       logs (structured + correlation ID)          │
+  │                              metrics (Counter/Gauge/Histogram, RED)      │
+  │                              traces (spans / W3C traceparent)            │
+  │                              OpenTelemetry as the unifying SDK           │
+  └─────────────────────────────────────────────────────────────────────────┘`} />
+        <Note><strong>The meta-theme of Week 17:</strong> protect shared state and user experience under load — across
+          caches, file stores, service calls, event streams, databases, and network boundaries. Every day adds one
+          more layer to building systems that degrade gracefully instead of collapsing.</Note>
       </section>
 
+      {/* ===== SECTION 2 — Day-by-day cheat sheet ===== */}
       <section id="s2">
         <div className="sec-label">Section 2</div>
         <h2>Day-by-day cheat sheet</h2>
@@ -396,240 +408,440 @@ export default function RecapW17() {
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 81 · Distributed Cache</h3>
         <ul>
           <li><strong>Cache-aside read:</strong> check cache → miss → query DB → write result to cache → return. Hit ratio determines DB load.</li>
-          <li><strong>Cache-aside write:</strong> write DB → <em>DELETE</em> the cache key. Never update the cache entry at write time — two concurrent writes can land out of order, leaving a stale value permanently.</li>
-          <li><strong>Write-through:</strong> write cache AND DB synchronously every time. Guarantees freshness; write latency doubles. Use when reads need guaranteed freshness and write volume is low.</li>
-          <li><strong>TTL:</strong> the acceptable staleness window. Shorter = more misses + fresher. Longer = fewer misses + staler. TTL is a safety net, not an invalidation strategy.</li>
-          <li><strong>Eviction policies:</strong> <C>allkeys-lru</C> for a pure cache (evict LRU when memory full); <C>noeviction</C> for a session store (never discard — accept errors instead).</li>
+          <li><strong>Cache-aside write:</strong> write DB → DELETE the cache key. Never update the cache entry — two concurrent writes can land out of order and leave a stale value until TTL.</li>
+          <li><strong>Write-through:</strong> write cache AND DB synchronously. Guarantees freshness; write latency doubles. Use when reads need guaranteed freshness and write volume is low.</li>
           <li><strong>Hot-key fix:</strong> L1 = in-process LRU (HashMap + DLL, Day 56 pattern); L2 = Redis. 95% of reads for hot keys never leave the JVM.</li>
-          <li><strong>Cache stampede fix:</strong> <C>SET lock:key "" NX EX 5</C> — only the thread that acquires the lock fills the cache. All others poll or wait on a condition.</li>
-          <li><strong>Redis data structures:</strong> String (simple value/counter), Hash (object fields), List (queue/timeline), SortedSet (leaderboard/rate-limiter), Set (unique memberships).</li>
+          <li><strong>Cache stampede fix:</strong> Redis <C>SET lock:key "" NX EX 5</C> — only the thread that wins the lock fills the cache. All others poll or serve a stale value.</li>
+          <li><strong>Eviction policies:</strong> <C>allkeys-lru</C> for a pure cache; <C>noeviction</C> for a session store (reject new writes when full).</li>
         </ul>
+        <Code html={`<span class="cm">// Cache-aside: always DELETE on write, never update</span>
+<span class="kw">void</span> updateUser(User u) {
+    db.save(u);                       <span class="cm">// 1. write DB first</span>
+    redis.del(<span class="str">"user:"</span> + u.id);         <span class="cm">// 2. invalidate cache key</span>
+}                                     <span class="cm">// 3. next read will miss and re-populate</span>`} />
 
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 82 · Search Autocomplete</h3>
         <ul>
           <li><strong>Trie node:</strong> <C>Map&lt;Character, TrieNode&gt; children</C>, <C>boolean isEnd</C>, <C>int frequency</C>.</li>
-          <li><strong>Insert:</strong> O(word length) — walk/create one node per character, mark <C>isEnd = true</C> at last node.</li>
-          <li><strong>Prefix search (naive):</strong> walk to prefix node → DFS collect all <C>isEnd</C> descendants → sort by frequency. O(M log M) — too slow for production.</li>
-          <li><strong>Top-K at each node (production):</strong> each node stores its top K completions sorted by frequency. Query = walk prefix O(L) + return stored list O(K). Writes update stored lists at all ancestors.</li>
-          <li><strong>Radix / compressed Trie:</strong> collapse single-child chains into one node holding the concatenated label. Same lookup speed, far less memory.</li>
-          <li><strong>Scale:</strong> shard by first 1–2 characters (all words starting with "ca" go to one shard). Frequency data is aggregated from query logs offline; Trie is rebuilt nightly.</li>
-          <li><strong>Personalization:</strong> a Decorator wraps the global Trie result and re-ranks or appends personal history (Day 27 pattern — same interface, extra behaviour).</li>
-          <li><strong>Key insight:</strong> autocomplete gets FASTER as the user types more — longer prefix → smaller subtree → fewer nodes to visit.</li>
+          <li><strong>Naive prefix search:</strong> walk to prefix node → DFS collect all isEnd descendants → sort by frequency. O(M log M) — too slow.</li>
+          <li><strong>Top-K at each node (production):</strong> each node pre-stores top-K completions sorted by frequency. Query = walk prefix O(L) + return list O(K). Writes update all ancestors.</li>
+          <li><strong>Radix / compressed Trie:</strong> collapse single-child chains into one node. Same lookup speed, far less memory.</li>
+          <li><strong>Scale:</strong> shard by first 1–2 characters. Rebuild Trie nightly from offline frequency aggregation.</li>
+          <li><strong>Key insight:</strong> autocomplete gets FASTER as the user types — longer prefix → smaller subtree → fewer nodes to visit.</li>
         </ul>
+        <Code html={`<span class="cm">// Top-K stored at each node — O(K) read vs O(M log M) DFS+sort</span>
+<span class="kw">class</span> TrieNode {
+    Map&lt;Character, TrieNode&gt; children = <span class="kw">new</span> HashMap&lt;&gt;();
+    List&lt;String&gt; topK = <span class="kw">new</span> ArrayList&lt;&gt;(); <span class="cm">// pre-sorted by frequency</span>
+    <span class="kw">boolean</span> isEnd;
+    <span class="kw">int</span> frequency;
+}`} />
 
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 83 · File Storage System</h3>
         <ul>
           <li><strong>Chunking:</strong> split each file into fixed-size slices (e.g. 4 MB). Chunk <C>id = SHA-256(chunkBytes)</C>.</li>
-          <li><strong>Upload protocol:</strong> client sends list of chunk hashes → server responds with which hashes are missing → client uploads only those chunks. Already-known hashes are free.</li>
-          <li><strong>Two-store architecture:</strong> <em>metadata DB</em> (File, Folder, Share, FileVersion, chunk reference list) + <em>block store</em> (raw bytes keyed by chunk hash).</li>
-          <li><strong>Upload commit:</strong> quota check counts only NEW chunks (deduped chunks are shared). Create <C>FileVersion</C> row. Increment <C>refCount</C> for each chunk in this version.</li>
-          <li><strong>Delta sync:</strong> client hashes all local chunks → diffs against server manifest → uploads changed chunks / downloads missing ones. Only bytes that actually changed cross the wire.</li>
-          <li><strong>Reference-count GC:</strong> when a <C>FileVersion</C> is deleted, decrement <C>refCount</C> for each of its chunks. Delete the chunk from the block store only when <C>refCount == 0</C>.</li>
-          <li><strong>Versioning is cheap:</strong> unchanged chunks share the same hash across versions. Uploading a new version of a 1 GB file with one small edit stores only the changed chunks.</li>
-          <li><strong>Restore to old version:</strong> create a new <C>FileVersion</C> pointing to the old chunk IDs. Zero new bytes written if all chunks still exist.</li>
+          <li><strong>Upload protocol:</strong> client sends list of chunk hashes → server responds which are missing → client uploads only those. Known hashes are free.</li>
+          <li><strong>Two-store architecture:</strong> metadata DB (File/Folder/FileVersion rows + chunk reference list) + block store (raw bytes keyed by chunk hash).</li>
+          <li><strong>Upload commit:</strong> quota counts only NEW chunks. Create FileVersion row. Increment refCount for each chunk in this version.</li>
+          <li><strong>Delta sync:</strong> client hashes local chunks → diffs against server manifest → uploads changed / downloads missing. Only changed bytes cross the wire.</li>
+          <li><strong>Reference-count GC:</strong> delete FileVersion → decrement refCount for each chunk. Delete chunk from block store only when refCount == 0.</li>
         </ul>
+        <Code html={`<span class="cm">// Dedup: chunk ID is its content hash — same bytes = same ID anywhere</span>
+<span class="kw">String</span> chunkId = sha256(chunkBytes);      <span class="cm">// deterministic key</span>
+<span class="kw">if</span> (!blockStore.exists(chunkId)) {
+    blockStore.put(chunkId, chunkBytes);   <span class="cm">// only write if not already there</span>
+}
+refCountTable.increment(chunkId);          <span class="cm">// track every FileVersion using this chunk</span>`} />
 
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 84 · Circuit Breaker &amp; Resilience</h3>
         <ul>
-          <li><strong>Timeout:</strong> every remote call must have a deadline. Rule of thumb: P99 latency × 3. Without timeout, a slow downstream hangs threads forever.</li>
-          <li><strong>Retry:</strong> for transient failures only (network blip, 503). Use exponential backoff (100 ms → 200 ms → 400 ms). Add jitter (random offset) to prevent thundering-herd retries. NEVER retry non-idempotent calls without an idempotency key.</li>
-          <li><strong>Circuit Breaker states:</strong> <C>CLOSED</C> (normal — count failures) → <C>OPEN</C> when failure rate exceeds threshold (fast-fail all requests) → <C>HALF_OPEN</C> after <C>resetTimeout</C> (let one probe through) → <C>CLOSED</C> on probe success or back to <C>OPEN</C> on probe failure.</li>
-          <li><strong>Fallback:</strong> what to do when the circuit is OPEN or the call fails. Options: return stale cached data, return a safe default, return a degraded response. Always design a plan B.</li>
-          <li><strong>Bulkhead:</strong> give each downstream service its own thread pool. Payment pool saturation cannot starve the search pool. Named after watertight ship compartments.</li>
-          <li><strong>Stack order (inside-out):</strong> Timeout → Retry → Circuit Breaker → Bulkhead → Fallback. Timeout is innermost (per attempt); Fallback is outermost (last resort).</li>
-          <li><strong>Retry inside CB:</strong> each retry attempt is a separate call — it counts as a failure toward the CB trip threshold. Retry outside CB means the breaker sees only the final logical failure, which makes it much slower to detect outages.</li>
-          <li><strong>Resilience4j:</strong> Java library — <C>@CircuitBreaker</C>, <C>@Retry</C>, <C>@TimeLimiter</C>, <C>@Bulkhead</C> annotations apply the same concepts declaratively.</li>
+          <li><strong>Timeout:</strong> every remote call must have a deadline. Rule of thumb: P99 latency × 3. Without timeout, slow services hang threads forever.</li>
+          <li><strong>Retry:</strong> transient failures only. Exponential backoff (100 ms → 200 ms → 400 ms) + jitter (random offset) to prevent thundering-herd retries. Never retry non-idempotent calls without an idempotency key.</li>
+          <li><strong>Circuit Breaker states:</strong> CLOSED (count failures) → OPEN at threshold (fast-fail all requests) → HALF_OPEN after resetTimeout (let one probe through) → CLOSED on probe success, or back to OPEN on failure.</li>
+          <li><strong>Bulkhead:</strong> separate thread pool per downstream service. Payment pool saturation cannot starve the search pool.</li>
+          <li><strong>Stack order (inside-out):</strong> Timeout → Retry → Circuit Breaker → Bulkhead → Fallback.</li>
+          <li><strong>Retry inside CB:</strong> each retry counts toward the CB trip threshold. Retry outside CB means the breaker sees only the final logical failure — much slower to detect outages.</li>
         </ul>
+        <Code html={`<span class="cm">// Resilience stack (inside-out). Timeout is innermost — per attempt.</span>
+Fallback.wrap(
+  Bulkhead.wrap(
+    CircuitBreaker.wrap(
+      Retry.wrap(
+        TimeLimiter.wrap(remoteCall)   <span class="cm">// innermost</span>
+      )
+    )
+  )
+)                                       <span class="cm">// Fallback is outermost — last resort</span>`} />
 
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 85 · Consistent Hashing</h3>
         <ul>
-          <li><strong>Problem with modulo hashing:</strong> adding 1 server changes N in <C>hash(key) % N</C> — roughly (N-1)/N ≈ 80% of all keys must move to a different server. Causes a cache miss storm.</li>
-          <li><strong>Consistent hashing:</strong> adding or removing 1 server moves only ~1/N of keys. All other keys stay on their current server.</li>
-          <li><strong>Hash ring structure:</strong> <C>TreeMap&lt;Integer, String&gt;</C> mapping ring position → server name. The ring is the TreeMap.</li>
-          <li><strong>Lookup:</strong> <C>map.ceilingEntry(hash(key))</C> → returns the first server at or clockwise from the key's position. If null (key is past the last entry), wrap around to <C>map.firstEntry()</C>. Time: O(log N).</li>
-          <li><strong>Add server:</strong> insert V virtual node entries (<C>hash("ServerA#0")</C> … <C>hash("ServerA#149")</C>). Only the next-clockwise arc's keys move to the new server. Nothing else changes.</li>
-          <li><strong>Remove server:</strong> delete V entries. Keys in those arcs move clockwise to the next real server. Everything else is undisturbed.</li>
-          <li><strong>Virtual nodes:</strong> V=1 gives unequal arc sizes (one server owns a large arc, another a tiny one). V=150+ gives approximately equal distribution. More virtual nodes = smoother load distribution but more memory.</li>
-          <li><strong>Use cases:</strong> Cassandra (data partitioning), Redis Cluster (16,384 hash slots = very fine-grained ring), CDN request routing, sticky load balancing.</li>
-          <li><strong>Bounded load extension:</strong> if a server's current load exceeds avg × threshold, route the key to the next clockwise server instead. Prevents one server from becoming a hotspot even with virtual nodes.</li>
+          <li><strong>Problem with modulo:</strong> adding 1 server changes N in hash(key) % N → ~(N-1)/N ≈ 80% of keys must move. Cache miss storm.</li>
+          <li><strong>Consistent hashing:</strong> adding or removing 1 server moves only ~1/N of keys. All other keys stay put.</li>
+          <li><strong>Ring structure:</strong> <C>TreeMap&lt;Integer, String&gt;</C> mapping ring position → server name.</li>
+          <li><strong>Lookup:</strong> <C>map.ceilingEntry(hash(key))</C> — first server clockwise from the key. Wrap to first entry if null. O(log N).</li>
+          <li><strong>Virtual nodes:</strong> hash("ServerA#0") … hash("ServerA#149") — 150 positions per server. Gives approximately equal arc distribution. V=1 is severely skewed.</li>
+          <li><strong>Use cases:</strong> Cassandra (data partitioning), Redis Cluster (16,384 hash slots), CDN routing, sticky load balancing.</li>
         </ul>
+        <Code html={`TreeMap&lt;Integer, String&gt; ring = <span class="kw">new</span> TreeMap&lt;&gt;();
+
+<span class="cm">// Add server with V virtual nodes</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; V; i++) {
+    ring.put(hash(<span class="str">"ServerA#"</span> + i), <span class="str">"ServerA"</span>);
+}
+
+<span class="cm">// Lookup: clockwise from key hash, wrap at end</span>
+Map.Entry&lt;Integer,String&gt; e = ring.ceilingEntry(hash(key));
+<span class="kw">return</span> e != <span class="kw">null</span> ? e.getValue() : ring.firstEntry().getValue();`} />
 
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 86 · URL Shortener</h3>
         <ul>
-          <li><strong>Three short-code strategies:</strong> random base-62 (simple but collision risk grows), counter+base-62 (no collisions by construction — production default), hash of long URL (deterministic but no per-user or per-click analytics).</li>
-          <li><strong>Base-62 encoding:</strong> charset = [0-9a-zA-Z]. Encode N: build digits right-to-left with <C>N % 62</C>, divide by 62. 62^6 ≈ 56 billion unique codes from 6 characters.</li>
-          <li><strong>Counter approach:</strong> use a Snowflake-style distributed ID: timestamp(41 bits) + machineId(10 bits) + sequence(12 bits). Encode the 64-bit result in base-62. No coordination needed between machines.</li>
-          <li><strong>Redirect latency:</strong> must be under 10 ms. Use Redis cache-aside: <C>GET shortCode → longUrl</C>. Never hit the DB on every click request.</li>
-          <li><strong>302 not 301:</strong> 302 = Found (temporary). The browser checks your server on every visit. 301 = Moved Permanently — browsers cache it forever. After one visit, the browser skips your shortener entirely, breaking all click analytics and making destination updates impossible.</li>
-          <li><strong>Analytics:</strong> async fire-and-forget: on redirect, publish a <C>ClickEvent</C> (shortCode, timestamp, IP, referrer) to a queue. A consumer writes to an analytics DB. Never block the redirect on analytics.</li>
-          <li><strong>Custom aliases:</strong> user-chosen short codes (e.g. <C>/mylink</C>). Store as a normal short-code entry. Check uniqueness before inserting — reject with 409 if already taken.</li>
-          <li><strong>Expiry:</strong> store <C>expiresAt</C> timestamp. On redirect, check it — return 410 Gone if expired. A background sweeper periodically GCs expired entries from DB and cache.</li>
+          <li><strong>Short-code strategies:</strong> random base-62 (collision risk grows), counter+base-62 (no collisions — production default), hash of long URL (deterministic, no per-click analytics).</li>
+          <li><strong>Base-62 encoding:</strong> charset = [0-9a-zA-Z]. 62^6 ≈ 56 billion unique codes from 6 characters. Build digits right-to-left: N % 62, divide by 62.</li>
+          <li><strong>302 not 301:</strong> 302 = Found (temporary) — browser checks your server every time. 301 = Moved Permanently — browser caches forever, breaks analytics and destination updates.</li>
+          <li><strong>Redirect latency:</strong> must be under 10 ms. Redis cache-aside: GET shortCode → longUrl. Never hit DB on every click.</li>
+          <li><strong>Analytics:</strong> async fire-and-forget. On redirect, publish ClickEvent to a queue. Consumer writes to analytics DB. Never block the redirect on analytics.</li>
+          <li><strong>Expiry:</strong> store expiresAt timestamp. Return 410 Gone if expired. Background sweeper GCs expired entries.</li>
         </ul>
+        <Code html={`<span class="cm">// Counter + base-62: no collisions by construction</span>
+<span class="kw">static final</span> String ALPHABET = <span class="str">"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"</span>;
+
+String encode(<span class="kw">long</span> n) {
+    StringBuilder sb = <span class="kw">new</span> StringBuilder();
+    <span class="kw">while</span> (n &gt; <span class="num">0</span>) { sb.insert(<span class="num">0</span>, ALPHABET.charAt((<span class="kw">int</span>)(n % <span class="num">62</span>))); n /= <span class="num">62</span>; }
+    <span class="kw">return</span> sb.toString();   <span class="cm">// pad to 6 chars with leading zeros if needed</span>
+}`} />
 
         <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 87 · Search Engine</h3>
         <ul>
-          <li><strong>Forward index:</strong> docId → list of words. Useful for "what words are in this doc?" Not useful for search.</li>
-          <li><strong>Inverted index:</strong> word → list of (docId, positions). Makes "which docs contain this word?" an O(1) lookup. This is what search engines are built on.</li>
-          <li><strong>Preprocessing symmetry:</strong> tokenize → lowercase → remove stop words → stem — applied BOTH at index time AND at query time. If "running" is indexed as "run" but the query "running" is not stemmed, it will never match. Both pipelines must be identical.</li>
-          <li><strong>TF (Term Frequency):</strong> <C>termCountInDoc / totalWordsInDoc</C>. High TF = this word appears a lot in this document.</li>
-          <li><strong>IDF (Inverse Document Frequency):</strong> <C>log(totalDocs / docsContainingTerm)</C>. High IDF = this word is rare across the corpus. Common words like "the" have IDF ≈ 0.</li>
-          <li><strong>TF-IDF score:</strong> TF × IDF. High score = the term is frequent in this doc AND rare overall = strong relevance signal.</li>
-          <li><strong>AND query postings merge:</strong> sort each term's postings list by docId. Walk both lists with two pointers, emit docIds that appear in both. O(m + n) — same algorithm as merging two sorted arrays.</li>
-          <li><strong>Phrase query:</strong> requires position lists. "java tutorial" means: find docs where "java" appears at position K and "tutorial" appears at position K+1 in the same doc.</li>
-          <li><strong>Crawl pipeline:</strong> seed URLs → fetch HTML → parse &lt;a href&gt; links → add unseen URLs to frontier (dedup via Bloom filter) → fetch → index. Robots.txt and politeness delays apply.</li>
-          <li><strong>Index sharding:</strong> <C>hash(term) % N_SHARDS</C> sends each term's postings to one shard. A query fans out to all shards that hold its terms, then merges and re-ranks results.</li>
+          <li><strong>Forward index:</strong> docId → list of words. Useful for "what words are in doc X?" — not for search.</li>
+          <li><strong>Inverted index:</strong> word → list of (docId, positions). Makes "which docs contain this word?" an O(1) lookup.</li>
+          <li><strong>Preprocessing symmetry:</strong> tokenize → lowercase → remove stop words → stem — applied identically at index time AND at query time. If they differ, queries produce zero results for valid words.</li>
+          <li><strong>TF-IDF score:</strong> TF = termCount/docLength (frequent in this doc). IDF = log(totalDocs/docsWithTerm) (rare across corpus). TF-IDF = TF × IDF. High = relevant.</li>
+          <li><strong>AND query postings merge:</strong> sort each term's postings by docId. Walk both lists with two pointers, emit docIds in both. O(m + n).</li>
+          <li><strong>Crawl pipeline:</strong> seed URLs → fetch → parse links → frontier (Bloom filter dedup) → fetch → index. Robots.txt and politeness delays apply.</li>
         </ul>
+        <Code html={`<span class="cm">// Inverted index: word → [(docId, position)]</span>
+Map&lt;String, List&lt;Posting&gt;&gt; index = <span class="kw">new</span> HashMap&lt;&gt;();
+
+<span class="cm">// AND query: two-pointer merge on sorted postings</span>
+List&lt;Posting&gt; a = index.get(<span class="str">"java"</span>);   <span class="cm">// sorted by docId</span>
+List&lt;Posting&gt; b = index.get(<span class="str">"tutorial"</span>);
+<span class="cm">// walk a and b together, emit only docIds present in both — O(m+n)</span>`} />
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 88 · Real-time Chat</h3>
+        <ul>
+          <li><strong>WebSocket:</strong> a persistent full-duplex TCP connection. One handshake, then messages flow both ways with no HTTP overhead per message. Ideal for real-time chat.</li>
+          <li><strong>Redis Pub/Sub fan-out:</strong> when a message is sent, publish to a channel. All chat servers subscribed to that channel forward it to connected recipients. Ephemeral — if no subscriber, message is dropped.</li>
+          <li><strong>Offline delivery queue:</strong> messages written to a persistent DB inbox before ack to sender. On recipient reconnect, flush undelivered messages since last ack.</li>
+          <li><strong>Receipt states:</strong> SENT (server stored) → DELIVERED (recipient device received) → READ (recipient opened). Each state transition sends a receipt back to the sender.</li>
+          <li><strong>Group chat fan-out:</strong> for small groups, fan out at the message service. For large groups (thousands), fan out at read time from a shared message store.</li>
+          <li><strong>Presence:</strong> heartbeat (periodic ping) to track online/offline. Store in Redis with TTL; absence of heartbeat = offline.</li>
+        </ul>
+        <Code html={`<span class="cm">// Fan-out: sender → server → Redis Pub/Sub → recipient servers → WebSockets</span>
+<span class="cm">// Offline: if recipient is not connected, write to inbox table</span>
+<span class="kw">void</span> sendMessage(Message msg) {
+    db.save(msg);                           <span class="cm">// 1. persist first</span>
+    redis.publish(<span class="str">"chat:"</span> + msg.chatId, msg); <span class="cm">// 2. fan-out to online users</span>
+    <span class="cm">// offline recipients pick it up on reconnect via inbox query</span>
+}`} />
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 89 · Leaderboard &amp; Top-K</h3>
+        <ul>
+          <li><strong>Redis Sorted Set:</strong> members kept sorted by a floating-point score. <C>ZADD key score member</C>, <C>ZINCRBY key delta member</C>, <C>ZREVRANGE key 0 K-1 WITHSCORES</C>. O(log N) per add, O(K) per top-K read.</li>
+          <li><strong>Min-heap for top-K in Java:</strong> maintain a min-heap of size K. For each element: if heap.size() &lt; K → add. Else if element &gt; heap.peek() → poll + add. O(N log K).</li>
+          <li><strong>Time-bucket sliding window:</strong> divide time into fixed buckets (e.g. 1-minute). Keep a circular buffer of bucket counts. Drop buckets older than the window. Sum remaining buckets for the current total.</li>
+          <li><strong>Leaderboard at scale:</strong> shard by region or game. Aggregate shards for a global leaderboard (scatter-gather). Cache the top-1000 with a short TTL.</li>
+          <li><strong>Percentile leaderboard:</strong> use a histogram (count of scores per bucket) to compute rank percentile without storing every score.</li>
+        </ul>
+        <Code html={`<span class="cm">// Redis sorted set: real-time leaderboard</span>
+redis.zadd(<span class="str">"scores"</span>, score, userId);          <span class="cm">// add or update score</span>
+redis.zincrby(<span class="str">"scores"</span>, delta, userId);        <span class="cm">// increment atomically</span>
+List top10 = redis.zrevrange(<span class="str">"scores"</span>, <span class="num">0</span>, <span class="num">9</span>); <span class="cm">// top-10 O(K)</span>
+
+<span class="cm">// Java min-heap for top-K from a stream</span>
+PriorityQueue&lt;Integer&gt; heap = <span class="kw">new</span> PriorityQueue&lt;&gt;(); <span class="cm">// min at top</span>
+<span class="kw">for</span> (<span class="kw">int</span> x : stream) {
+    heap.offer(x);
+    <span class="kw">if</span> (heap.size() &gt; K) heap.poll(); <span class="cm">// evict smallest</span>
+}`} />
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 90 · Event-Driven Architecture</h3>
+        <ul>
+          <li><strong>Event Sourcing:</strong> state is stored as an append-only log of immutable events. Current state = replay of all events. Audit log is free; time-travel is possible; rebuild any projection.</li>
+          <li><strong>CQRS (Command Query Responsibility Segregation):</strong> write path (commands) and read path (queries) are separate services/tables optimized independently. Read models are denormalized projections rebuilt from events.</li>
+          <li><strong>Saga pattern:</strong> a long-running distributed transaction broken into local steps, each with a compensating transaction (undo). If step N fails, compensations run in reverse from N-1 to 1.</li>
+          <li><strong>Choreography vs Orchestration:</strong> choreography = services react to events from each other (no central coordinator). Orchestration = a saga coordinator tells each service what to do (easier to reason about but SPOF risk).</li>
+          <li><strong>Eventual consistency:</strong> writes propagate asynchronously; read models may lag. Design for it: show "updating…" instead of stale data, use idempotent consumers.</li>
+        </ul>
+        <Code html={`<span class="cm">// Event Sourcing: state = replay of immutable events</span>
+<span class="kw">interface</span> Event { Instant occurredAt(); }
+<span class="kw">record</span> OrderPlaced(String orderId, Money amount, Instant occurredAt) <span class="kw">implements</span> Event {}
+<span class="kw">record</span> PaymentConfirmed(String orderId, Instant occurredAt) <span class="kw">implements</span> Event {}
+
+<span class="cm">// Saga: each step has a compensating action (undo) if a later step fails</span>
+<span class="cm">// Step 1: reserve inventory  — compensate: release inventory</span>
+<span class="cm">// Step 2: charge payment     — compensate: refund payment</span>
+<span class="cm">// Step 3: dispatch shipment  — compensate: cancel shipment</span>`} />
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 91 · Database Sharding</h3>
+        <ul>
+          <li><strong>Why shard:</strong> a single DB node cannot handle the write throughput or data volume of a large system. Sharding partitions data across multiple nodes.</li>
+          <li><strong>Range sharding:</strong> keys 0–999 on shard A, 1000–1999 on shard B. Simple, supports range scans. Risk: sequential inserts all hit one shard (hot shard).</li>
+          <li><strong>Hash sharding:</strong> shard = hash(key) % N. Even distribution, no range scans. Adding/removing nodes moves (N-1)/N of keys — use consistent hashing instead.</li>
+          <li><strong>Directory sharding:</strong> a lookup table maps key ranges to shard IDs. Maximum flexibility; the directory is a SPOF if not replicated.</li>
+          <li><strong>Shard key rules:</strong> high cardinality, uniform distribution, queries include the shard key (avoid scatter-gather), immutable once set.</li>
+          <li><strong>Virtual shards:</strong> create 1,000 logical shards mapped to N physical nodes. Adding a physical node = reassign some virtual shards. No key rehashing needed.</li>
+        </ul>
+        <Code html={`<span class="cm">// Hash sharding: determine which shard holds a key</span>
+<span class="kw">int</span> shardId = Math.abs(key.hashCode()) % NUM_SHARDS;
+DataSource ds = shards.get(shardId);
+
+<span class="cm">// Virtual shards: logical partition → physical node mapping</span>
+<span class="cm">// virtualShard = hash(key) % 1000  (fixed, never changes)</span>
+<span class="cm">// physicalNode = lookupTable[virtualShard]  (reassign without rehashing)</span>`} />
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 92 · API Gateway &amp; Service Mesh</h3>
+        <ul>
+          <li><strong>API Gateway:</strong> single entry point for all client requests. Responsibilities: authentication (JWT), authorization, rate limiting per client, request routing, response aggregation, SSL termination, logging.</li>
+          <li><strong>Filter chain:</strong> each concern is a filter (Chain of Responsibility, Day 36). A request passes through auth → rate-limit → logging → routing → backend call → response filters in order.</li>
+          <li><strong>JWT validation at gateway:</strong> the gateway validates the token signature and expiry; upstream services trust the gateway-forwarded user identity without re-validating.</li>
+          <li><strong>Service Mesh:</strong> a sidecar proxy (e.g. Envoy) injected next to every service instance. Handles mTLS, retries, circuit breaking, tracing, and load balancing transparently — without code changes.</li>
+          <li><strong>Gateway vs Service Mesh:</strong> gateway = north-south traffic (client → services). Service mesh = east-west traffic (service → service).</li>
+          <li><strong>Rate limiting at gateway:</strong> per-client token bucket or sliding window counter, stored in Redis so all gateway instances share state. Return 429 with Retry-After header.</li>
+        </ul>
+        <Code html={`<span class="cm">// API Gateway filter chain — Chain of Responsibility (Day 36)</span>
+<span class="kw">interface</span> Filter {
+    <span class="kw">void</span> handle(Request req, FilterChain chain);
+}
+
+<span class="kw">class</span> AuthFilter <span class="kw">implements</span> Filter {
+    <span class="kw">public void</span> handle(Request req, FilterChain chain) {
+        <span class="kw">if</span> (!jwt.isValid(req.token)) { req.respond(<span class="num">401</span>); <span class="kw">return</span>; }
+        chain.next(req);   <span class="cm">// pass to next filter in chain</span>
+    }
+}`} />
+
+        <h3 style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 93 · Observability</h3>
+        <ul>
+          <li><strong>Three pillars:</strong> Logs (what happened), Metrics (how much / how fast), Traces (where time was spent across services).</li>
+          <li><strong>Structured logs:</strong> emit JSON with fixed fields (timestamp, level, service, traceId, message). Machine-parseable and searchable. Correlation ID ties all logs for one request together.</li>
+          <li><strong>Metrics types:</strong> Counter (monotonically increasing — requests total), Gauge (current value — heap used), Histogram (distribution — latency buckets, P50/P95/P99).</li>
+          <li><strong>RED method:</strong> Rate (requests/sec), Errors (error rate), Duration (latency). Three numbers that describe the health of any service from the outside.</li>
+          <li><strong>Distributed traces:</strong> a trace ID follows a request across all services. Each service creates a span with parent span ID, start time, duration, and tags. Assembling spans for one trace shows the full call graph.</li>
+          <li><strong>OpenTelemetry:</strong> vendor-neutral SDK and wire protocol for all three pillars. Instrument once, export to any backend (Prometheus, Jaeger, Datadog, etc.).</li>
+        </ul>
+        <Code html={`<span class="cm">// W3C traceparent header — propagated across every service hop</span>
+<span class="cm">// traceparent: 00-{traceId}-{spanId}-{flags}</span>
+<span class="cm">// e.g.  traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01</span>
+
+<span class="cm">// RED metrics for a service</span>
+Counter requests  = Counter.build(<span class="str">"http_requests_total"</span>).register();
+Counter errors    = Counter.build(<span class="str">"http_errors_total"</span>).register();
+Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</span>)
+                             .buckets(<span class="num">0.01</span>, <span class="num">0.05</span>, <span class="num">0.1</span>, <span class="num">0.5</span>, <span class="num">1.0</span>).register();`} />
       </section>
 
+      {/* ===== SECTION 3 — The week in a table ===== */}
       <section id="s3">
         <div className="sec-label">Section 3</div>
-        <h2>📋 The week in one table</h2>
+        <h2>The week in one table</h2>
         <table className="matrix">
           <thead>
             <tr>
-              <th>day · topic</th>
-              <th>key insight</th>
-              <th>core pattern / structure</th>
-              <th>interview signal</th>
+              <th>Day · Topic</th>
+              <th>Core pattern</th>
+              <th>Key Java class / tool</th>
+              <th>Gotcha to remember</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>81 · Distributed Cache</td>
-              <td>Invalidate (DELETE) cache on write — never update in cache-aside</td>
-              <td>L1 in-process + L2 Redis; SET NX EX stampede lock</td>
-              <td>"I use cache-aside with DELETE on write and TTL as a safety net"</td>
+              <td>Cache-aside with DELETE on write</td>
+              <td>Redis String, Hash, SortedSet; SET NX EX</td>
+              <td>Never UPDATE cache in cache-aside — always DELETE to avoid stale-write race</td>
             </tr>
             <tr>
               <td>82 · Search Autocomplete</td>
-              <td>Autocomplete gets faster as you type — longer prefix, smaller subtree</td>
-              <td>Trie + top-K stored at each node; radix compression; prefix sharding</td>
-              <td>"Store top-K at each node — O(1) suggestion read vs O(M log M) DFS+sort"</td>
+              <td>Trie + top-K stored at every node</td>
+              <td><C>Map&lt;Character, TrieNode&gt;</C>; <C>PriorityQueue</C> for top-K</td>
+              <td>Top-K write updates ALL ancestor nodes — O(K×L) per insert</td>
             </tr>
             <tr>
-              <td>83 · File Storage System</td>
-              <td>Chunk ID = SHA-256(content) → dedup is structural, not algorithmic</td>
-              <td>Metadata DB + block store; refCount GC; delta sync by hash manifest</td>
-              <td>"Only new chunks cost quota; restoring old versions writes zero bytes"</td>
+              <td>83 · File Storage</td>
+              <td>Content-addressable chunks + refCount GC</td>
+              <td>SHA-256 MessageDigest; metadata DB + block store</td>
+              <td>Delete a chunk ONLY when refCount reaches 0 — not when any one FileVersion is deleted</td>
             </tr>
             <tr>
-              <td>84 · Circuit Breaker &amp; Resilience</td>
-              <td>CLOSED→OPEN→HALF_OPEN is a state machine, not a boolean flag</td>
-              <td>Timeout→Retry→CB→Bulkhead→Fallback stack; retry inside CB</td>
-              <td>"Retry goes inside the circuit breaker so each attempt counts toward the trip"</td>
+              <td>84 · Circuit Breaker</td>
+              <td>CLOSED → OPEN → HALF_OPEN state machine</td>
+              <td>Resilience4j <C>@CircuitBreaker</C>, <C>@Retry</C>, <C>@TimeLimiter</C></td>
+              <td>Retry goes INSIDE the circuit breaker so each attempt counts toward the trip threshold</td>
             </tr>
             <tr>
               <td>85 · Consistent Hashing</td>
-              <td>Add/remove 1 server moves only 1/N keys — nothing else is disturbed</td>
-              <td>TreeMap ring + virtual nodes (V=150+); ceilingEntry() lookup O(log N)</td>
-              <td>"TreeMap.ceilingEntry() is the ring lookup — O(log N)"</td>
+              <td>TreeMap ring + virtual nodes</td>
+              <td><C>TreeMap&lt;Integer,String&gt;</C>; <C>ceilingEntry()</C></td>
+              <td>V=1 virtual nodes = severely skewed arcs; use V=150+ for even distribution</td>
             </tr>
             <tr>
               <td>86 · URL Shortener</td>
-              <td>Counter+base-62 = no collisions by construction</td>
-              <td>Redis cache-aside for redirect; 302 not 301; async analytics queue</td>
-              <td>"302 not 301 — browsers cache 301 forever, breaking analytics"</td>
+              <td>Counter + base-62 encoding; 302 redirect</td>
+              <td>Redis GET for redirect; async queue for analytics</td>
+              <td>301 = browsers cache forever, analytics broken; always use 302</td>
             </tr>
             <tr>
               <td>87 · Search Engine</td>
-              <td>Inverted index: word → doc list, not doc → word list</td>
-              <td>Preprocessing symmetry; TF-IDF scoring; postings sorted merge</td>
-              <td>"TF-IDF: high when frequent in doc AND rare across all docs"</td>
+              <td>Inverted index + TF-IDF; preprocessing symmetry</td>
+              <td><C>Map&lt;String,List&lt;Posting&gt;&gt;</C>; two-pointer merge</td>
+              <td>Index-time and query-time preprocessing MUST be identical or nothing matches</td>
+            </tr>
+            <tr>
+              <td>88 · Real-time Chat</td>
+              <td>WebSocket + Redis Pub/Sub + offline inbox</td>
+              <td>WebSocket API; Redis PUBLISH/SUBSCRIBE</td>
+              <td>Redis Pub/Sub is ephemeral — always write to DB before publishing for offline delivery</td>
+            </tr>
+            <tr>
+              <td>89 · Leaderboard &amp; Top-K</td>
+              <td>Redis Sorted Set; min-heap O(N log K)</td>
+              <td>Redis ZADD/ZINCRBY/ZREVRANGE; <C>PriorityQueue</C></td>
+              <td>ZINCRBY is atomic — safe for concurrent score updates without a separate lock</td>
+            </tr>
+            <tr>
+              <td>90 · Event-Driven Architecture</td>
+              <td>Event Sourcing (log+replay) + CQRS + Saga</td>
+              <td>Kafka / EventStore; immutable event records</td>
+              <td>Read models may lag — design for eventual consistency, not immediate reads after writes</td>
+            </tr>
+            <tr>
+              <td>91 · Database Sharding</td>
+              <td>Hash / range / directory sharding; virtual shards</td>
+              <td>Consistent hashing ring; directory lookup table</td>
+              <td>The shard key must be chosen once and is effectively immutable — wrong choice = hot shard forever</td>
+            </tr>
+            <tr>
+              <td>92 · API Gateway &amp; Service Mesh</td>
+              <td>Filter chain (Chain of Responsibility, Day 36)</td>
+              <td>Spring Cloud Gateway; Envoy sidecar; JWT libraries</td>
+              <td>Gateway = north-south (client ↔ services); service mesh = east-west (service ↔ service)</td>
+            </tr>
+            <tr>
+              <td>93 · Observability</td>
+              <td>Logs + Metrics + Traces; RED method</td>
+              <td>OpenTelemetry SDK; Prometheus; Jaeger / Zipkin</td>
+              <td>Correlation ID must be propagated in EVERY outbound call or traces break mid-chain</td>
             </tr>
           </tbody>
         </table>
       </section>
 
+      {/* ===== SECTION 4 — Memory hooks ===== */}
       <section id="s4">
         <div className="sec-label">Section 4</div>
-        <h2>🧠 Memory hooks</h2>
+        <h2>Memory hooks — one line per day</h2>
         <ul>
-          <li><strong>Cache-aside write rule:</strong> delete the cache key on write — never write to cache and DB in two separate steps. Two steps = race condition. Delete = safe invalidation.</li>
-          <li><strong>Trie lookup gets faster as you type:</strong> more characters → deeper prefix walk → smaller subtree below the prefix node → fewer nodes to visit.</li>
-          <li><strong>Chunk ID is content:</strong> SHA-256(same bytes anywhere) = same ID = same chunk = automatic dedup. No dedup algorithm needed — identity is content identity.</li>
-          <li><strong>HALF_OPEN exists to verify, not guess:</strong> you cannot jump OPEN → CLOSED without proof the service recovered. HALF_OPEN lets one probe through to verify.</li>
-          <li><strong>Bulkhead = ship compartments:</strong> one compartment flooding does not sink the ship. One slow downstream does not starve unrelated services.</li>
-          <li><strong>Retry + jitter:</strong> without jitter, all clients retry at exactly t = 100 ms together — thundering herd of retries. Jitter adds a random offset (e.g. 0–50 ms) to spread them out.</li>
-          <li><strong>RefCount GC:</strong> a chunk is never deleted while any FileVersion references it. decrement → delete only when count == 0. Same as JVM garbage collection.</li>
-          <li><strong>Resilience stack order:</strong> Timeout is innermost (per call). Retry wraps it (per intent). Circuit Breaker wraps that (across intents). Bulkhead is outermost (across services). Fallback catches everything.</li>
-          <li><strong>Consistent hashing add rule:</strong> only the next clockwise arc's keys move — nothing else is disturbed. Compare with modulo where ~80% of keys move when N changes.</li>
-          <li><strong>302 vs 301:</strong> 301 = browser caches forever = analytics broken forever. Always 302 for any link where you want to track clicks or update the destination.</li>
-          <li><strong>Preprocessing symmetry:</strong> tokenize query the same way you tokenized documents — or "running" will never match "run" in the index. Both pipelines must be identical.</li>
+          <li><strong>Day 81 — Cache-aside write:</strong> DELETE the key, never update it — two threads updating in the wrong order leave stale data forever.</li>
+          <li><strong>Day 82 — Trie autocomplete:</strong> the longer the prefix the smaller the subtree — autocomplete speeds up as you type.</li>
+          <li><strong>Day 83 — Content-addressed storage:</strong> SHA-256(same bytes anywhere) = same key = same chunk = zero-cost dedup, automatic.</li>
+          <li><strong>Day 84 — HALF_OPEN:</strong> you cannot jump OPEN → CLOSED without proof — HALF_OPEN is the probe that verifies recovery before trusting it.</li>
+          <li><strong>Day 85 — Consistent hashing:</strong> add 1 server, only its neighbor's arc moves — compare with modulo hashing where ~80% of keys move.</li>
+          <li><strong>Day 86 — 302 not 301:</strong> 301 = browsers cache forever = analytics broken forever. Always 302 for any link you want to track or update.</li>
+          <li><strong>Day 87 — Preprocessing symmetry:</strong> index "running" as "run" but forget to stem the query → zero results for a valid search. Both pipelines must be identical.</li>
+          <li><strong>Day 88 — Redis Pub/Sub is ephemeral:</strong> write to DB first, then publish — or offline recipients never get the message.</li>
+          <li><strong>Day 89 — ZINCRBY is atomic:</strong> no locks needed for concurrent leaderboard updates — Redis handles it.</li>
+          <li><strong>Day 90 — Event Sourcing state:</strong> current state = replay of the append-only log. Delete nothing; travel in time for free.</li>
+          <li><strong>Day 91 — Shard key is immutable:</strong> choose once, get it right — resharding costs enormous migration effort.</li>
+          <li><strong>Day 92 — Gateway = north-south, mesh = east-west:</strong> gateway faces clients; mesh faces services.</li>
+          <li><strong>Day 93 — Correlation ID in every hop:</strong> propagate the trace ID in every outbound call or distributed traces break mid-chain.</li>
         </ul>
       </section>
 
+      {/* ===== SECTION 5 — Traps ===== */}
       <section id="s5">
         <div className="sec-label">Section 5</div>
-        <h2>🕳 Traps to never repeat</h2>
-        <Warn><strong>Updating the cache instead of invalidating it.</strong> Two threads can race to write stale values after a DB write — one wins and sits in cache past its TTL. In cache-aside, always DELETE on write. Never update.</Warn>
-        <Warn><strong>Retrying non-idempotent calls without an idempotency key.</strong> POST /payments/charge retried after a timeout can double-charge the user. The server may have already processed the first call. Always check idempotency before adding retry.</Warn>
-        <Warn><strong>Treating the circuit breaker as a boolean flag (on/off).</strong> Without HALF_OPEN, you re-open immediately on the first failure after timeout — causing an infinite OPEN → CLOSED → OPEN loop. HALF_OPEN is the probe that proves recovery before fully re-opening.</Warn>
-        <Warn><strong>Storing chunk bytes in the metadata DB.</strong> BLOBs in the metadata store kill query performance and prevent independent scaling of file bytes vs file records. The block store is separate for exactly this reason.</Warn>
-        <Warn><strong>One global Redis connection pool for all services.</strong> Like one global thread pool, it becomes a bottleneck. Use a connection pool per downstream service, or at minimum use connection pooling (Lettuce, Jedis pool) with sensible per-service limits.</Warn>
-        <Warn><strong>Skipping jitter on retry backoff.</strong> All service instances fail at the same time and retry at the same intervals — thundering-herd retries amplify the original outage. Add random jitter to each backoff interval.</Warn>
-        <Warn><strong>Modulo hashing on resize.</strong> Adding 1 server to a 4-server modulo cluster invalidates ~(N-1)/N = 75–80% of the cache. The entire cluster warms from scratch — massive DB load spike. Always use consistent hashing for distributed caches where nodes come and go.</Warn>
-        <Warn><strong>Storing long URL as the cache key.</strong> Cache <C>shortCode → longUrl</C>, not the reverse. The long URL is the value, not the lookup key. Getting the direction wrong makes the cache useless for redirects.</Warn>
-        <Warn><strong>Indexing without stemming query terms.</strong> If "running" is indexed as "run" at index time but the query "running" is not stemmed at query time, the term will not match anything in the index. Preprocessing must be symmetric — same pipeline, both directions.</Warn>
+        <h2>Traps to never repeat</h2>
+        <Warn><strong>Updating the cache instead of invalidating it (Day 81).</strong> Two threads racing to update cache after a DB write can land in the wrong order — a stale value wins until TTL. In cache-aside, always DELETE on write. Never update the entry.</Warn>
+        <Warn><strong>Retrying non-idempotent calls without an idempotency key (Day 84).</strong> POST /payments/charge retried after a timeout can double-charge the user. Always add an idempotency key before enabling retry on a state-mutating endpoint.</Warn>
+        <Warn><strong>Placing retry OUTSIDE the circuit breaker (Day 84).</strong> The breaker then sees only one logical failure per intent, not individual attempts — it trips far too slowly during an outage. Retry must be INSIDE the CB.</Warn>
+        <Warn><strong>Using V=1 virtual nodes in consistent hashing (Day 85).</strong> One virtual node per server creates wildly unequal arc sizes. Use V=150 or more for approximately equal load distribution.</Warn>
+        <Warn><strong>Using 301 redirects in a URL shortener (Day 86).</strong> Browsers cache 301 permanently. After one visit the browser bypasses your shortener forever — analytics are broken and destination updates are invisible.</Warn>
+        <Warn><strong>Asymmetric preprocessing in search (Day 87).</strong> If you stem at index time but not at query time (or vice versa), valid queries produce zero results. Both pipelines must be identical: same steps, same order, both directions.</Warn>
+        <Warn><strong>Relying on Redis Pub/Sub for offline delivery (Day 88).</strong> Pub/Sub is in-memory and ephemeral — messages not consumed at publish time are lost. Always write to a persistent DB inbox before publishing.</Warn>
+        <Warn><strong>Choosing a low-cardinality shard key (Day 91).</strong> Sharding by country (200 distinct values) puts a large portion of traffic on the "US" shard. A shard key must be high-cardinality (hashed user_id) and evenly distributed.</Warn>
+        <Warn><strong>Dropping the correlation ID on the first outbound call (Day 93).</strong> Every service must read the incoming trace ID from the W3C traceparent header and propagate it in every outgoing call. One service forgetting to forward it breaks the entire distributed trace.</Warn>
+        <Warn><strong>Storing file chunks as BLOBs in the metadata DB (Day 83).</strong> Mixing binary data with relational rows kills query performance and prevents independent scaling. The block store is separate for exactly this reason.</Warn>
       </section>
 
+      {/* ===== SECTION 6 — Bonus depth ===== */}
       <section id="s6">
         <div className="sec-label">Section 6 · Bonus depth</div>
-        <h2>💡 Corner cases and interview depth</h2>
-        <Reveal summary="Cache invalidation race: how it actually breaks">
-          <p>Thread A reads a value → cache miss → queries DB (gets value V1) → before A writes to cache, thread B writes a new value V2 to DB and deletes the cache key → thread A writes V1 to cache. Now the cache holds stale V1 and the DB holds V2. TTL is the only safety net. Short TTL catches this; long TTL leaves stale data until expiry. Write-through (write cache and DB atomically) eliminates the race but at write latency cost.</p>
+        <h2>Corner cases and interview depth</h2>
+
+        <Reveal summary="Cache invalidation race: how it actually breaks (Day 81)">
+          <p>Thread A reads cache — miss. Thread A queries DB (gets V1). Thread B writes V2 to DB and deletes the cache key. Thread A writes V1 to cache. Now cache holds stale V1 while DB holds V2. TTL is the only safety net. Write-through avoids this by making the cache write synchronous with the DB write, but at double the write latency.</p>
         </Reveal>
-        <Reveal summary="Why radix compression matters for Trie memory">
-          <p>A naive Trie for English words stores a node per character. A word like "strawberry" needs 10 nodes. Most of those nodes have exactly one child — they are just pass-through. A radix Trie collapses the chain "s→t→r→a→w→b→e→r→r→y" into a single node holding the string "strawberry". For a dictionary with many long words, radix compression can reduce node count by 60–80%.</p>
+
+        <Reveal summary="Why chunk dedup can cross user boundaries safely (Day 83)">
+          <p>If user A and user B upload identical files, they share chunks in the block store. This is safe because permissions are enforced at the metadata layer (FileVersion, Share rows), not the block store. The block store knows only hashes, not owners. No access control logic belongs in the block store.</p>
         </Reveal>
-        <Reveal summary="Why NOT to use double for money — the chunk quota case">
-          <p>Chunk sizes are stored as longs (bytes). Quota is accumulated as a long (total bytes). Fine. But if you compute PRICE per GB using double arithmetic (chunkBytes / 1_073_741_824.0 * pricePerGB), you introduce floating-point rounding. Multiply that by millions of chunks and you get billing errors. Always compute billing in integer units (e.g. paise, cents) using BigDecimal or long arithmetic.</p>
+
+        <Reveal summary="Circuit breaker threshold tuning (Day 84)">
+          <p>Trip threshold must be above the service's baseline error rate or the breaker trips constantly on normal traffic. resetTimeout must be longer than the service's typical recovery time — too short and you probe a still-sick service repeatedly. HALF_OPEN probe count (1 vs N) trades recovery speed against safety: 1 is conservative, N is faster but risks extra load on a recovering service.</p>
         </Reveal>
-        <Reveal summary="Circuit breaker threshold tuning">
-          <p>Trip threshold (e.g. 50% failure rate over 10 calls) must be tuned to the service's normal error rate. A service with 5% baseline errors needs a threshold above 5% or it trips constantly. resetTimeout must be longer than the service's typical recovery time — too short and you probe a still-sick service repeatedly. HALF_OPEN probe count (1 vs N requests) trades recovery speed against safety: 1 probe is conservative; N probes are faster but risk more load on a recovering service.</p>
+
+        <Reveal summary="Consistent hashing: worked example with V=1 vs V=150 (Day 85)">
+          <p>3 servers, V=1. Server A at position 100, B at 300, C at 700 on a ring of 1000. Arc sizes: A=400, B=200, C=400. B handles half the load of A. With V=150, each server has 150 random positions; arc sizes average ~333 each. Adding a 4th server inserts 150 more positions and each existing server loses ~1/4 of its arcs — smooth rebalancing.</p>
         </Reveal>
-        <Reveal summary="Chunk dedup across user boundaries — security implications">
-          <p>If user A and user B upload the same file, they share the same chunk in the block store. User A's permissions should NOT give them access to user B's file — permissions are enforced at the metadata layer (FileVersion, Share rows), not the block store. The block store only knows chunk hashes, not who owns what. This design is safe as long as the metadata layer is correct — but it means the block store cannot enforce access control by itself.</p>
+
+        <Reveal summary="Event Sourcing: when replay is too slow (Day 90)">
+          <p>For an account with 10 million events, replaying every event to get current balance is impractical. Solution: periodic snapshots. Store a snapshot of the current state every N events (e.g. every 1,000). On load, start from the latest snapshot and replay only events after it. Snapshots are an optimization — the source of truth is still the event log.</p>
         </Reveal>
-        <Reveal summary="Retry + idempotency key implementation">
-          <p>Idempotency key = client-generated UUID tied to one logical intent (e.g. "charge this card for this order"). On the server side: before processing, check a table: <C>idempotency_keys(key, status, response_body)</C>. If key exists and status = COMPLETED, return the cached response. If key exists and status = IN_PROGRESS, return 409. If key does not exist, insert it (IN_PROGRESS), process, update to COMPLETED. This makes any endpoint safe to retry regardless of verb.</p>
+
+        <Reveal summary="Database sharding: cross-shard queries and scatter-gather (Day 91)">
+          <p>If a query does not include the shard key, it must fan out to all shards (scatter), collect results from each (gather), merge, and re-sort. This is expensive. Design queries so the shard key is almost always present. For queries that must span shards, aggregate on the application side or use a separate denormalized read model.</p>
         </Reveal>
-        <Reveal summary="Consistent hashing: why virtual nodes matter (worked example)">
-          <p>3 real servers, V=1. Server A lands at position 100, Server B at 300, Server C at 700 on a ring of 1000. Arc sizes: A owns 400 units (700→100 wrap-around), B owns 200 units (100→300), C owns 400 units (300→700). B handles half the load of A and C — badly skewed. With V=150, each server has 150 random positions across the ring. The arc sizes average out to ~333 each. Adding a 4th server inserts 150 more positions; each of the other three servers loses about 1/4 of its arcs. Load rebalances smoothly.</p>
+
+        <Reveal summary="Service mesh vs API gateway: do you need both? (Day 92)">
+          <p>Yes, in large systems. Gateway handles north-south: it is the public-facing edge — it does auth, rate-limiting, SSL termination, and routes external traffic. The service mesh handles east-west: mTLS between services, per-service retries, circuit breaking, and latency-based load balancing — all transparently via sidecars. They solve different layers of the network problem.</p>
         </Reveal>
-        <Reveal summary="URL shortener: counter approach vs hash approach trade-offs">
-          <p>Counter+base-62 is sequential: codes come out as aaaaaa, aaaaab, aaaaac... A scraper can enumerate all your short URLs by iterating. Fix: shuffle the counter with a reversible bijection (e.g. multiply by a large coprime, mod 62^6) before encoding. Hash approach (MD5/SHA-256 of long URL, take 6 chars): deterministic so the same long URL always gets the same code — useful for dedup, but collisions require fallback (append counter, rehash). Hash also reveals that two users shortened the same URL (same code).</p>
-        </Reveal>
-        <Reveal summary="Search: BM25 vs TF-IDF and why BM25 is used in production">
-          <p>TF-IDF has a saturation problem: a document that mentions "java" 100 times scores 10× a document that mentions it 10 times, even if the 100-mention doc is just stuffing the keyword. BM25 adds a saturation parameter k1 (typically 1.2–2.0): score grows with TF but plateaus. It also adds b (0–1) for document-length normalization — a shorter document that mentions "java" 5 times is more relevant than a longer one that mentions it 5 times among 10,000 words. BM25 is the default in Elasticsearch and Lucene.</p>
+
+        <Reveal summary="OpenTelemetry: one SDK, any backend (Day 93)">
+          <p>Before OpenTelemetry, instrumenting an app for Datadog meant Datadog SDK; switching to Jaeger meant rewriting all tracing code. OpenTelemetry defines one API and one wire format (OTLP). You instrument once; you configure an exporter to send to any backend. This decouples instrumentation from the observability vendor — exactly the Dependency Inversion principle applied to infrastructure.</p>
         </Reveal>
       </section>
 
+      {/* ===== SECTION 7 — Rapid review ===== */}
       <section id="s7">
         <div className="sec-label">Section 7 · Interactive</div>
-        <h2>🔁 Rapid review</h2>
+        <h2>Rapid review</h2>
         <p>Recall the answer before revealing — if you hesitate on any card, that is the day to reopen:</p>
         <ReviewDrill items={DRILL} />
       </section>
 
+      {/* ===== SECTION 8 — Quiz ===== */}
       <section id="s8">
         <div className="sec-label">Section 8 · Test yourself</div>
-        <h2>🧠 Recap quiz — 11 questions</h2>
-        <p>Integrative questions across all seven days of Week 17.</p>
+        <h2>Recap quiz — 10 integrative questions</h2>
+        <p>Questions cross multiple days. Click an answer; explanations appear for every choice.</p>
         <Quiz questions={QUESTIONS} />
       </section>
 
       <div className="footer">
         <strong>Week 17 revised?</strong> You can now explain the cache-aside invalidation rule and why
-        you delete instead of update, describe the Trie top-K design and why autocomplete speeds up as you
-        type, model a content-addressed chunk store with reference-count GC, layer the full resilience
-        stack — Timeout → Retry → Circuit Breaker → Bulkhead → Fallback — with retry placed inside the
-        circuit breaker, explain why consistent hashing moves only 1/N keys on a server change, choose
-        302 over 301 for trackable redirects, and describe the preprocessing symmetry rule that makes
-        inverted-index search queries actually match.
+        you delete instead of update, describe Trie top-K design and why autocomplete speeds up as you type,
+        model a content-addressed chunk store with reference-count GC, layer the full resilience
+        stack (Timeout → Retry → CB → Bulkhead → Fallback) with retry inside the circuit breaker,
+        explain why consistent hashing moves only 1/N keys, choose 302 over 301 for trackable redirects,
+        describe preprocessing symmetry for search, build a real-time chat system with WebSocket and offline
+        delivery, use Redis sorted sets for leaderboards, distinguish Event Sourcing from CQRS and explain
+        Sagas, apply the right sharding strategy and shard key rules, design an API Gateway filter chain
+        using Chain of Responsibility, and instrument a service with the three pillars of observability.
         <br /><br />
-        ← <a className="homelink" href="#/revise" style={{ display: 'inline' }}>Revision Hub</a> ·
-        You have completed the bonus week. Review any day that felt shaky and then tackle mock interviews
-        with full-system design questions combining Month 3 classics with the Month 4 resilience layer.
+        Back to the <a className="homelink" href="#/revise" style={{ display: 'inline' }}>Revision Hub</a> —
+        review any day that felt shaky, then tackle mock interviews combining Month 3 classics with the
+        Month 4 resilience and observability layer.
       </div>
     </div>
   )
