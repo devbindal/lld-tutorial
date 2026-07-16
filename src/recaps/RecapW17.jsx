@@ -156,10 +156,40 @@ const DRILL = [
     why: 'One trace = one request ID that follows a request from the browser through API gateway, service A, service B, and DB. Each hop or sub-operation creates a span with start time, duration, parent span ID, and tags. Assembling all spans for a trace ID shows the full call graph.'
   },
   {
-    q: 'Saga pattern vs two-phase commit (2PC): when do you choose Saga?',
-    o: ['2PC is always preferred because it is simpler', 'Saga when services are owned by different teams or when 2PC availability cost is too high — each step has a compensating transaction; 2PC when you need strict synchronous atomicity across a small number of services you own', 'Saga only works with Event Sourcing', 'They solve different problems: 2PC is for reads, Saga is for writes'],
+    q: 'In Kafka, what guarantees ordering of messages for a given order ID?',
+    o: ['Kafka guarantees ordering across the entire topic', 'Use the order ID as the partition key — hash(key) % N routes all messages for that order to the same partition, and a partition is an ordered log', 'Increase the replication factor to 3', 'Use a single consumer per topic'],
     a: 1,
-    why: '2PC blocks all participants until the coordinator decides commit/abort — high availability cost, coordinator is a SPOF. Saga breaks the transaction into local steps each with a compensating action (undo). If step 3 fails, compensations run in reverse. Saga trades strict atomicity for availability and independence.'
+    why: 'Kafka guarantees ordering only within a partition, not across partitions. By using the entity ID (e.g. orderId) as the message key, all events for that entity go to the same partition via hash(key) % N, so a single consumer processes them in order.'
+  },
+  {
+    q: 'What is the Outbox Pattern and why does it matter?',
+    o: ['A pattern for sending emails asynchronously', 'Write the business record AND the outbox event row in one DB transaction — a relay then publishes to Kafka separately, ensuring atomicity between the DB write and the event', 'A Kafka consumer pattern that stores consumed messages locally', 'A circuit breaker for message queues'],
+    a: 1,
+    why: 'You cannot atomically write to a DB and send a message to Kafka in one step. The outbox pattern uses a single DB transaction to write both the business record and an event row in an outbox table. A relay (or CDC tool like Debezium) reads the outbox and publishes to Kafka. If the relay crashes, it re-reads the unpublished rows — no message is ever lost.'
+  },
+  {
+    q: 'CDN Cache-Control: when should you use "public, s-maxage=N" vs "private, no-store"?',
+    o: ['"private, no-store" for all content to be safe', '"public, s-maxage=N" for shared static content CDNs may cache; "private, no-store" for user-specific sensitive data that must never be cached by any proxy', '"public" always, then rely on the CDN to decide', '"s-maxage" only works on HTTP/2'],
+    a: 1,
+    why: '"public, s-maxage=N" tells CDN PoPs they may cache this response for N seconds — correct for static assets, CSS, JS. "private" means only the browser may cache it (not CDN). "no-store" means store nothing anywhere — required for sensitive user data like account pages or auth tokens.'
+  },
+  {
+    q: 'Why is least-connections better than round-robin when request durations vary widely?',
+    o: ['It is not — round-robin is always simpler and equally fair', 'Least-connections routes new requests to whichever server has the fewest active connections right now, so a server stuck on a slow request naturally gets fewer new requests', 'Least-connections requires cookies, round-robin does not', 'Round-robin cannot be used with health checks'],
+    a: 1,
+    why: 'Round-robin blindly rotates regardless of how busy each server currently is — a slow request on S1 does not stop S1 from getting its next turn. Least-connections adapts: it checks live connection counts, so a server already loaded with a heavy request receives fewer new ones until it catches up.'
+  },
+  {
+    q: 'Why do sticky sessions break rolling deployments and auto-scaling?',
+    o: ['They do not — sticky sessions are always safe', 'They pin a user to one specific server instance; taking that instance down (deploy) or adding new instances (scale) either loses that user\'s session or leaves new servers without any assigned traffic', 'Sticky sessions only work with L4 load balancers', 'They require every server to run the exact same OS version'],
+    a: 1,
+    why: 'Sticky sessions couple a user to a specific server via cookie or IP hash. A rolling deploy takes servers down one at a time — every pinned user on that server loses their session. Auto-scaling adds new servers that hold no existing sessions at all. Externalizing session state (Redis) removes this coupling entirely.'
+  },
+  {
+    q: 'What is a "bounded context" in Domain-Driven Design, and why does it matter for microservices?',
+    o: ['A rate limit on how many requests a service may handle', 'A boundary inside which a model and its terms have one consistent meaning — the same word (e.g. "Customer") can mean something different in another bounded context, so each context should own its own model', 'A physical boundary between data centers', 'A limit on how many microservices one team may own'],
+    a: 1,
+    why: '"Order" in Sales (a quote with discount tiers) is not the same as "Order" in Warehouse (a pick list with bin locations). Forcing one shared Order class to serve both creates constant schema conflict between teams. Splitting into separate bounded contexts — each with its own model — lets each team evolve independently.'
   },
 ]
 
@@ -334,6 +364,142 @@ const QUESTIONS = [
     },
     r: { id: 'day92', label: 'Day 92 — API Gateway and Service Mesh' }
   },
+  {
+    q: 'In Kafka, you need all events for a given orderId to be processed in order. What must you do?',
+    o: [
+      'Set replication factor to 3 to ensure ordering',
+      'Use orderId as the message key — Kafka routes all messages with the same key to the same partition, and a partition is an ordered log',
+      'Use a single partition per topic so all messages are globally ordered',
+      'Set the consumer group to have exactly one consumer'
+    ],
+    a: 1,
+    e: 'Kafka guarantees ordering only within a partition. Using the entity ID (orderId) as the message key causes the producer to route via hash(key) % numPartitions — all events for that order land in the same partition and are consumed in order by one consumer in the group.',
+    w: {
+      0: 'Replication factor controls fault tolerance (how many copies exist), not message ordering.',
+      2: 'A single partition works but eliminates all parallelism. Key-based routing is the production solution.',
+      3: 'One consumer per group processes the entire topic sequentially, which eliminates parallelism and does not help with per-entity ordering.'
+    },
+    r: { id: 'day94', label: 'Day 94 — Kafka and Distributed Messaging' }
+  },
+  {
+    q: 'A service needs to write to its DB and publish a Kafka event atomically. What pattern solves this?',
+    o: [
+      'Two-phase commit (2PC) across the DB and Kafka',
+      'Outbox pattern — write the business record and an outbox event row in the same DB transaction; a relay publishes to Kafka separately',
+      'Write to Kafka first, then to the DB — Kafka is more reliable',
+      'Use a distributed lock to coordinate the two writes'
+    ],
+    a: 1,
+    e: 'You cannot atomically span a DB transaction and a Kafka send. The outbox pattern keeps both writes in one DB transaction (always consistent). A relay (or Debezium CDC) reads uncommitted outbox rows and publishes them to Kafka. If the relay crashes, it re-reads unpublished rows on restart — no event is ever lost.',
+    w: {
+      0: '2PC across a DB and Kafka is impractical — Kafka does not participate in XA transactions and the coordinator is a SPOF.',
+      2: 'Writing to Kafka first means if the DB write fails, the event has been published for a change that did not happen.',
+      3: 'A distributed lock does not help — the two writes still happen at different times; a crash between them leaves them inconsistent.'
+    },
+    r: { id: 'day95', label: 'Day 95 — Distributed Transactions' }
+  },
+  {
+    q: 'A CDN serves your homepage. You update the HTML. Users keep seeing the old version for hours. What went wrong and how do you fix static assets going forward?',
+    o: [
+      'The CDN is broken — contact support',
+      'The CDN cached the response per s-maxage and will not re-fetch until it expires; for versioned static assets use URL hashing (e.g. main.a3f9.js) so each build gets a unique URL that is instantly fresh',
+      'Set Cache-Control: no-cache on all responses to prevent caching',
+      'Switch from 200 to 304 responses to force revalidation'
+    ],
+    a: 1,
+    e: 'CDN PoPs serve from their local cache until s-maxage expires. For HTML (which changes), use a short s-maxage or stale-while-revalidate. For static assets (JS/CSS), embed a content hash in the filename — the URL changes on every build, so the CDN sees a brand-new URL and fetches fresh content immediately.',
+    w: {
+      0: 'The CDN is behaving exactly as configured. The fix is a better caching strategy, not a support ticket.',
+      2: 'no-cache forces revalidation on every request — it defeats CDN caching entirely and sends every request to origin.',
+      3: '304 Not Modified is a revalidation response the origin sends to the CDN; it does not control how long the CDN caches in the first place.'
+    },
+    r: { id: 'day96', label: 'Day 96 — CDN and Edge Caching' }
+  },
+  {
+    q: 'A load balancer uses IP hash for sticky sessions. What breaks when one server is removed from the pool?',
+    o: [
+      'Nothing — IP hash is immune to pool changes',
+      'The modulo base changes (hash(ip) % N), so most clients suddenly hash to a different server than before, losing their session affinity all at once',
+      'Only the clients on the removed server are affected',
+      'IP hash automatically migrates sessions to the new server'
+    ],
+    a: 1,
+    e: 'IP hash routes via hash(clientIp) % N. Removing one server changes N, so almost every client\'s hash % N result changes — not just clients who were on the removed server. This is the same modulo-hashing fragility from consistent hashing (Day 85), applied to load balancer routing instead of cache routing.',
+    w: {
+      0: 'IP hash is exactly as fragile to pool-size changes as plain modulo hashing — changing N reroutes almost everyone.',
+      2: 'Because the divisor N changes for everyone, clients who were NOT on the removed server are also affected, not just the ones who were.',
+      3: 'IP hash has no concept of session migration — it purely recomputes a hash. There is no data transfer between servers.'
+    },
+    r: { id: 'day97', label: 'Day 97 — Load Balancing' }
+  },
+  {
+    q: 'Why must a circuit breaker\'s retry logic live INSIDE the breaker rather than wrapping it (a Day 84 idea revisited for load balancers and service meshes)?',
+    o: [
+      'It does not matter which order they are in',
+      'If retry wraps the breaker, the breaker only sees one logical failure per caller intent instead of each individual attempt, so it trips far too slowly during a real outage',
+      'Retry outside the breaker causes a compile error',
+      'The breaker cannot track failures unless retry is disabled entirely'
+    ],
+    a: 1,
+    e: 'This question is a direct callback to Day 84\'s resilience stack (Timeout → Retry → Circuit Breaker → Bulkhead → Fallback). Retry must be inside the CB so every individual attempt counts toward the trip threshold — the same principle a service mesh sidecar (Day 92) applies transparently to every service-to-service call.',
+    w: {
+      0: 'Order changes how fast the breaker detects an outage — this is not cosmetic.',
+      2: 'This is a design smell, not a compiler error — both orderings compile fine.',
+      3: 'The breaker can track failures with retry either inside or outside; the issue is granularity of what counts as one failure, not whether tracking is possible.'
+    },
+    r: { id: 'day97', label: 'Day 97 — Load Balancing' }
+  },
+  {
+    q: 'A team extracts a "PaymentService" but has it share the same PostgreSQL database and tables as "OrderService." What is the core problem?',
+    o: [
+      'There is no problem — sharing a database is fine as long as the code is in separate repos',
+      'The database is a hidden coupling point: a schema change in one service\'s tables can silently break the other service\'s queries, so true independence never existed despite separate codebases',
+      'PostgreSQL cannot be shared by two services for licensing reasons',
+      'The problem only appears if the services are deployed to different servers'
+    ],
+    a: 1,
+    e: 'Database-per-service is the single most important microservices rule (Day 98). A shared database looks like two independent services but is not — PaymentService renaming a column breaks OrderService\'s query silently, and neither team can deploy schema changes without coordinating with the other. Cross-service reads must go through the owning service\'s API, not a DB join.',
+    w: {
+      0: 'Separate repos and separate deploy pipelines do not remove the coupling if the underlying storage is still shared — a schema change still breaks the other service.',
+      2: 'This is an architectural coupling issue, not a licensing constraint.',
+      3: 'The problem is structural (shared schema, shared table ownership) — it exists regardless of physical deployment topology.'
+    },
+    r: { id: 'day98', label: 'Day 98 — Microservices Patterns' }
+  },
+  {
+    q: 'What is the "Strangler Fig" pattern, and why is it preferred over rewriting a monolith all at once?',
+    o: [
+      'A caching pattern that strangles slow queries by timing them out',
+      'Incrementally route one capability at a time from the monolith to a new microservice via a gateway, delete the dead code, and repeat — a big-bang rewrite almost always fails because the monolith keeps evolving while a full rewrite is frozen',
+      'A pattern for compressing HTTP responses at the edge',
+      'A database migration tool for schema changes'
+    ],
+    a: 1,
+    e: 'Named after the strangler fig tree, which grows around a host tree and slowly replaces it. The migration cycle is: route (put a gateway in front) → extract (build the new service for one capability) → redirect (send that capability\'s traffic to the new service) → kill + repeat. This avoids the classic "6-month rewrite" trap, since the old system stays live and useful throughout.',
+    w: {
+      0: 'This question is about service migration strategy, not caching or query timeouts.',
+      2: 'HTTP compression is unrelated — Strangler Fig is an architectural migration pattern.',
+      3: 'It is not a schema tool — it is a strategy for incrementally replacing an entire system, potentially including its database.'
+    },
+    r: { id: 'day98', label: 'Day 98 — Microservices Patterns' }
+  },
+  {
+    q: 'In the 6-step system design interview framework (Day 99), which step is most often skipped by weak candidates, and what does skipping it signal?',
+    o: [
+      'Step 3 (high-level design) — skipping it signals the candidate cannot draw diagrams',
+      'Step 1 (clarify requirements) — jumping straight to drawing boxes without asking about scale, scope, or consistency signals solution-first thinking instead of problem-first thinking',
+      'Step 6 (edge cases) — skipping it has no real consequence since production failures are rare',
+      'Step 2 (define scope) — skipping it only matters for very large systems'
+    ],
+    a: 1,
+    e: 'Drawing before clarifying is the #1 mistake named across Day 99\'s common-mistakes section. A 10K QPS design and a 10M QPS design look completely different — without scale and scope questions, the constraints that should drive every later decision are missing, and the interviewer cannot tell if you understand why you chose SQL vs NoSQL, cache vs no cache, etc.',
+    w: {
+      0: 'Step 3 is usually where candidates over-invest time, not skip — boxes are the "safe" part of the interview.',
+      2: 'Not mentioning failure modes (Step 6) is explicitly called out as a signal of junior-level thinking, not a minor omission.',
+      3: 'Scope (Step 2) matters at every scale — it prevents the interviewer from later saying "you forgot X," regardless of system size.'
+    },
+    r: { id: 'day99', label: 'Day 99 — System Design Interview Synthesis' }
+  },
 ]
 
 export default function RecapW17() {
@@ -341,16 +507,19 @@ export default function RecapW17() {
     <div className="scrollarea">
       <div className="hero">
         <div className="eyebrow">Bonus · Week 17</div>
-        <h1>Week 17 Recap:<br />13 Days of Advanced System Design</h1>
-        <p>Days 81–93 in one place: caching, search, file storage, resilience, consistent hashing, URL shortener,
-           search engine, real-time chat, leaderboards, event-driven architecture, sharding, API gateway, and
-           observability. Cheat-sheet, rapid review, recap quiz.</p>
+        <h1>Week 17 Recap:<br />19 Days of Advanced System Design</h1>
+        <p>Days 81–99 in one place: caching, search, file storage, resilience, consistent hashing, URL shortener,
+           search engine, real-time chat, leaderboards, event-driven architecture, sharding, API gateway,
+           observability, Kafka, distributed transactions, CDN, load balancing, microservices patterns, and
+           the system design interview framework. Cheat-sheet, rapid review, recap quiz.</p>
         <div className="chips">
           {[
             'Distributed Cache', 'Search Autocomplete', 'File Storage', 'Circuit Breaker',
             'Consistent Hashing', 'URL Shortener', 'Search Engine', 'Real-time Chat',
             'Leaderboard & Top-K', 'Event Sourcing', 'CQRS', 'Sagas',
-            'Database Sharding', 'API Gateway', 'Service Mesh', 'Observability'
+            'Database Sharding', 'API Gateway', 'Service Mesh', 'Observability',
+            'Kafka', 'Outbox Pattern', 'CDN', 'Load Balancing', 'Microservices Patterns',
+            'Interview Synthesis'
           ].map((c) => <span className="chip" key={c}>{c}</span>)}
         </div>
       </div>
@@ -359,13 +528,14 @@ export default function RecapW17() {
       <section id="s1">
         <div className="sec-label">Section 1</div>
         <h2>The week in one picture</h2>
-        <Code html={`  WEEK 17 (BONUS) — 13 advanced system-design topics, grouped by concern
+        <Code html={`  WEEK 17 (BONUS) — 19 advanced system-design topics, grouped by concern
 
   ┌─────────────────────────── CACHING LAYER ───────────────────────────────┐
   │  Day 81  DISTRIBUTED CACHE  cache-aside / write-through / TTL           │
   │                              eviction (LRU/LFU) / hot-key / stampede    │
   │  Day 82  SEARCH AUTOCOMPLETE Trie + top-K at node / radix tree          │
   │  Day 86  URL SHORTENER       base-62 counter / 302 / async analytics    │
+  │  Day 96  CDN & EDGE CACHING  PoP / Cache-Control / URL hash / shield    │
   └─────────────────────────────────────────────────────────────────────────┘
 
   ┌─────────────────────────── DATA TIER ───────────────────────────────────┐
@@ -387,6 +557,10 @@ export default function RecapW17() {
   │  Day 88  REAL-TIME CHAT      WebSocket / Redis Pub-Sub / offline queue  │
   │  Day 90  EVENT-DRIVEN ARCH   Event Sourcing (log+replay) / CQRS         │
   │                              Saga + compensating transactions            │
+  │  Day 94  KAFKA               topic / partition / offset / consumer group│
+  │                              key-based routing / log compaction          │
+  │  Day 95  DISTRIBUTED TXNS    2PC / Saga / Outbox / CDC (Debezium)       │
+  │                              idempotency key / exactly-once delivery     │
   └─────────────────────────────────────────────────────────────────────────┘
 
   ┌─────────────────────────── OBSERVABILITY ───────────────────────────────┐
@@ -394,6 +568,18 @@ export default function RecapW17() {
   │                              metrics (Counter/Gauge/Histogram, RED)      │
   │                              traces (spans / W3C traceparent)            │
   │                              OpenTelemetry as the unifying SDK           │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────── SCALING & ARCHITECTURE ──────────────────────┐
+  │  Day 97  LOAD BALANCING      L4 vs L7 / 6 algorithms / health checks    │
+  │                              sticky sessions / connection draining       │
+  │  Day 98  MICROSERVICES       decomposition / bounded contexts / ACL     │
+  │                              strangler fig / DB-per-service / BFF        │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────── INTERVIEW PREP ───────────────────────────────┐
+  │  Day 99  INTERVIEW SYNTHESIS 6-step framework / patterns library         │
+  │                              trade-off compass / common mistakes         │
   └─────────────────────────────────────────────────────────────────────────┘`} />
         <Note><strong>The meta-theme of Week 17:</strong> protect shared state and user experience under load — across
           caches, file stores, service calls, event streams, databases, and network boundaries. Every day adds one
@@ -639,6 +825,106 @@ Counter requests  = Counter.build(<span class="str">"http_requests_total"</span>
 Counter errors    = Counter.build(<span class="str">"http_errors_total"</span>).register();
 Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</span>)
                              .buckets(<span class="num">0.01</span>, <span class="num">0.05</span>, <span class="num">0.1</span>, <span class="num">0.5</span>, <span class="num">1.0</span>).register();`} />
+
+        <h3 id="day94" style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 94 · Kafka &amp; Distributed Messaging</h3>
+        <ul>
+          <li><strong>Topic:</strong> a named category for messages (e.g. "order-events"). Producers write to a topic; consumers read from it.</li>
+          <li><strong>Partition:</strong> each topic is split into N ordered, immutable append-only logs. Messages within a partition are ordered; across partitions there is no guarantee.</li>
+          <li><strong>Offset:</strong> each message in a partition has a monotonically increasing integer offset. A consumer's bookmark is the offset of the last message it processed.</li>
+          <li><strong>Consumer group:</strong> multiple consumers sharing a topic. Kafka assigns each partition to exactly one consumer in the group — parallelism scales with partition count.</li>
+          <li><strong>Key-based routing:</strong> producer sets a message key (e.g. orderId). Kafka routes via <C>hash(key) % numPartitions</C> — all events for the same entity go to the same partition, guaranteeing per-entity order.</li>
+          <li><strong>Log compaction:</strong> Kafka can retain only the latest message per key forever (instead of deleting by age). Useful for materializing the latest state of every entity.</li>
+          <li><strong>At-least-once + idempotent consumer:</strong> Kafka guarantees at-least-once delivery by default. Consumers must be idempotent (check if eventId was already processed) to achieve effectively exactly-once semantics.</li>
+        </ul>
+        <Code html={`<span class="cm">// Producer: route by key so all events for one order go to the same partition</span>
+producer.send(<span class="kw">new</span> ProducerRecord&lt;&gt;(<span class="str">"order-events"</span>, order.id(), event));
+<span class="cm">//                                  topic ↑         key ↑    value ↑</span>
+<span class="cm">// hash(order.id()) % N determines the partition — ordering per order guaranteed`} />
+        <Warn><strong>Kafka gotcha:</strong> Kafka guarantees ordering <em>within</em> a partition, not across partitions. If you need global ordering, use a single partition — but that eliminates all parallelism.</Warn>
+
+        <h3 id="day95" style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 95 · Distributed Transactions</h3>
+        <ul>
+          <li><strong>2PC (two-phase commit):</strong> coordinator sends Prepare to all participants → all reply Ready → coordinator sends Commit. Blocking: if the coordinator crashes after Prepare, participants hold locks indefinitely (in-doubt state).</li>
+          <li><strong>Saga:</strong> break the transaction into local steps each with a compensating transaction (undo). If step N fails, run compensations from N-1 to 1. Achieves eventual consistency, not strict atomicity.</li>
+          <li><strong>Outbox pattern:</strong> write the business record AND an outbox event row in the same DB transaction. A relay (or CDC tool) publishes outbox rows to Kafka separately. Atomicity between the DB write and the event is guaranteed by the DB transaction.</li>
+          <li><strong>Idempotency key:</strong> store the eventId after first processing. On duplicate delivery, check the table and skip re-processing. This converts at-least-once delivery into effectively exactly-once.</li>
+          <li><strong>CDC (Change Data Capture):</strong> tools like Debezium read the DB write-ahead log (WAL) to detect new outbox rows and publish them to Kafka. No polling; no missed events.</li>
+        </ul>
+        <Code html={`<span class="cm">// Outbox: business write + event row in ONE transaction — atomically consistent</span>
+db.execute(<span class="str">"INSERT INTO orders (id, status) VALUES (?, ?)"</span>, orderId, <span class="str">"PENDING"</span>);
+db.execute(<span class="str">"INSERT INTO outbox (event_type, payload) VALUES (?, ?)"</span>,
+           <span class="str">"ORDER_PLACED"</span>, payload);
+<span class="cm">// Both commit or both rollback — Debezium/relay reads outbox and publishes to Kafka</span>`} />
+        <Warn><strong>2PC gotcha:</strong> coordinator crash after Prepare = all participants stuck holding locks forever (in-doubt state). This is why 2PC is rarely used across microservices you do not own.</Warn>
+
+        <h3 id="day96" style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 96 · CDN &amp; Edge Caching</h3>
+        <ul>
+          <li><strong>CDN PoP (Point of Presence):</strong> a CDN server in a nearby city. On a cache hit it serves the response locally (low latency). On a cache miss it fetches from origin, caches at the PoP, then serves.</li>
+          <li><strong><C>Cache-Control: public, s-maxage=N</C>:</strong> CDN PoPs may cache this response for N seconds. Use for static assets, public API responses, and pages that are the same for all users.</li>
+          <li><strong><C>Cache-Control: private, no-store</C>:</strong> <C>private</C> means only the browser may cache (not CDN). <C>no-store</C> means store nothing anywhere — required for sensitive user data (account pages, auth tokens).</li>
+          <li><strong>URL hash for static assets:</strong> embed a content hash in the filename (e.g. <C>main.a3f9b2.js</C>). Every build produces a new URL, so the CDN always sees a fresh request and serves the correct version immediately.</li>
+          <li><strong>Origin shield:</strong> one designated PoP ("shield PoP") acts as the sole fetcher from origin. All other PoPs miss → fetch from shield PoP, not origin. Prevents thundering herd on cache miss for popular content.</li>
+          <li><strong>Edge computing:</strong> run code at the PoP (e.g. Cloudflare Workers, Lambda@Edge). Auth checks, A/B tests, and personalization happen at the edge with no origin round-trip.</li>
+          <li><strong><C>stale-while-revalidate</C>:</strong> serve stale content immediately while fetching a fresh copy in the background. Users never wait for origin; content stays fresh within the revalidation window.</li>
+        </ul>
+        <Code html={`<span class="cm">// CDN-friendly response headers</span>
+response.setHeader(<span class="str">"Cache-Control"</span>, <span class="str">"public, s-maxage=300, stale-while-revalidate=60"</span>);
+<span class="cm">//  s-maxage=300      → CDN may cache for 5 minutes</span>
+<span class="cm">//  stale-while-revalidate=60 → serve stale for 60 s while fetching fresh copy</span>
+
+<span class="cm">// Sensitive user data — never cache anywhere</span>
+response.setHeader(<span class="str">"Cache-Control"</span>, <span class="str">"private, no-store"</span>);`} />
+        <Warn><strong>CDN gotcha:</strong> <C>Vary: Accept-Language</C> creates a separate cache entry per language header value. With 20 languages, each PoP stores 20 copies of every page. Use separate URLs per locale instead.</Warn>
+
+        <h3 id="day97" style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 97 · Load Balancing</h3>
+        <ul>
+          <li><strong>L4 (transport layer):</strong> routes by IP/port only, no HTTP awareness. Very fast, pass-through TLS. Example: AWS NLB.</li>
+          <li><strong>L7 (application layer):</strong> routes by URL path, header, or cookie; terminates TLS. Example: AWS ALB, Nginx, HAProxy.</li>
+          <li><strong>Six algorithms:</strong> round-robin (simple, no adaptation), weighted round-robin (handles capacity differences), least-connections (adapts to slow requests), least-response-time (most adaptive), IP hash (simple sticky affinity, fragile with NAT), consistent hashing (ring-based, used for cache affinity).</li>
+          <li><strong>Health checks:</strong> active = LB probes <C>/health</C> on a schedule; N consecutive failures (usually 2–3) marks a server DOWN and removes it from rotation. Passive = LB watches real traffic error rates.</li>
+          <li><strong>Sticky sessions:</strong> pin a client to one server via cookie or IP hash so in-memory session state is found again. Fragile — breaks rolling deploys and auto-scaling. Fix: externalize session state to Redis so any server can serve any user.</li>
+          <li><strong>Connection draining:</strong> mark a server DRAINING → stop sending new requests → wait for in-flight requests to finish → then shut it down. Prevents killing active user requests during a deploy.</li>
+        </ul>
+        <Code html={`<span class="cm">// Least-connections: adapts to load, unlike round-robin</span>
+<span class="kw">synchronized</span> Server next() {
+    <span class="kw">return</span> servers.stream()
+        .filter(Server::isHealthy)
+        .min(Comparator.comparingInt(Server::activeConnections)) <span class="cm">// fewest active first</span>
+        .orElseThrow(NoHealthyServersException::<span class="kw">new</span>);
+}`} />
+        <Warn><strong>Load balancing gotcha:</strong> IP hash reroutes clients when the server pool changes — the divisor N changes for everyone, not just clients on the removed server (same problem as plain modulo hashing, Day 85).</Warn>
+
+        <h3 id="day98" style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 98 · Microservices Patterns</h3>
+        <ul>
+          <li><strong>Three decomposition strategies:</strong> by business capability (Conway's Law — services mirror team structure), by DDD bounded context (split where the same word means different things), by volatility (extract what changes often, keep stable code in the monolith).</li>
+          <li><strong>Bounded context:</strong> a boundary inside which a model and its terms are consistent. "Customer" in Sales, Support, and Billing are three different models — forcing one shared class creates constant cross-team conflict.</li>
+          <li><strong>Anti-Corruption Layer (ACL):</strong> a translation layer at a bounded-context boundary that keeps a legacy or third-party model (e.g. Stripe) out of your clean domain. It is the Adapter pattern (Day 26) applied at the boundary — swap providers by swapping the adapter only.</li>
+          <li><strong>Strangler Fig:</strong> incremental migration — route via a gateway, extract one capability into a new service, redirect its traffic, kill the dead monolith code, repeat. Avoids the near-always-failed big-bang rewrite.</li>
+          <li><strong>Database per service:</strong> the single most important rule. No service reaches directly into another service's database. Cross-service reads go through the owning service's API; cross-service consistency uses Saga (Day 90) or Outbox (Day 95), never a shared-DB transaction.</li>
+          <li><strong>API Composition / BFF:</strong> one client call hits a Composer that fans out to N services in parallel and merges results — avoids N round-trips from a slow mobile connection and keeps clients from knowing internal service topology.</li>
+        </ul>
+        <Code html={`<span class="cm">// Database per service — no cross-service DB joins, ever</span>
+<span class="cm">// OrderService owns orders_db; PaymentService owns payments_db</span>
+PaymentSummary ps = paymentClient.getPaymentForOrder(orderId); <span class="cm">// HTTP call, not a join</span>
+<span class="cm">// Multi-step consistency across services → Saga (Day 90) or Outbox (Day 95)</span>`} />
+        <Warn><strong>Microservices gotcha:</strong> extracting nano-services (one service per class or table) is worse than a monolith — it turns cheap method calls into expensive network calls while adding zero real independence.</Warn>
+
+        <h3 id="day99" style={{ fontFamily: 'Space Grotesk', marginTop: 18 }}>Day 99 · System Design Interview Synthesis</h3>
+        <ul>
+          <li><strong>The 6-step framework:</strong> (1) Clarify requirements 5min — ask DAU, features, read/write ratio, consistency, latency SLA. (2) Define scope 5min — state in/out, write scale math. (3) High-level design 10min — boxes and arrows, happy path, name every service. (4) Deep dive 10min — pick 1–2 hard sub-problems, discuss trade-offs. (5) Scale 10min — ask "what breaks at 10×," walk cache/replicas/sharding/async/CDN. (6) Edge cases 5min — idempotency, circuit breakers, monitoring.</li>
+          <li><strong>Scale math shortcut:</strong> seconds/day ≈ 86,400 (round to 100,000 for mental math). 100M users × 10 req/day ÷ 100K ≈ 1,000s QPS average; peak is 2–3× that.</li>
+          <li><strong>How to find the hard sub-problem:</strong> look for two users/one resource (booking), one event/millions of fans (fan-out), fast search over huge data, real-time updates to millions, or money movement — these are the Step 4 deep-dive candidates.</li>
+          <li><strong>"It depends" is a real answer</strong> — only when followed by what it depends on and how each option performs under those conditions. Bare "it depends" without justification is a non-answer.</li>
+          <li><strong>Patterns library:</strong> a 20-row lookup table mapping "problem you have" → "pattern to use" → which Day taught it, from caching to consistent hashing to circuit breakers to distributed tracing.</li>
+        </ul>
+        <Code html={`<span class="cm">// The 6-step framework at a glance</span>
+<span class="cm">//  Step 1  (5 min)  Clarify requirements   — ask questions</span>
+<span class="cm">//  Step 2  (5 min)  Define scope           — state what is in / out</span>
+<span class="cm">//  Step 3 (10 min)  High-level design      — boxes + arrows, happy path</span>
+<span class="cm">//  Step 4 (10 min)  Deep dive              — 1-2 hard sub-problems</span>
+<span class="cm">//  Step 5 (10 min)  Scale + bottlenecks    — stress-test at 10x</span>
+<span class="cm">//  Step 6  (5 min)  Edge cases + failures  — what breaks, how to handle it</span>`} />
+        <Warn><strong>Interview gotcha:</strong> drawing boxes before asking about scale is the #1 mistake — a 10K QPS design and a 10M QPS design look nothing alike, and the interviewer is grading whether your design fits the constraints you never asked for.</Warn>
       </section>
 
       {/* ===== SECTION 3 — The week in a table ===== */}
@@ -733,6 +1019,42 @@ Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</s
               <td>OpenTelemetry SDK; Prometheus; Jaeger / Zipkin</td>
               <td>Correlation ID must be propagated in EVERY outbound call or traces break mid-chain</td>
             </tr>
+            <tr>
+              <td>94 · Kafka &amp; Distributed Messaging</td>
+              <td>Topic / partition / consumer group; key-based routing</td>
+              <td>KafkaProducer, KafkaConsumer; ProducerRecord with key</td>
+              <td>Ordering is per-partition only — use message key to route related events to the same partition</td>
+            </tr>
+            <tr>
+              <td>95 · Distributed Transactions</td>
+              <td>Saga + Outbox pattern + idempotency key</td>
+              <td>Outbox DB table; Debezium CDC; idempotency_keys table</td>
+              <td>2PC coordinator crash = all participants stuck holding locks (in-doubt state) — prefer Saga + Outbox</td>
+            </tr>
+            <tr>
+              <td>96 · CDN &amp; Edge Caching</td>
+              <td>PoP cache hit/miss; Cache-Control directives; URL hash</td>
+              <td>Cache-Control header; origin shield; edge workers</td>
+              <td><C>Vary: Accept-Language</C> creates separate cache entries per language — combinatorial explosion</td>
+            </tr>
+            <tr>
+              <td>97 · Load Balancing</td>
+              <td>L4/L7 routing; 6 algorithms; health checks; draining</td>
+              <td>AWS ALB/NLB; Nginx; HAProxy; <C>AtomicInteger</C> round-robin</td>
+              <td>IP hash reroutes almost ALL clients when the pool size changes — same flaw as plain modulo hashing</td>
+            </tr>
+            <tr>
+              <td>98 · Microservices Patterns</td>
+              <td>Bounded contexts; ACL; Strangler Fig; DB-per-service; BFF</td>
+              <td>Adapter classes; API Gateway; per-service datastore</td>
+              <td>Nano-services (one per class/table) turn cheap method calls into expensive network calls</td>
+            </tr>
+            <tr>
+              <td>99 · Interview Synthesis</td>
+              <td>6-step framework; patterns library; trade-off reasoning</td>
+              <td>N/A — a process framework, not a code artifact</td>
+              <td>Drawing boxes before clarifying scale is the #1 mistake — constraints must come before design</td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -755,6 +1077,12 @@ Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</s
           <li><strong>Day 91 — Shard key is immutable:</strong> choose once, get it right — resharding costs enormous migration effort.</li>
           <li><strong>Day 92 — Gateway = north-south, mesh = east-west:</strong> gateway faces clients; mesh faces services.</li>
           <li><strong>Day 93 — Correlation ID in every hop:</strong> propagate the trace ID in every outbound call or distributed traces break mid-chain.</li>
+          <li><strong>Day 94 — Kafka is a newspaper press:</strong> each reader (consumer group) gets their own copy at their own pace — ordering guaranteed per partition, not globally.</li>
+          <li><strong>Day 95 — Outbox is the only way:</strong> write event to the same DB transaction as the business record — the only way to atomically write to a DB AND send a message.</li>
+          <li><strong>Day 96 — CDN is a bookstore chain:</strong> local branches serve most readers; the warehouse (origin) is hit only on stockout (cache miss).</li>
+          <li><strong>Day 97 — Least-connections beats round-robin:</strong> round-robin gives every server a turn regardless of how busy it is; least-connections checks who is free right now.</li>
+          <li><strong>Day 98 — One word, three meanings:</strong> "Customer" means something different to Sales, Support, and Billing — that is exactly where a bounded context boundary belongs.</li>
+          <li><strong>Day 99 — Clarify before you draw:</strong> a 10K QPS design and a 10M QPS design look nothing alike — ask first, sketch second.</li>
         </ul>
       </section>
 
@@ -772,6 +1100,12 @@ Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</s
         <Warn><strong>Choosing a low-cardinality shard key (Day 91).</strong> Sharding by country (200 distinct values) puts a large portion of traffic on the "US" shard. A shard key must be high-cardinality (hashed user_id) and evenly distributed.</Warn>
         <Warn><strong>Dropping the correlation ID on the first outbound call (Day 93).</strong> Every service must read the incoming trace ID from the W3C traceparent header and propagate it in every outgoing call. One service forgetting to forward it breaks the entire distributed trace.</Warn>
         <Warn><strong>Storing file chunks as BLOBs in the metadata DB (Day 83).</strong> Mixing binary data with relational rows kills query performance and prevents independent scaling. The block store is separate for exactly this reason.</Warn>
+        <Warn><strong>Kafka consumer group rebalance pauses consumption (Day 94).</strong> When a consumer joins or leaves a group, Kafka triggers a rebalance — all consumers in the group stop processing while partitions are reassigned. Minimize rebalances with sticky assignment and tune session.timeout.ms.</Warn>
+        <Warn><strong>2PC coordinator crash = in-doubt deadlock (Day 95).</strong> If the coordinator crashes between Prepare and Commit, all participants hold locks and wait indefinitely. There is no automatic recovery without a new coordinator. This is why Saga + Outbox is preferred across microservices.</Warn>
+        <Warn><strong><C>Cache-Control: private</C> still allows browser caching (Day 96).</strong> <C>private</C> only prevents CDN/proxy caching. The browser can still cache and serve stale responses to the same user. Use <C>no-store</C> for truly sensitive data that should never be stored anywhere.</Warn>
+        <Warn><strong>Relying on sticky sessions instead of externalizing state (Day 97).</strong> Pinning a user to one server via cookie or IP hash breaks the moment that server is taken down for a rolling deploy or auto-scaled away. Store session state in Redis so any server can serve any user.</Warn>
+        <Warn><strong>Sharing one database across microservices (Day 98).</strong> It looks like independence — separate codebases, separate repos — but a schema change in one service's tables can silently break another service's queries. Database-per-service is the rule, not a suggestion.</Warn>
+        <Warn><strong>Drawing the architecture before asking about scale (Day 99).</strong> The #1 system design interview mistake. A design built for 10K QPS and one built for 10M QPS should look different — skipping Step 1 (clarify) means every later decision is a guess.</Warn>
       </section>
 
       {/* ===== SECTION 6 — Bonus depth ===== */}
@@ -810,6 +1144,30 @@ Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</s
         <Reveal summary="OpenTelemetry: one SDK, any backend (Day 93)">
           <p>Before OpenTelemetry, instrumenting an app for Datadog meant Datadog SDK; switching to Jaeger meant rewriting all tracing code. OpenTelemetry defines one API and one wire format (OTLP). You instrument once; you configure an exporter to send to any backend. This decouples instrumentation from the observability vendor — exactly the Dependency Inversion principle applied to infrastructure.</p>
         </Reveal>
+
+        <Reveal summary="Kafka: exactly-once semantics in practice (Day 94)">
+          <p>Kafka's default is at-least-once: if a consumer crashes after processing but before committing its offset, it re-reads the message on restart. To achieve effectively exactly-once: (1) enable idempotent producers (Kafka dedupes retried sends using a producer ID + sequence number); (2) use transactions (producer wraps multiple partition writes in an atomic transaction); (3) consumers store the offset and the processing result in the same DB transaction (transactional outbox in reverse). Most teams use at-least-once + idempotent consumers rather than Kafka transactions.</p>
+        </Reveal>
+
+        <Reveal summary="Saga choreography vs orchestration: when to use which (Day 95)">
+          <p>Choreography: each service publishes an event after its local step; the next service subscribes and reacts. No central coordinator — services are decoupled. Downside: the overall business flow is implicit and hard to observe. Orchestration: a saga orchestrator sends commands to each service and waits for replies. The flow is explicit and observable but the orchestrator is a SPOF and introduces coupling. Use choreography for simple flows; orchestration for complex multi-step flows where you need visibility and centralized error handling.</p>
+        </Reveal>
+
+        <Reveal summary="CDN origin shield and thundering herd (Day 96)">
+          <p>Without an origin shield, when a cached object expires, every PoP around the world simultaneously sends a request to origin for the same object. On a high-traffic site this creates a thundering herd that can overwhelm origin. With an origin shield, all PoPs that miss forward to one designated shield PoP, which forwards a single request to origin. Origin only ever handles one miss per unique object per cache expiry cycle.</p>
+        </Reveal>
+
+        <Reveal summary="Why consistent hashing is listed as a load balancing algorithm, not just a caching trick (Day 97)">
+          <p>Consistent hashing (Day 85) is usually introduced for cache/shard routing, but it applies equally to load balancer routing: place servers and request keys on the same ring, and each key routes to the nearest server clockwise. Adding or removing a server reroutes only ~1/N of traffic instead of all of it — exactly like the cache case. In practice it is used less often for raw HTTP load balancing (least-connections is more common there) and more for cache-affinity and consistent routing in distributed databases.</p>
+        </Reveal>
+
+        <Reveal summary="Two-pizza teams and why service size is a domain question, not a headcount rule (Day 98)">
+          <p>Amazon's "two-pizza team" heuristic (if two pizzas cannot feed the team, the service is too big) is popular but easy to over-apply. The real driver of service boundaries is the bounded context, not team size. A two-person team can correctly own a large, cohesive service if the domain does not naturally split. A ten-person team can own a small service if the work genuinely needs that many hands. Use team size as a smell to investigate, not a rule to enforce.</p>
+        </Reveal>
+
+        <Reveal summary="Why 'it depends' is graded as a strength, not a hedge (Day 99)">
+          <p>Interviewers are trained to distrust confident, unconditional answers like "always use Kafka" or "always use SQL" — real systems have trade-offs. "It depends" said alone sounds like an evasion, but "It depends: if we need joins and strong consistency, SQL; if we need 50K writes/sec and can tolerate eventual consistency, Cassandra; for THIS system with 100M DAU and simple lookups, I'd start with PostgreSQL" demonstrates you understand the actual forces at play, not just a decision tree you memorized.</p>
+        </Reveal>
       </section>
 
       {/* ===== SECTION 7 — Rapid review ===== */}
@@ -823,7 +1181,7 @@ Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</s
       {/* ===== SECTION 8 — Quiz ===== */}
       <section id="s8">
         <div className="sec-label">Section 8 · Test yourself</div>
-        <h2>Recap quiz — 10 integrative questions</h2>
+        <h2>Recap quiz — 18 integrative questions</h2>
         <p>Questions cross multiple days. Click an answer; explanations appear for every choice.</p>
         <Quiz questions={QUESTIONS} />
       </section>
@@ -837,11 +1195,16 @@ Histogram latency = Histogram.build(<span class="str">"http_duration_seconds"</s
         describe preprocessing symmetry for search, build a real-time chat system with WebSocket and offline
         delivery, use Redis sorted sets for leaderboards, distinguish Event Sourcing from CQRS and explain
         Sagas, apply the right sharding strategy and shard key rules, design an API Gateway filter chain
-        using Chain of Responsibility, and instrument a service with the three pillars of observability.
+        using Chain of Responsibility, instrument a service with the three pillars of observability,
+        route Kafka messages by key for per-entity ordering, use the Outbox pattern to atomically write
+        to a DB and publish a message, set Cache-Control headers correctly for CDN caching vs sensitive data,
+        pick the right load balancing algorithm and externalize session state instead of relying on sticky
+        sessions, decompose a monolith along bounded contexts with an ACL and Strangler Fig migration while
+        respecting database-per-service, and run the 6-step system design interview framework end to end.
         <br /><br />
         Back to the <a className="homelink" href="#/revise" style={{ display: 'inline' }}>Revision Hub</a> —
         review any day that felt shaky, then tackle mock interviews combining Month 3 classics with the
-        Month 4 resilience and observability layer.
+        Month 4 resilience, messaging, and edge-caching layer.
       </div>
     </div>
   )
