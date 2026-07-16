@@ -479,7 +479,8 @@ CompletableFuture.supplyAsync(() -&gt; users.fetch(id), ioPool);`} />
         </ul>
         <Note><strong>Interview framing:</strong> "for CPU-bound work, a fixed pool of ~core-count platform
           threads; for I/O-bound work on 21+, virtual threads per task plus a Semaphore for backpressure;
-          below 21, a bounded ThreadPoolExecutor sized by Little's law." That one sentence covers forty
+          below 21, a bounded ThreadPoolExecutor sized by Little's law (threads ≈ request rate × time per
+          request — e.g. 100 req/s × 0.2 s each needs ~20 threads busy)." That one sentence covers forty
           years of threading advice.</Note>
       </section>
 

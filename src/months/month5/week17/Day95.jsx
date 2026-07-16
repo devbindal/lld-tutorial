@@ -1315,6 +1315,22 @@ db.execute(<span class="str">"INSERT INTO outbox (event_type, payload, status) "
             if the outbox table grows large. Production systems strongly prefer CDC.
           </p>
         </Reveal>
+        <Reveal summary="Which HTTP methods are idempotent by contract — and how does that connect to idempotency keys?">
+          <p>
+            The HTTP spec itself divides the verbs: <strong>GET, PUT, DELETE are idempotent by
+            contract</strong> — calling them N times must equal calling them once (PUT replaces the whole
+            resource with the same body; DELETE of a deleted thing is still deleted). <strong>POST is
+            not</strong> — each POST may create another resource. That is exactly why this day's
+            idempotency keys exist: they are how you MANUFACTURE idempotency for POST. The client generates
+            a UUID per logical operation, sends it as an <C>Idempotency-Key</C> header, and the server
+            dedupes on it — a retried <C>POST /payments</C> returns the original result instead of charging
+            twice. Two interview follow-ups: ① idempotent ≠ safe — DELETE changes state but is idempotent;
+            only GET/HEAD are "safe" (read-only); ② the contract is about <em>server state</em>, not the
+            response — a second DELETE may return 404 instead of 204 and still be idempotent. Naming
+            "retries are only safe against idempotent operations, so we design operations to be idempotent"
+            ties Day 84's retry stack, Kafka's at-least-once (Day 94), and this day into one sentence.
+          </p>
+        </Reveal>
       </section>
 
       {/* ── QUIZ ── */}

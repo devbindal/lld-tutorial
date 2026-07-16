@@ -1049,6 +1049,35 @@ export default function Day99() {
             of the edge case. It is a maturity signal.
           </p>
         </Reveal>
+
+        <Reveal summary='Q6: The classic warm-up — "what happens when you type a URL and press Enter?"'>
+          <p>
+            You now own every stage of this answer from the bonus days. The strong version, in order:
+          </p>
+          <ol>
+            <li><strong>DNS:</strong> browser cache → OS cache → recursive resolver → root/TLD/authoritative
+              servers return the IP. With GeoDNS or anycast (Day 97), users in India and the US get
+              DIFFERENT IPs — the nearest data center or CDN PoP.</li>
+            <li><strong>TCP + TLS:</strong> a TCP handshake, then a TLS handshake — certificate verified,
+              keys exchanged. Usually terminated at the CDN edge or the load balancer (Day 97's "TLS
+              termination"), so backends speak plain HTTP inside the network.</li>
+            <li><strong>CDN check (Day 96):</strong> the request hits the nearest PoP. Static asset in
+              cache → served in milliseconds, done. Miss or dynamic → forwarded toward origin (through the
+              origin shield if configured).</li>
+            <li><strong>Load balancer (Day 97):</strong> picks a healthy server — least-connections or
+              round-robin — skipping any instance that failed its health checks.</li>
+            <li><strong>API Gateway (Day 92):</strong> the filter chain — validate JWT, rate-limit the
+              client, route by path — then on to the service.</li>
+            <li><strong>Service → cache → DB (Days 81, 91):</strong> check Redis; on miss, query the DB
+              (a replica for reads, the leader for writes — Day 91), populate the cache, return.</li>
+            <li><strong>Response renders;</strong> subsequent asset requests short-circuit at steps 1–3
+              thanks to browser cache, connection reuse, and CDN hits.</li>
+          </ol>
+          <p>
+            The interviewer is checking altitude control: can you tell the whole story in 90 seconds AND
+            zoom into any single step for ten minutes when asked. Practice both zoom levels.
+          </p>
+        </Reveal>
       </section>
 
       {/* QUIZ */}

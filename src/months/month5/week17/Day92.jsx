@@ -894,6 +894,30 @@ export default function Day92() {
             and return a fallback without making a network request.
           </p>
         </Reveal>
+        <Reveal summary="Q6: What is actually INSIDE the JWT the gateway keeps validating?">
+          <p>
+            Three base64url-encoded parts joined by dots: <strong>header.payload.signature</strong>. The
+            header names the signing algorithm (<C>{'{'}"alg":"RS256"{'}'}</C>). The payload carries the
+            claims — <C>sub</C> (user id), <C>exp</C> (expiry), <C>iss</C> (issuer), roles. The signature is
+            the first two parts signed with the issuer's key. Two facts interviewers probe: ① the payload
+            is <strong>encoded, not encrypted</strong> — anyone can base64-decode and read it, so never put
+            secrets in a JWT; ② validation is pure math — signature check + expiry check — which is exactly
+            why the gateway can do it with NO database call, and why stateless auth scales.
+          </p>
+        </Reveal>
+        <Reveal summary="Q7: Sessions vs JWTs — and if JWTs can't be revoked, how does logout work?">
+          <p>
+            <strong>Session:</strong> server stores state, browser holds an opaque id; every request costs a
+            session-store lookup, but revocation is instant (delete the row). <strong>JWT:</strong> server
+            stores nothing, the token IS the state; validation is free, but you cannot un-sign a token —
+            it stays valid until <C>exp</C>. The production compromise: a <strong>short-lived access
+            token</strong> (5–15 min) plus a <strong>long-lived refresh token</strong> that IS stored
+            server-side. "Logout" and "account compromised" revoke the refresh token; the stolen access
+            token then dies within minutes on its own. Bonus point: a gateway-side denylist of revoked
+            token ids (<C>jti</C> claim) in Redis covers the paranoid window — at the cost of reintroducing
+            a lookup, which is the whole trade-off restated.
+          </p>
+        </Reveal>
       </section>
 
       {/* QUIZ */}

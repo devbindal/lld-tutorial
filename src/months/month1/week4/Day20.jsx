@@ -497,6 +497,17 @@ sendTo(email);                            <span class="cm">// ❌ email = "lol-n
             scale (your Money's setScale did this!) or compare with compareTo. A genuinely production-relevant
             trap.</p>
         </Reveal>
+        <Reveal summary={<>Q: The follow-up — put both BigDecimals in a <C>HashSet</C> vs a <C>TreeSet</C>. Sizes?</>}>
+          <p><strong>HashSet: 2. TreeSet: 1.</strong> HashSet uses equals()/hashCode() — 2.0 and 2.00 are
+            "different", both stay. TreeSet ignores equals entirely and uses <C>compareTo()</C> — which
+            returns 0 for them, so the second is treated as a duplicate and silently dropped. This is the
+            <strong> consistent-with-equals rule</strong> from the Comparable javadoc: sorted collections
+            behave "strangely" (by their own admission) whenever <C>compareTo() == 0</C> disagrees with
+            <C> equals()</C>. Same story with a Comparator: sort people by lastName only, feed them to a
+            TreeMap, and two different people with the same lastName become one entry. Rule: before using
+            any type as a sorted-collection key, ask "does compareTo-zero mean equals-true?" — if not,
+            extend the comparator (<C>.thenComparing(...)</C>) until it does.</p>
+        </Reveal>
         <Reveal summary="Q: Records: can they have extra methods? instance fields? extend? implement?">
           <p>Extra methods, static members, compact-constructor validation: <strong>yes</strong>. Extra INSTANCE
             fields beyond the header: <strong>no</strong> (the header IS the state, that's the guarantee).

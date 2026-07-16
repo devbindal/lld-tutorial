@@ -597,6 +597,18 @@ c.accelerate();   <span class="cm">// 💥 NullPointerException — no house at 
             language model, ALL objects live on the heap; the stack holds locals and references. (Bonus point:
             the JIT may "scalar-replace" objects that never escape a method — an optimization, not the model.)</p>
         </Reveal>
+        <Reveal summary="Q: How does the garbage collector actually organize the heap? (generations)">
+          <p>The heap is split by object AGE, because of one observed truth ("the weak generational
+            hypothesis"): <strong>most objects die young</strong>. New objects are born in the small
+            <strong> young generation</strong>; when it fills, a fast <strong>minor GC</strong> sweeps it —
+            most objects are already garbage, the few survivors are copied out, and after surviving a few
+            rounds they get promoted to the <strong>old generation</strong>. The old gen is collected far
+            less often by a slower <strong>major/full GC</strong>. Both briefly pause your program
+            ("stop-the-world") — modern collectors like G1 and ZGC exist mainly to shrink those pauses.
+            One sentence for the interview: "GC exploits the fact that most objects die young: cheap
+            frequent sweeps of the nursery, rare expensive sweeps of the old generation." That, plus
+            Day 1's reachability rule for WHAT is garbage, covers 90% of GC questions.</p>
+        </Reveal>
       </section>
 
       {/* 11 */}
