@@ -406,6 +406,10 @@ export default function Day28() {
         <p>The honest answer for interviews: <em>"GoF chose transparency; I default to safety — clients mostly
           READ trees uniformly, and the few places that BUILD them can know they hold a Folder. I'd rather have
           a compile error than a penguin."</em> (Days 13 and 14 nodding in the background.)</p>
+        <Warn><strong>The transparent-Composite trap:</strong> putting <C>add()</C>/<C>remove()</C> on the
+          Component interface means every leaf must implement them somehow — usually by throwing
+          <C> UnsupportedOperationException</C>. That is Day 13's LSP violation wearing a tree-shaped costume:
+          the leaf is lying about what it can do, and the crash only happens at runtime.</Warn>
       </section>
 
       {/* 8 */}

@@ -385,6 +385,9 @@ Notifier notifier = <span class="kw">new</span> SlackAdapter(<span class="kw">ne
             letting each side treat it as one of their own — useful when two old systems must call each other.
             Rare, but knowing the term "two-way adapter" closes out the topic in interviews.</p>
         </Reveal>
+        <Warn><strong>Class adapter's hidden cost:</strong> Java only allows one <C>extends</C>. A class adapter
+          spends your single inheritance slot on the vendor class — you can no longer extend anything of your
+          own. This is the real reason object adapters win in Java, not just style preference.</Warn>
       </section>
 
       {/* 7 */}

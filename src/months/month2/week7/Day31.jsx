@@ -344,6 +344,10 @@ registry.put(<span class="str">"NONE"</span>, Cart::total);`} />
           <C> Runnable</C> (the work to do), <C>ThreadFactory</C>, <C>Predicate</C> in
           <C> filter(...)</C> — every higher-order method you call takes a strategy. Day 14 called these
           "extreme ISP"; today add: <strong>extreme Strategy</strong>.</p>
+        <Warn><strong>The capturing-lambda trap:</strong> a lambda that closes over a mutable local variable
+          quietly turns a "stateless" strategy into a stateful one shared by every caller. If that strategy is
+          registered once and reused across concurrent checkouts, one customer's data leaks into another's.
+          Capture only immutable config, never mutable per-call state.</Warn>
       </section>
 
       {/* 7 */}

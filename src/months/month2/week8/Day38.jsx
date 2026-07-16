@@ -373,6 +373,10 @@ export default function Day38() {
             the entire interaction script without a UI — the rules became testable the moment they became
             one object (Day 15's testability ⇔ good seams, again).</li>
         </ul>
+        <Warn><strong>The god-mediator trap:</strong> every interaction rule for the whole screen (or app) piling
+          into ONE mediator class recreates a god object (Day 11) — you have removed N² wiring only to grow one
+          unmanageable brain. Split by screen/feature, or promote heavy sub-flows into their own mediators, once
+          one file stops fitting in your head.</Warn>
       </section>
 
       {/* 7 */}

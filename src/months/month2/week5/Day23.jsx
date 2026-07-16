@@ -396,6 +396,10 @@ GuiFactory f = OS.isMac() ? <span class="kw">new</span> MacFactory() : <span cla
         <p>So the pattern fits when the <strong>product lineup is stable but families multiply</strong> — exactly
           the shape of UI kits (widgets are known; themes keep coming) and test kits (services are known;
           environments keep coming).</p>
+        <Warn><strong>The reverse-fit trap:</strong> if you can already tell that the product lineup will grow
+          (new widget types, new service kinds) faster than the number of families, Abstract Factory is fighting
+          your actual change pattern — every new product type breaks every existing factory. Check which axis
+          moves more before committing to the pattern.</Warn>
       </section>
 
       {/* 7 */}

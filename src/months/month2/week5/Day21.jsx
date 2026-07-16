@@ -432,6 +432,9 @@ AppConfig second = c.newInstance();      <span class="cm">// 💥 instance #2 ex
             constants, and Java's serialization spec handles enums by name. That's why <em>Effective Java</em>
             crowns it. (Day 19's "bulletproof singleton" teaser — fully paid.)</li>
         </ul>
+        <Warn><strong>The forgotten defense:</strong> teams that implement <C>Serializable</C> on a singleton almost
+          always forget <C>readResolve()</C>. Without it, every deserialize silently mints a fresh instance — no
+          exception, no warning, just a second "singleton" quietly coexisting with the first.</Warn>
       </section>
 
       {/* 8 */}

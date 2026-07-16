@@ -367,6 +367,10 @@ export default function Day34() {
           parameter</strong> — so states can hold zero fields, which makes them shareable singletons
           (flyweight, Day 30); <strong>② states create their successors</strong> — transition rules live next
           to the behavior that triggers them, one state per file, the whole grid column in one place.</p>
+        <Warn><strong>The stateful-state trap:</strong> the moment a state class gains a field (e.g. caching
+          "coins inserted so far" on <C>HasCoinState</C> instead of on the context), it can no longer be a
+          shared singleton — every machine now needs its OWN instance, and two machines can silently corrupt
+          each other's data if one is accidentally reused. Data belongs on the context; states stay stateless.</Warn>
       </section>
 
       {/* 5 */}

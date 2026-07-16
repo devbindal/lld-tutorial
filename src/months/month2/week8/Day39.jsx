@@ -341,6 +341,10 @@ hero.restore(history.pop());`} />
           <li><strong>Immutable fields → share freely</strong> (Strings, Money, records, enums — Day 20's
             dividend pays yet again: the more of your state is values, the cheaper your snapshots).</li>
         </ul>
+        <Warn><strong>The silent shallow-save:</strong> a memento that stores a reference instead of a copy
+          compiles fine, runs fine, and "saves" fine — the bug only shows up later, when a restore comes back
+          looking exactly like the present instead of the past. There is no exception to catch it; only a test
+          that mutates state AFTER saving and asserts the snapshot didn't change.</Warn>
       </section>
 
       {/* 7 */}

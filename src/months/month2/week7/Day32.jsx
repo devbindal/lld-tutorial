@@ -414,6 +414,10 @@ Key: Subject does NOT import EmailFan, AppNotify, or NewsBot.
           and later observers starve — isolation (try/catch per observer) is non-negotiable. ② Forgotten
           unsubscribes leave ghosts the GC cannot collect (strong refs!) — the lapsed listener leak. Unsubscribe
           belongs to the lifecycle; WeakReference is the safety net.</Good>
+        <Warn><strong>The self-unsubscribe crash:</strong> an observer that calls <C>unsubscribe(this)</C> from
+          inside its own <C>update()</C> mutates the observer list while the publisher is still iterating over
+          it — <C>ConcurrentModificationException</C> (Day 37's cursor scar). Use <C>CopyOnWriteArrayList</C> or
+          collect removals and apply them after the notify loop finishes.</Warn>
       </section>
 
       {/* 9 */}

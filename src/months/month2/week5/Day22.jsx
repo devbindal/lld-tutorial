@@ -409,6 +409,10 @@ LocalDate d = LocalDate.of(<span class="num">2026</span>, <span class="num">6</s
             possibly shared instance · <C>newInstance()</C> — guaranteed fresh · <C>parse(s)</C> — from text
             (your Day 20 Email!). Spotting these tells you instantly that creation is being managed, not raw.</p>
         </Reveal>
+        <Warn><strong>The Integer cache trap:</strong> <C>Integer.valueOf(100) == Integer.valueOf(100)</C> is
+          true (cached), but <C>Integer.valueOf(200) == Integer.valueOf(200)</C> is false — the cache only
+          covers -128..127. Code that works in tests with small numbers can silently break in production with
+          real ones. Always compare boxed types with <C>.equals()</C>, never <C>==</C>.</Warn>
       </section>
 
       {/* 8 */}

@@ -374,6 +374,10 @@ client: desk.handle(ticket);          <span class="cm">// ONE address. Done.</sp
             reviewable place — and makes runtime re-ordering (feature flags, A/B escalation rules) a data
             change.</li>
         </ul>
+        <Warn><strong>The forgotten <C>next()</C> call:</strong> a handler that processes a request but never
+          calls the next link (by accident, not by design) silently swallows every request that should have
+          reached the rest of the chain. There is no exception — the chain just goes quiet. Always be explicit
+          about whether a handler passes along or intentionally stops.</Warn>
       </section>
 
       {/* 6 */}
