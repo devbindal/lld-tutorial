@@ -250,7 +250,7 @@ export const COURSE = {
             { id: 97, slug: 'day97', title: 'Load Balancing', sub: 'L4 vs L7, algorithms, health checks, sticky sessions, connection draining', ready: true },
             { id: 98, slug: 'day98', title: 'Microservices Patterns', sub: 'Decomposition, bounded contexts, strangler fig, anti-corruption layer, service mesh', ready: true },
             { id: 99, slug: 'day99', title: 'System Design Interview Synthesis', sub: '6-step framework, patterns library, common mistakes, mock walkthroughs', ready: true },
-            { id: 100, slug: 'day100', title: 'Grand Finale', sub: 'All 100 days — the complete patterns map, what to build next', ready: false },
+            { id: 100, slug: 'day100', title: 'Grand Finale', sub: 'All 100 days — the complete patterns map, what to build next', ready: true },
           ],
         },
       ],
