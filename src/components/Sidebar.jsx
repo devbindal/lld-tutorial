@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { COURSE } from '../data/roadmap.js'
+import { useProgress, isDone } from '../data/progress.js'
 
 // find which month + week a day belongs to
 function locate(dayId) {
@@ -27,6 +28,7 @@ function defaultOpen(route) {
 }
 
 export default function Sidebar({ route, onNavigate }) {
+  useProgress()
   const activeLoc = route.name === 'day' ? locate(route.day) : null
   const init = defaultOpen(route)
 
@@ -87,6 +89,7 @@ export default function Sidebar({ route, onNavigate }) {
                               <span className="daynum">{day.id}</span>
                               {day.title}
                               {!day.ready && <span className="lockicon">🔒 soon</span>}
+                              {day.ready && isDone(day.id) && <span className="donecheck">✓</span>}
                             </div>
                             <div className="ns">{day.sub}</div>
                           </a>

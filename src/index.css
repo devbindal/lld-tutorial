@@ -55,6 +55,7 @@ a{color:inherit}
   .menubtn{display:inline-flex;position:fixed;top:14px;left:14px;z-index:60;background:var(--ink);color:#fff;border:none;
     border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans'}
   .scrollarea{padding:60px 18px 70px}
+  .daynav{margin-top:-40px;padding:0 18px 50px}
 }
 
 /* ---------- hero ---------- */
@@ -148,6 +149,21 @@ td.no{color:var(--red);font-weight:700}
 
 .footer{margin-top:70px;border-top:1px solid var(--line);padding-top:18px;font-size:14px;color:#6b7280;max-width:760px}
 
+/* ---------- prev/next day navigation (rendered by App.jsx under every day page) ---------- */
+.daynav{max-width:900px;margin:-50px auto 0;padding:0 40px 70px;display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
+.daynav a{flex:1;min-width:200px;text-decoration:none;border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;background:#fff;transition:border-color .12s,transform .12s}
+.daynav a:hover{border-color:var(--blue);transform:translateY(-2px)}
+.daynav .dn-label{font-family:'IBM Plex Mono';font-size:11px;color:#7c8aa5;letter-spacing:.08em;text-transform:uppercase}
+.daynav .dn-title{font-family:'Space Grotesk';font-size:16px;font-weight:600;color:var(--ink);margin-top:4px}
+.daynav .dn-next{text-align:right}
+.daynav .dn-spacer{flex:1;min-width:200px}
+.daynav .dn-done{align-self:center;cursor:pointer;font-family:'IBM Plex Mono';font-size:12.5px;font-weight:600;
+  padding:10px 16px;border-radius:99px;border:1.5px solid var(--line);background:#fff;color:#64748b;
+  transition:border-color .12s,background .12s}
+.daynav .dn-done:hover{border-color:var(--green)}
+.daynav .dn-done.on{background:#E9F6EF;border-color:var(--green);color:var(--green)}
+
 /* ---------- home page ---------- */
 .home-hero{margin:30px 0 18px}
 .home-hero .eyebrow{font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.16em;color:var(--blue);text-transform:uppercase}
@@ -166,3 +182,18 @@ td.no{color:var(--red);font-weight:700}
   letter-spacing:.08em;padding:3px 9px;border-radius:99px}
 .dc-tag.ready{background:#E9F6EF;color:var(--green)}
 .dc-tag.soon{background:#F1F0EA;color:#94a3b8}
+.dc-tag.done{background:var(--green);color:#fff}
+.dc-tag.quiz{background:#EEF2FF;color:var(--blue);margin-left:6px}
+
+/* ---------- learner progress (localStorage-backed) ---------- */
+.continue-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;text-decoration:none;
+  border:2px solid var(--blue);border-radius:14px;background:#F0F4FF;padding:16px 22px;margin:6px 0 4px;
+  transition:transform .12s}
+.continue-banner:hover{transform:translateY(-2px)}
+.continue-banner .cb-label{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+.continue-banner .cb-title{font-family:'Space Grotesk';font-size:19px;font-weight:600;color:var(--ink);margin-top:4px}
+.continue-banner .cb-arrow{font-size:26px;color:var(--blue)}
+.progressline{display:flex;align-items:center;gap:12px;margin:12px 0 4px;font-family:'IBM Plex Mono';font-size:12.5px;color:#7c8aa5}
+.progressbar{flex:1;max-width:320px;height:8px;border-radius:99px;background:#E8E6DE;overflow:hidden}
+.progressfill{height:100%;border-radius:99px;background:var(--green);transition:width .3s}
+.navlink .donecheck{margin-left:auto;color:var(--green);font-weight:700}

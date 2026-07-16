@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Home from './components/Home.jsx'
 import { ALL_DAYS } from './data/roadmap.js'
+import { isDone, toggleDone, setLastVisited, useProgress } from './data/progress.js'
 
 // Lazy imports: each day page is its own chunk, loaded on first visit.
 const Day1 = lazy(() => import('./months/month1/week1/Day1.jsx'))
@@ -258,6 +259,36 @@ function parseHash() {
   return { name: 'home' }
 }
 
+// Prev/next navigation + mark-done toggle, rendered under every day page.
+// Built from roadmap data so no day file needs to know its neighbours.
+function DayNav({ day }) {
+  useProgress()
+  const ready = ALL_DAYS.filter((d) => d.ready).sort((a, b) => a.id - b.id)
+  const idx = ready.findIndex((d) => d.id === day)
+  const prev = idx > 0 ? ready[idx - 1] : null
+  const next = idx >= 0 && idx < ready.length - 1 ? ready[idx + 1] : null
+  const done = isDone(day)
+  return (
+    <div className="daynav">
+      {prev ? (
+        <a href={`#/day/${prev.id}`}>
+          <div className="dn-label">← Previous · Day {prev.id}</div>
+          <div className="dn-title">{prev.title}</div>
+        </a>
+      ) : <div className="dn-spacer" />}
+      <button className={'dn-done' + (done ? ' on' : '')} onClick={() => toggleDone(day)}>
+        {done ? '✓ Day done' : '☐ Mark day as done'}
+      </button>
+      {next ? (
+        <a href={`#/day/${next.id}`} className="dn-next">
+          <div className="dn-label">Next · Day {next.id} →</div>
+          <div className="dn-title">{next.title}</div>
+        </a>
+      ) : <div className="dn-spacer" />}
+    </div>
+  )
+}
+
 function ComingSoon({ day }) {
   const info = ALL_DAYS.find((d) => d.id === day)
   return (
@@ -301,10 +332,15 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
+  // Remember the last day the learner opened, for the home "continue" banner.
+  useEffect(() => {
+    if (route.name === 'day' && DAY_COMPONENTS[route.day]) setLastVisited(route.day)
+  }, [route])
+
   let page
   if (route.name === 'day') {
     const Comp = DAY_COMPONENTS[route.day]
-    page = Comp ? <Comp /> : <ComingSoon day={route.day} />
+    page = Comp ? <><Comp /><DayNav day={route.day} /></> : <ComingSoon day={route.day} />
   } else if (route.name === 'recap') {
     const Comp = RECAP_COMPONENTS[route.week]
     page = Comp ? <Comp /> : <Home />

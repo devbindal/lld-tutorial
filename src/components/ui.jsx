@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { currentPageId, saveQuizScore, getQuizScore } from '../data/progress.js'
 
 // Syntax-highlighted code. Pass an HTML string built with <span class="kw|str|cm|num">.
 // Content is static and authored by us, so dangerouslySetInnerHTML is safe here.
@@ -33,6 +34,9 @@ export function Good({ children }) { return <div className="good">{children}</di
 // }]
 export function Quiz({ questions }) {
   const [state, setState] = useState({}) // { [qi]: pickedIndex }
+  // Which page this quiz lives on ('day-12', 'recap-w3'), captured once at mount —
+  // used to persist the score so the home grid can show it as a revision signal.
+  const [pageId] = useState(() => currentPageId())
   const answeredCount = Object.keys(state).length
   const correctCount = Object.entries(state).filter(
     ([qi, pick]) => pick === questions[qi].a
@@ -40,8 +44,15 @@ export function Quiz({ questions }) {
 
   function pick(qi, oi) {
     if (state[qi] !== undefined) return // lock after first answer
-    setState((s) => ({ ...s, [qi]: oi }))
+    const next = { ...state, [qi]: oi }
+    setState(next)
+    if (Object.keys(next).length === questions.length) {
+      const correct = Object.entries(next).filter(([i, p]) => p === questions[i].a).length
+      saveQuizScore(pageId, correct, questions.length)
+    }
   }
+
+  const saved = pageId ? getQuizScore(pageId) : null
 
   const done = answeredCount === questions.length
   let scoreMsg = ''
@@ -56,6 +67,12 @@ export function Quiz({ questions }) {
 
   return (
     <div>
+      {saved && answeredCount === 0 && (
+        <div className="score" style={{ fontSize: 14.5, marginTop: 0, marginBottom: 14, color: '#7c8aa5' }}>
+          📌 Your last score: <b>{saved.score} / {saved.total}</b>
+          {saved.score < saved.total ? ' — beat it this time.' : ' — a perfect run. Keep it that way.'}
+        </div>
+      )}
       {questions.map((item, qi) => {
         const picked = state[qi]
         const isAnswered = picked !== undefined
