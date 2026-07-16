@@ -405,6 +405,84 @@ process(t);
           producer-consumers — now you can build the engine, not just name it.</Good>
       </section>
 
+      {/* bonus: the rest of java.util.concurrent you must know */}
+      <section id="coordination">
+        <div className="sec-label">Bonus deep-dive · Coordination &amp; modern async</div>
+        <h2>🧰 Latches, semaphores, CompletableFuture — and virtual threads</h2>
+        <p>
+          BlockingQueue hands work BETWEEN threads. Three more <C>java.util.concurrent</C> tools
+          coordinate threads AROUND work — and interviews treat all three as assumed knowledge:
+        </p>
+        <Code html={`<span class="cm">// ── CountDownLatch — "wait until N things have happened" (one-shot) ──</span>
+CountDownLatch ready = <span class="kw">new</span> CountDownLatch(<span class="num">3</span>);   <span class="cm">// 3 services must start</span>
+<span class="cm">// each service thread, when initialized:</span>
+ready.countDown();                                <span class="cm">// −1, never blocks</span>
+<span class="cm">// main thread:</span>
+ready.await();                                    <span class="cm">// blocks until count hits 0</span>
+<span class="cm">// classic uses: start-line for load tests, wait-for-startup, fan-out/fan-in</span>
+<span class="cm">// one-shot: the count never resets — for reuse you want CyclicBarrier</span>
+
+<span class="cm">// ── Semaphore — "at most N inside at once" (permits) ──</span>
+Semaphore permits = <span class="kw">new</span> Semaphore(<span class="num">10</span>);          <span class="cm">// 10 DB connections max</span>
+permits.acquire();                                <span class="cm">// take a permit (blocks if 0 left)</span>
+<span class="kw">try</span> { useConnection(); }
+<span class="kw">finally</span> { permits.release(); }                   <span class="cm">// ALWAYS give it back</span>
+<span class="cm">// a Semaphore(1) is a lock; a Semaphore(N) is a BULKHEAD (Day 84 uses exactly this)</span>
+
+<span class="cm">// ── CyclicBarrier — "everyone meets here, then we all continue" (reusable) ──</span>
+CyclicBarrier round = <span class="kw">new</span> CyclicBarrier(<span class="num">4</span>, () -&gt; mergeResults());
+<span class="cm">// each of 4 workers, at the end of a phase:</span>
+round.await();    <span class="cm">// blocks until all 4 arrive → barrier action runs → all released</span>
+<span class="cm">// unlike a latch it RESETS — perfect for iterative simulations, phased computation</span>`} />
+        <h3 style={{ marginTop: 24 }}>CompletableFuture — producer–consumer without the queue ceremony</h3>
+        <p>
+          You saw <C>CompletableFuture</C> used in the resilience stack (Day 84) and the BFF composer
+          (Day 98). Here is the model: it is a <strong>promise of a future value</strong> that you compose
+          with callbacks instead of blocking:
+        </p>
+        <Code html={`<span class="cm">// fan out two independent calls IN PARALLEL, combine when both finish:</span>
+CompletableFuture&lt;User&gt;  userF  = CompletableFuture.supplyAsync(() -&gt; users.fetch(id));
+CompletableFuture&lt;Order&gt; orderF = CompletableFuture.supplyAsync(() -&gt; orders.fetch(id));
+
+CompletableFuture&lt;Page&gt; page =
+    userF.thenCombine(orderF, (user, order) -&gt; render(user, order));
+<span class="cm">//        └ runs only when BOTH complete — no thread blocks while waiting</span>
+
+<span class="cm">// the composition vocabulary:</span>
+<span class="cm">//   thenApply(f)     transform the result           (map)</span>
+<span class="cm">//   thenCompose(f)   chain another async call       (flatMap — avoids Future&lt;Future&gt;)</span>
+<span class="cm">//   thenCombine(o,f) merge two independent futures</span>
+<span class="cm">//   allOf(f1..fn)    wait for all  ·  anyOf: first one wins</span>
+<span class="cm">//   exceptionally(f) the catch-block of the async world</span>
+
+<span class="cm">// TRAP: supplyAsync with no executor runs on ForkJoinPool.commonPool() —</span>
+<span class="cm">// shared by the whole JVM. Blocking calls there starve parallel streams and</span>
+<span class="cm">// other futures. For I/O work, ALWAYS pass your own executor:</span>
+CompletableFuture.supplyAsync(() -&gt; users.fetch(id), ioPool);`} />
+        <h3 style={{ marginTop: 24 }}>Virtual threads (Java 21+) — what changed, what didn't</h3>
+        <p>
+          Since Java 21, <C>Thread.ofVirtual()</C> / <C>Executors.newVirtualThreadPerTaskExecutor()</C>
+          give you threads so cheap you can have millions: when a virtual thread blocks on I/O, the JVM
+          parks it and reuses the carrier OS thread. That rewrites one chapter of this day and leaves
+          another untouched:
+        </p>
+        <ul>
+          <li><strong>What changed:</strong> pool sizing for I/O-bound work. The whole "how many threads for
+            blocking calls?" dance disappears — spawn one virtual thread per task and let them block cheaply.
+            Simple blocking code becomes the right style again.</li>
+          <li><strong>What didn't:</strong> backpressure. A million cheap threads all hammering one database
+            is still a flood — you still need the bounded buffer (this day's core lesson) or a Semaphore to
+            cap concurrent access. Virtual threads remove the THREAD bottleneck, not the RESOURCE bottleneck.</li>
+          <li><strong>The gotcha to name:</strong> pinning — a virtual thread that blocks inside a
+            <C> synchronized</C> block pins its carrier OS thread (fixed in Java 24, but the interview question
+            survives). Prefer <C>ReentrantLock</C> around blocking calls in virtual-thread code.</li>
+        </ul>
+        <Note><strong>Interview framing:</strong> "for CPU-bound work, a fixed pool of ~core-count platform
+          threads; for I/O-bound work on 21+, virtual threads per task plus a Semaphore for backpressure;
+          below 21, a bounded ThreadPoolExecutor sized by Little's law." That one sentence covers forty
+          years of threading advice.</Note>
+      </section>
+
       {/* 10 */}
       <section id="s10">
         <div className="sec-label">Section 10</div>

@@ -1279,6 +1279,78 @@ export default function Day90() {
         </Reveal>
       </section>
 
+      {/* ── BONUS ── CAP theorem: the law behind "eventual consistency" */}
+      <section id="cap">
+        <div className="sec-label">Bonus deep-dive · The CAP theorem</div>
+        <h2>CAP — why "eventually consistent" is a choice, not a bug</h2>
+        <p>
+          Everything above kept saying "eventual consistency is the trade-off." There is a theorem
+          that explains WHY a trade-off exists at all, and interviewers expect you to know it by name:
+          the <strong>CAP theorem</strong> (Eric Brewer, 2000).
+        </p>
+        <Code html={`<span class="cm">// The three properties:</span>
+<span class="cm">//   C — Consistency:          every read sees the latest write (or an error)</span>
+<span class="cm">//   A — Availability:         every request gets a (non-error) response</span>
+<span class="cm">//   P — Partition tolerance:  the system survives the network splitting in two</span>
+
+<span class="cm">// The theorem: during a network partition, you can keep C or A — not both.</span>
+
+<span class="cm">//        [Node 1] ═══╳═══ [Node 2]        the network cable is "cut" (partition)</span>
+<span class="cm">//            │                │</span>
+<span class="cm">//         write x=5        read x?</span>
+<span class="cm">//</span>
+<span class="cm">// Node 2 cannot know about x=5. It has exactly two options:</span>
+<span class="cm">//   CP: refuse to answer until the partition heals  → consistent but UNAVAILABLE</span>
+<span class="cm">//   AP: answer with its stale value                 → available but INCONSISTENT</span>`} />
+        <p>
+          Two things people get wrong — say these out loud in the interview and you're ahead of most
+          candidates:
+        </p>
+        <ul>
+          <li><strong>P is not optional.</strong> Networks WILL partition (a switch dies, a garbage-collection
+            pause makes a node look dead). "CA" systems only exist on a single node. The real choice is
+            always CP vs AP — and only DURING a partition. In normal operation you can have both C and A.</li>
+          <li><strong>It's per-operation, not per-system.</strong> A booking system can be CP for seat
+            claims (never double-sell — refuse requests if unsure) and AP for the seat-map display (show
+            slightly stale availability rather than an error page). Day 51's BookMyShow does exactly this.</li>
+        </ul>
+        <table className="matrix">
+          <thead>
+            <tr><th>Choice</th><th>During a partition…</th><th>Typical examples</th><th>Fits when…</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CP</strong></td>
+              <td>Some requests fail/block rather than return stale data</td>
+              <td>ZooKeeper, etcd, bank core ledgers, seat/inventory claims</td>
+              <td>A wrong answer costs money or corrupts state</td>
+            </tr>
+            <tr>
+              <td><strong>AP</strong></td>
+              <td>Every node keeps answering; conflicts reconciled later</td>
+              <td>DNS, Cassandra (tunable), shopping carts, social feeds, this day's read models</td>
+              <td>A stale answer is annoying but harmless</td>
+            </tr>
+          </tbody>
+        </table>
+        <Note>
+          <strong>The refinement worth naming: PACELC.</strong> "If Partition then A-or-C; Else
+          Latency-or-Consistency." Even with NO partition, strong consistency costs latency — every write
+          must reach replicas before acknowledging. That is why Day 99's trade-off compass has a
+          consistency slider at all: you pay for C in latency every single day, not just during outages.
+        </Note>
+        <Reveal summary="How does CAP connect to everything this day taught?">
+          <p>
+            Event-driven architecture is a deliberate AP choice on the read path: the write model accepts
+            the command immediately, and read models catch up asynchronously. Sagas exist because a CP-style
+            distributed transaction (2PC) sacrifices availability — every participant blocks while the
+            coordinator decides. When you say "I'll use a Saga here," you are saying "I choose availability
+            and repair inconsistency with compensations." Being able to narrate that chain — CAP → 2PC's
+            cost → Saga as the AP answer — is a senior-level moment.
+          </p>
+        </Reveal>
+      </section>
+
       {/* ── SECTION 10 ── Idempotency + Cheat Sheet */}
       <section id="s10">
         <div className="sec-label">Section 10</div>

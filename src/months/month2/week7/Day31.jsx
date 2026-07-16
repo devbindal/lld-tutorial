@@ -362,6 +362,61 @@ registry.put(<span class="str">"NONE"</span>, Cart::total);`} />
           <C> .thenComparing(...)</C> COMPOSE strategies — decorator thinking (Day 27) applied to strategies.</Good>
       </section>
 
+      {/* bonus: generics — the type-level side of strategy sockets */}
+      <section id="generics">
+        <div className="sec-label">Bonus deep-dive · Generics for API designers</div>
+        <h2>🧬 Why sort() takes Comparator&lt;? super T&gt; — the PECS rule</h2>
+        <p>
+          Look closely at the real JDK signature you just used. It is not
+          <C> sort(Comparator&lt;T&gt;)</C> — it is <C>sort(Comparator&lt;? super T&gt;)</C>. That
+          question mark is the type-level version of everything today taught: it makes the strategy
+          socket accept MORE strategies. Interviews love this corner, so let's own it.
+        </p>
+        <Code html={`<span class="cm">// The problem, concretely. You have:</span>
+<span class="kw">class</span> Animal { }
+<span class="kw">class</span> Dog <span class="kw">extends</span> Animal { }
+
+Comparator&lt;Animal&gt; byWeight = ...;      <span class="cm">// compares ANY animal by weight</span>
+List&lt;Dog&gt; dogs = ...;
+
+<span class="cm">// If sort demanded exactly Comparator&lt;Dog&gt;, this would NOT compile —</span>
+<span class="cm">// Comparator&lt;Animal&gt; is not a Comparator&lt;Dog&gt; (generics are invariant!).</span>
+<span class="cm">// But a thing that can compare any two Animals can OBVIOUSLY compare two Dogs.</span>
+
+<span class="cm">// The fix in the JDK signature:</span>
+<span class="kw">void</span> sort(Comparator&lt;? super T&gt; c)      <span class="cm">// "a comparator of T or any supertype of T"</span>
+dogs.sort(byWeight);                     <span class="cm">// ✅ compiles — Animal is a supertype of Dog</span>
+
+<span class="cm">// ── The PECS rule (Effective Java, Item 31) ─────────────────────</span>
+<span class="cm">// Producer Extends, Consumer Super — decided by what the parameter DOES with T:</span>
+<span class="cm">//</span>
+<span class="cm">// PRODUCES T's for you (you read from it)  → ? extends T</span>
+<span class="kw">void</span> addAll(Collection&lt;? <span class="kw">extends</span> T&gt; src)   <span class="cm">// reads T's out of src</span>
+<span class="cm">//</span>
+<span class="cm">// CONSUMES T's from you (you pass T's in)  → ? super T</span>
+<span class="kw">void</span> sort(Comparator&lt;? <span class="kw">super</span> T&gt; c)          <span class="cm">// feeds your T's INTO the comparator</span>
+Predicate&lt;? <span class="kw">super</span> T&gt;, Consumer&lt;? <span class="kw">super</span> T&gt;   <span class="cm">// same logic all over java.util.function</span>`} />
+        <p>
+          One more piece completes the interview picture: <strong>type erasure</strong>. Generics exist
+          only at compile time — the JVM sees raw <C>List</C>, not <C>List&lt;String&gt;</C>. Three
+          consequences you will be asked about:
+        </p>
+        <ul>
+          <li><C>new T[]</C> and <C>new ArrayList&lt;String&gt;[10]</C> don't compile — the runtime type isn't there to create.</li>
+          <li><C>x instanceof List&lt;String&gt;</C> doesn't compile — at runtime every list is just a <C>List</C>.</li>
+          <li>You cannot overload <C>f(List&lt;String&gt;)</C> and <C>f(List&lt;Integer&gt;)</C> — after erasure they are the same method.</li>
+        </ul>
+        <Note><strong>Why this lives in the Strategy day:</strong> every strategy socket you design has a
+          type-level dimension. Declaring <C>process(Handler&lt;? super Order&gt;)</C> instead of
+          <C> process(Handler&lt;Order&gt;)</C> is the same act of generosity as accepting an interface
+          instead of a concrete class — it lets more callers plug in. PECS is ISP (Day 14) for type
+          parameters.</Note>
+        <Warn><strong>The mnemonic trap:</strong> PECS describes the API's PARAMETER from the caller's view of
+          the wildcard collection — not your return types. Returning <C>List&lt;? extends T&gt;</C> from your
+          own API forces every caller to deal with wildcards forever. Rule: wildcards in parameters, concrete
+          type arguments in return types.</Warn>
+      </section>
+
       {/* 8 */}
       <section id="s8">
         <div className="sec-label">Section 8</div>
@@ -459,6 +514,27 @@ registry.put(<span class="str">"NONE"</span>, Cart::total);`} />
             is honest, local and readable (KISS, Day 16). Strategy earns its files when variants multiply,
             arrive at runtime, need isolated tests, or third parties supply them. Patterns are bought with
             complexity; check the price.</p>
+        </Reveal>
+        <Reveal summary="Q: Why doesn't List&lt;Dog&gt; count as a List&lt;Animal&gt;? (invariance)">
+          <p>If it did, you could do <C>List&lt;Animal&gt; animals = dogs; animals.add(new Cat());</C> — and a
+            Cat lands in a List&lt;Dog&gt;. Generics are <strong>invariant</strong> to keep that write safe.
+            Arrays chose the opposite (covariance) and pay with a RUNTIME <C>ArrayStoreException</C> — cite
+            that contrast and you've answered the follow-up before it's asked. Wildcards
+            (<C>? extends</C> read-only-ish, <C>? super</C> write-friendly) are how you opt back into
+            flexibility, one direction at a time.</p>
+        </Reveal>
+        <Reveal summary="Q: What does 'generics are erased' actually break, and how do libraries cope?">
+          <p>At runtime <C>List&lt;String&gt;</C> is just <C>List</C> — so no <C>new T()</C>, no
+            <C> instanceof List&lt;String&gt;</C>, no overloading on type arguments. Libraries route around it
+            by carrying the class explicitly: <C>Class&lt;T&gt;</C> tokens
+            (<C>fromJson(json, User.class)</C>) or super-type tokens
+            (<C>new TypeReference&lt;List&lt;User&gt;&gt;(){'{}'}</C>) whose anonymous subclass PRESERVES the
+            generic signature via reflection. Naming "type token" is the senior tell here.</p>
+        </Reveal>
+        <Reveal summary="Q: Quick fire — where should the wildcard go: copy(src, dst)?">
+          <p><C>copy(List&lt;? extends T&gt; src, List&lt;? super T&gt; dst)</C> — src PRODUCES elements
+            (extends), dst CONSUMES them (super). This exact signature is
+            <C> Collections.copy</C> in the JDK, and it is the single most common PECS drill question.</p>
         </Reveal>
       </section>
 

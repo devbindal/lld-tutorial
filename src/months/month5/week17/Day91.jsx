@@ -1006,6 +1006,76 @@ String cached = redis.get(<span class="str">"profile:"</span> + celebUserId);
         </Reveal>
       </section>
 
+      {/* ── BONUS ── Replication & quorums: sharding's sibling */}
+      <section id="replication">
+        <div className="sec-label">Bonus deep-dive · Replication &amp; quorums</div>
+        <h2>Replication — the other half of "scale the database"</h2>
+        <p>
+          Interviewers love asking "sharding vs replication?" because candidates constantly mix them up.
+          They solve different problems: <strong>sharding splits</strong> the data (each server holds a
+          different slice — more capacity), <strong>replication copies</strong> the data (each server holds
+          the same data — more read throughput and fault tolerance). Production systems do BOTH: each shard
+          is itself a small replica set.
+        </p>
+        <Code html={`<span class="cm">// Leader-follower replication (the default everywhere: Postgres, MySQL, MongoDB)</span>
+<span class="cm">//</span>
+<span class="cm">//                    writes</span>
+<span class="cm">//                      │</span>
+<span class="cm">//                      ▼</span>
+<span class="cm">//                  [LEADER]  ── the only node that accepts writes</span>
+<span class="cm">//                   /     \\      (one writer = no write conflicts)</span>
+<span class="cm">//        replication       replication</span>
+<span class="cm">//                 /           \\</span>
+<span class="cm">//        [FOLLOWER 1]     [FOLLOWER 2]  ── serve reads; take over if leader dies</span>
+<span class="cm">//              ▲                ▲</span>
+<span class="cm">//            reads            reads</span>
+<span class="cm">//</span>
+<span class="cm">// SYNC replication:  leader waits for followers to confirm before ACKing the write</span>
+<span class="cm">//                    → zero data loss on failover, but every write pays the wait</span>
+<span class="cm">// ASYNC replication: leader ACKs immediately, followers catch up behind</span>
+<span class="cm">//                    → fast writes, but followers LAG (ms to seconds)</span>
+<span class="cm">//                    → leader dies before shipping? those writes are LOST</span>`} />
+        <p>
+          Async lag creates the classic bug every interviewer probes: <strong>read-your-own-writes</strong>.
+          A user updates their profile (write → leader), the page reloads (read → lagging follower), and
+          their change is "gone." Standard fixes, in preference order:
+        </p>
+        <ul>
+          <li><strong>Pin the author to the leader</strong> for a short window after their write (e.g. 10 s), or for reads of data they themselves own.</li>
+          <li><strong>Session timestamp:</strong> client remembers its last-write time; reads go to a replica only if the replica has caught up past it.</li>
+          <li><strong>Accept it</strong> where staleness is harmless (view counts, someone else's profile) — this is Day 90's CAP trade made at the replica level.</li>
+        </ul>
+        <h3 style={{ marginTop: 24 }}>Quorums — replication without a fixed leader</h3>
+        <Code html={`<span class="cm">// Leaderless systems (Cassandra, DynamoDB) replace "the leader knows best"</span>
+<span class="cm">// with ARITHMETIC. With N replicas, pick W and R such that:</span>
+<span class="cm">//</span>
+<span class="cm">//        W + R &gt; N      →  every read set OVERLAPS every write set</span>
+<span class="cm">//                           by at least one node → the read always</span>
+<span class="cm">//                           touches at least one up-to-date copy</span>
+<span class="cm">//</span>
+<span class="cm">// N=3, W=2, R=2:  2+2 &gt; 3 ✅  balanced (the common default)</span>
+<span class="cm">// N=3, W=3, R=1:  fast reads, writes block if ANY replica is down</span>
+<span class="cm">// N=3, W=1, R=1:  1+1 &lt; 3 ❌  fast everything — and stale reads possible</span>
+<span class="cm">//                              (this is choosing AP with your eyes open)</span>`} />
+        <Warn>
+          <strong>The failover trap — split brain:</strong> when the leader dies, a follower is promoted.
+          But if the OLD leader was merely unreachable (network partition, long GC pause) and comes back,
+          you briefly have TWO leaders accepting writes — conflicting data that no automatic process can
+          merge. Real systems prevent it with a quorum vote for promotion and by "fencing" the old leader
+          (revoking its ability to write). Naming "split brain" and "fencing" in an interview is a strong
+          senior signal.
+        </Warn>
+        <Reveal summary="How replication and sharding compose in a real deployment">
+          <p>
+            A large system shards users across, say, 8 shards by <C>hash(user_id)</C> — and each shard is a
+            3-node replica set (1 leader + 2 followers). Writes for a user go to their shard's leader; reads
+            can hit that shard's followers. Losing any single machine loses nothing: a follower is promoted
+            inside that one shard while the other 7 shards never notice. That sentence — "shard for capacity,
+            replicate each shard for availability" — is the complete answer to "how does the database scale?"
+          </p>
+        </Reveal>
+      </section>
+
       {/* ── INTERVIEW CORNER ── */}
       <section id="interview">
         <div className="sec-label">Interview corner &middot; Rapid fire</div>

@@ -899,6 +899,12 @@ export default function Day99() {
         <div style={{ marginTop: 32 }}>
           <TradeoffCompass />
         </div>
+        <Note>
+          The (AP)/(CP) labels on the consistency slider come from the <strong>CAP theorem</strong>: during a
+          network partition a distributed system keeps either Consistency (refuse stale answers — CP) or
+          Availability (answer, possibly stale — AP), never both. Full explanation with the PACELC refinement:
+          Day 90's CAP deep-dive.
+        </Note>
         <Good>
           The compass is not a substitute for thinking — it is a prompt. In a real interview,
           you say: "This system is read-heavy and can tolerate eventual consistency, so I'd lean

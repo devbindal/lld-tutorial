@@ -566,6 +566,19 @@ export default function Day56() {
             real caches approximate it for concurrency and hit-rate." That framing shows you know where the toy
             meets reality.</p>
         </Reveal>
+        <Reveal summary='Q: "You lean on HashMap for O(1) — what actually happens INSIDE it?"'>
+          <p>The follow-up interviewers use to check the O(1) isn't cargo-culted. Inside: an array of buckets;
+            a key lands in bucket <C>hash(key) &amp; (capacity−1)</C> (capacity is always a power of two, so the
+            mask replaces a slow modulo). Collisions chain into a linked list in that bucket. Three numbers to
+            know: <strong>load factor 0.75</strong> — when size exceeds 0.75×capacity, the array DOUBLES and
+            every entry is rehashed into new buckets (an O(n) pause hidden inside one put — pre-size with
+            <C> new HashMap&lt;&gt;(expected/0.75f + 1)</C> if you know n); <strong>treeify at 8</strong> —
+            since Java 8, a bucket whose chain exceeds 8 entries converts to a red-black tree, turning the
+            worst case from O(n) to O(log n) (this killed the hash-collision DoS attack); and
+            <strong> the contract</strong> — all of it only works if <C>equals</C>/<C>hashCode</C> obey Day
+            20's rules, and if keys are immutable: mutate a field used in <C>hashCode</C> after insertion and
+            the entry is still in the OLD bucket — lookups miss it forever, the map "loses" your key.</p>
+        </Reveal>
       </section>
 
       {/* quiz */}

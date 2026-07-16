@@ -497,6 +497,16 @@ ReadWriteLock rw = <span class="kw">new</span> ReentrantReadWriteLock();   <span
             hold fewer locks at once. Detection (watchdogs/thread dumps) is a fallback, but prevention by lock
             ordering is the primary tool.</p>
         </Reveal>
+        <Reveal summary='Q: "What is ThreadLocal, and what is its famous production leak?"'>
+          <p><C>ThreadLocal&lt;T&gt;</C> is the CONFINED rung of today's ladder made concrete: each thread gets
+            its own private copy (<C>tl.get()</C>/<C>set()</C>), so there is no sharing and no locking —
+            classic uses are per-thread <C>SimpleDateFormat</C> (not thread-safe to share) and request context
+            (user id, trace id — Day 93's MDC rides on this). <strong>The leak:</strong> in a thread POOL,
+            threads never die — a value <C>set()</C> and never removed stays referenced by that pool thread
+            forever, and worse, LEAKS to the next request that reuses the thread (user A's context showing up
+            in user B's request is a real, famous production bug). Rule: in pooled threads, always
+            <C> tl.remove()</C> in a <C>finally</C> block.</p>
+        </Reveal>
       </section>
 
       {/* quiz */}
