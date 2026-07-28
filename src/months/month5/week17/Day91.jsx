@@ -412,44 +412,44 @@ const QUESTIONS = [
   {
     q: 'You shard a users table by userId using hash(userId) % 4. You add a 5th shard. What is the main problem?',
     o: [
-      'The hash function becomes slower with 5 shards',
+      'The directory service must be rebuilt from scratch',
       'Almost every key maps to a different shard — you must move roughly 80% of all data',
       'Range queries become impossible',
-      'The directory service must be rebuilt from scratch'
+      'The hash function becomes slower with 5 shards'
     ],
     a: 1,
     e: 'With modulo hashing, changing N from 4 to 5 changes the result of hash(key) % N for most keys. You must migrate those records to their new shard — an enormously expensive data migration.',
     w: {
-      0: 'Hash function speed does not depend on N — it is a trivial calculation. The problem is data migration, not CPU cost.',
+      0: 'Directory services are irrelevant to hash-based sharding. The problem is the modulo remapping of keys.',
       2: 'Range queries are already scatter-gather with hash sharding. Adding a shard does not change that property.',
-      3: 'Directory services are irrelevant to hash-based sharding. The problem is the modulo remapping of keys.'
+      3: 'Hash function speed does not depend on N — it is a trivial calculation. The problem is data migration, not CPU cost.'
     },
     r: { id: 's6', label: 'Section 6 — Resharding and the % N problem' }
   },
   {
     q: 'Which shard key would be the WORST choice for a social media app where 80% of users are in the United States?',
-    o: ['userId (UUID)', 'country_code', 'email address hash', 'timestamp of account creation'],
-    a: 1,
+    o: ['email address hash', 'timestamp of account creation', 'userId (UUID)', 'country_code'],
+    a: 3,
     e: 'Sharding by country_code puts 80% of all data and writes on the "US" shard while other shards sit nearly idle. This is a classic hotspot caused by low cardinality and skewed data distribution.',
     w: {
-      0: 'UUID is a near-perfect shard key — very high cardinality, uniformly distributed, no hotspots.',
-      2: 'Email hashes are also well-distributed and high-cardinality — a reasonable shard key choice.',
-      3: 'Timestamp can cause a sequential write hotspot but is still far better than a low-cardinality key like country.'
+      0: 'Email hashes are also well-distributed and high-cardinality — a reasonable shard key choice.',
+      1: 'Timestamp can cause a sequential write hotspot but is still far better than a low-cardinality key like country.',
+      2: 'UUID is a near-perfect shard key — very high cardinality, uniformly distributed, no hotspots.'
     },
     r: { id: 's3', label: 'Section 3 — Choosing the shard key' }
   },
   {
     q: 'A "scatter-gather" query in a sharded system means:',
     o: [
-      'The database automatically replicates writes to all shards',
       'A query is sent to all shards in parallel and results are merged by the caller',
+      'The database automatically replicates writes to all shards',
       'Data is gathered from replicas before being scattered to primary shards',
       'The consistent hash ring gathers all virtual nodes before routing'
     ],
-    a: 1,
+    a: 0,
     e: 'Scatter-gather is the pattern for queries that cannot be routed to a single shard. Every shard runs the query locally, and the caller merges all partial results — adding latency proportional to N shards.',
     w: {
-      0: 'Replication is a separate mechanism. Scatter-gather is about querying, not write propagation.',
+      1: 'Replication is a separate mechanism. Scatter-gather is about querying, not write propagation.',
       2: 'This inverts the meaning. There is no "scattering to primaries" step in normal sharding.',
       3: 'The consistent hash ring finds which single shard owns a key — the opposite of scatter-gather.'
     },
@@ -458,85 +458,85 @@ const QUESTIONS = [
   {
     q: 'You have a users table and an orders table. To avoid cross-shard joins when listing a user\'s orders, you should:',
     o: [
-      'Shard users by userId and orders by orderId',
+      'Use a directory service to map each orderId to the correct shard',
       'Shard both tables by userId so a user\'s data co-locates on the same shard',
-      'Keep users sharded and orders in one un-sharded database',
-      'Use a directory service to map each orderId to the correct shard'
+      'Shard users by userId and orders by orderId',
+      'Keep users sharded and orders in one un-sharded database'
     ],
     a: 1,
     e: 'Co-locating related data on the same shard is the standard fix for cross-shard joins. If both users and orders are sharded by userId, "all orders for user X" always lives on one shard — no fan-out.',
     w: {
-      0: 'Sharding orders by orderId spreads a user\'s orders across all shards. Every order query becomes a scatter-gather — exactly the problem we are trying to avoid.',
-      2: 'Keeping orders un-sharded defeats the purpose of horizontal scaling for a table that is often larger than users.',
-      3: 'A directory service maps keys to shards but does not help if related data is spread across different shards.'
+      0: 'A directory service maps keys to shards but does not help if related data is spread across different shards.',
+      2: 'Sharding orders by orderId spreads a user\'s orders across all shards. Every order query becomes a scatter-gather — exactly the problem we are trying to avoid.',
+      3: 'Keeping orders un-sharded defeats the purpose of horizontal scaling for a table that is often larger than users.'
     },
     r: { id: 's5', label: 'Section 5 — Cross-shard queries and denormalization' }
   },
   {
     q: 'What is a "virtual shard" and why does it help with resharding?',
     o: [
-      'A shard that stores only soft-deleted records until garbage collected',
-      'A logical partition layer between keys and physical servers, so adding a server only reassigns virtual shard ranges without remapping individual keys',
+      'A temporary shard used only during the migration window',
       'A replica of a shard used to serve read traffic',
-      'A temporary shard used only during the migration window'
+      'A shard that stores only soft-deleted records until garbage collected',
+      'A logical partition layer between keys and physical servers, so adding a server only reassigns virtual shard ranges without remapping individual keys'
     ],
-    a: 1,
+    a: 3,
     e: 'Virtual shards (e.g., 1024 fixed slots) form a stable mapping layer. Physical servers own ranges of virtual shards. Adding a server means moving some virtual shard ranges — a bounded, predictable operation — rather than recomputing hash(key) % N for every key.',
     w: {
-      0: 'This describes a soft-delete pattern, not virtual shards.',
-      2: 'That describes a read replica, which is a separate concept.',
-      3: 'Virtual shards are permanent, not temporary. They are the stable indirection layer that never changes in count.'
+      0: 'Virtual shards are permanent, not temporary. They are the stable indirection layer that never changes in count.',
+      1: 'That describes a read replica, which is a separate concept.',
+      2: 'This describes a soft-delete pattern, not virtual shards.'
     },
     r: { id: 's6', label: 'Section 6 — Virtual shards' }
   },
   {
     q: 'Which technique helps most when a single WRITE-heavy celebrity user overwhelms one shard?',
     o: [
-      'Add a Redis cache in front of the hot shard',
-      'Move the celebrity to a dedicated shard',
       'Append a random suffix (sub-sharding) to spread writes across multiple sub-keys',
-      'Switch from hash sharding to range sharding'
+      'Switch from hash sharding to range sharding',
+      'Move the celebrity to a dedicated shard',
+      'Add a Redis cache in front of the hot shard'
     ],
-    a: 2,
+    a: 0,
     e: 'Sub-sharding (userId_0 through userId_9) spreads writes across 10 sub-keys, each hashing to a potentially different shard. This directly reduces write pressure. The trade-off: reads must query all 10 sub-keys and aggregate.',
     w: {
-      0: 'Redis cache absorbs read traffic, not write traffic. A write-heavy user still overwhelms the shard even with a cache.',
-      1: 'A dedicated shard isolates the problem but does not distribute writes — the dedicated shard still receives all celebrity writes and hits the same ceiling.',
-      3: 'Switching sharding strategies is extremely expensive and does not fix the celebrity problem, which is about write concentration for one key.'
+      1: 'Switching sharding strategies is extremely expensive and does not fix the celebrity problem, which is about write concentration for one key.',
+      2: 'A dedicated shard isolates the problem but does not distribute writes — the dedicated shard still receives all celebrity writes and hits the same ceiling.',
+      3: 'Redis cache absorbs read traffic, not write traffic. A write-heavy user still overwhelms the shard even with a cache.'
     },
     r: { id: 's8', label: 'Section 8 — Hot shard mitigation' }
   },
   {
     q: 'When should you NOT shard your database?',
     o: [
-      'When your data fits on one server and read replicas handle your query load',
-      'When you have more than 1 million rows',
       'When your application uses an ORM like Hibernate',
-      'When you are using a relational database like PostgreSQL'
+      'When you are using a relational database like PostgreSQL',
+      'When your data fits on one server and read replicas handle your query load',
+      'When you have more than 1 million rows'
     ],
-    a: 0,
+    a: 2,
     e: 'Sharding is a last resort because it adds enormous operational complexity: cross-shard queries, difficult transactions, complex resharding. If a single powerful server with read replicas handles your load, that is almost always the better choice.',
     w: {
-      1: '1 million rows is tiny by modern database standards. A single PostgreSQL server can easily handle hundreds of millions of rows with proper indexing.',
-      2: 'ORM usage is irrelevant to the sharding decision. Many sharding setups use ORMs.',
-      3: 'Relational databases like PostgreSQL can absolutely be sharded (tools like Citus exist). The type of database does not determine whether sharding is needed.'
+      0: 'ORM usage is irrelevant to the sharding decision. Many sharding setups use ORMs.',
+      1: 'Relational databases like PostgreSQL can absolutely be sharded (tools like Citus exist). The type of database does not determine whether sharding is needed.',
+      3: '1 million rows is tiny by modern database standards. A single PostgreSQL server can easily handle hundreds of millions of rows with proper indexing.'
     },
     r: { id: 's10', label: 'Section 10 — When NOT to shard' }
   },
   {
     q: 'Consistent hashing helps with resharding because:',
     o: [
-      'It guarantees each shard has exactly the same number of keys',
-      'When a shard is added or removed, only 1/N of keys need to move on average',
+      'It converts range queries into single-shard queries',
       'It eliminates the need for a shard key entirely',
-      'It converts range queries into single-shard queries'
+      'When a shard is added or removed, only 1/N of keys need to move on average',
+      'It guarantees each shard has exactly the same number of keys'
     ],
-    a: 1,
+    a: 2,
     e: 'Consistent hashing places both keys and servers on a ring. A new server claims one arc of the ring, and only the keys in that arc move. With N servers, adding one moves roughly 1/N of keys — far better than naive modulo hashing which remaps almost everything.',
     w: {
-      0: 'Consistent hashing does not guarantee equal key distribution. Virtual nodes are added on top to improve balance.',
-      2: 'You still need a shard key. Consistent hashing changes HOW the key maps to a shard, not whether a key is needed.',
-      3: 'Range queries are still scatter-gather with consistent hashing — the hash function scrambles key ordering by design.'
+      0: 'Range queries are still scatter-gather with consistent hashing — the hash function scrambles key ordering by design.',
+      1: 'You still need a shard key. Consistent hashing changes HOW the key maps to a shard, not whether a key is needed.',
+      3: 'Consistent hashing does not guarantee equal key distribution. Virtual nodes are added on top to improve balance.'
     },
     r: { id: 's6', label: 'Section 6 — Consistent hashing and resharding' }
   }

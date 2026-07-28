@@ -197,33 +197,33 @@ const QUESTIONS = [
   {
     q: 'After updating a user profile in the DB, what should you do to the Redis cache entry in a cache-aside setup?',
     o: [
-      'Update the cache entry to match the DB write immediately',
       'Delete (invalidate) the cache key — the next read will re-populate it from DB',
       'Leave it alone and let TTL expire it naturally',
-      'Write a versioned key so old and new coexist'
+      'Write a versioned key so old and new coexist',
+      'Update the cache entry to match the DB write immediately'
     ],
-    a: 1,
+    a: 0,
     e: 'In cache-aside, delete on write is always safe. If two threads race to update the cache after a DB write, they can land in the wrong order and a stale value wins until TTL. Deleting is atomic and race-safe: the worst case is one extra DB read on the next miss.',
     w: {
-      0: 'Updating cache at write time introduces a race: thread A reads V1 from DB, thread B writes V2 to DB and deletes cache, thread A writes stale V1 back to cache. Now cache holds V1 while DB holds V2.',
-      2: 'TTL is a staleness safety net, not an invalidation strategy. Stale data sits in cache for the entire TTL window after every write.',
-      3: 'Versioned keys require all readers to use the new key. Old code reading the old key gets stale data indefinitely.'
+      1: 'TTL is a staleness safety net, not an invalidation strategy. Stale data sits in cache for the entire TTL window after every write.',
+      2: 'Versioned keys require all readers to use the new key. Old code reading the old key gets stale data indefinitely.',
+      3: 'Updating cache at write time introduces a race: thread A reads V1 from DB, thread B writes V2 to DB and deletes cache, thread A writes stale V1 back to cache. Now cache holds V1 while DB holds V2.'
     },
     r: { id: 'day81', label: 'Day 81 — Distributed Cache' }
   },
   {
     q: 'A Trie stores top-K completions at every node instead of running DFS at query time. What is the trade-off?',
     o: [
+      'Reads are slower because you must sort the stored list before returning it',
       'Reads are O(1) per suggestion but every insert/frequency update must update stored top-K at all ancestor nodes',
       'Reads and writes are both O(1) — no trade-off',
-      'Reads are slower because you must sort the stored list before returning it',
       'Writes are O(1) but reads require a full DFS of the prefix subtree'
     ],
-    a: 0,
+    a: 1,
     e: 'Storing top-K at each node makes reads O(K) — just return the pre-sorted list. But writes must propagate: a frequency change to a word may update the top-K list of every ancestor node from leaf to root. That is O(K × word-length) per write. Acceptable because reads vastly outnumber writes.',
     w: {
-      1: 'There is a real trade-off: writes become more expensive when you push sorting work to write time instead of read time.',
-      2: 'The list is already sorted at each node — that is the point. No sort at read time.',
+      0: 'The list is already sorted at each node — that is the point. No sort at read time.',
+      2: 'There is a real trade-off: writes become more expensive when you push sorting work to write time instead of read time.',
       3: 'This describes the naive DFS approach, which is what storing top-K is designed to replace.'
     },
     r: { id: 'day82', label: 'Day 82 — Search Autocomplete' }
@@ -231,16 +231,16 @@ const QUESTIONS = [
   {
     q: 'Two users upload the exact same 4 MB chunk. How many times is it stored in the block store?',
     o: [
-      'Twice — one per user for isolation',
-      'Once — SHA-256(same bytes) produces the same key; the block store keeps one copy and increments refCount',
       'Once per FileVersion that references it',
+      'Once — SHA-256(same bytes) produces the same key; the block store keeps one copy and increments refCount',
+      'Twice — one per user for isolation',
       'It depends on whether the users are in the same organization'
     ],
     a: 1,
     e: 'SHA-256 is deterministic. Both uploads hash to the same chunk ID. The block store checks: does a chunk with this ID exist? Yes — skip the write, bump refCount. The metadata layer enforces who can see what; the block store only knows hashes.',
     w: {
-      0: 'Per-user copies would defeat the whole point of content-addressing. Isolation is a metadata concern (permissions, FileVersion rows), not a storage concern.',
-      2: 'The chunk is stored once regardless of how many FileVersions reference it. refCount tracks the number of references.',
+      0: 'The chunk is stored once regardless of how many FileVersions reference it. refCount tracks the number of references.',
+      2: 'Per-user copies would defeat the whole point of content-addressing. Isolation is a metadata concern (permissions, FileVersion rows), not a storage concern.',
       3: 'Dedup is purely content-based (hash equality). Organization membership is irrelevant.'
     },
     r: { id: 'day83', label: 'Day 83 — File Storage System' }
@@ -248,33 +248,33 @@ const QUESTIONS = [
   {
     q: 'A circuit breaker is OPEN. A new request arrives. What happens?',
     o: [
-      'The request is queued until the circuit closes',
       'The request is fast-failed immediately without calling the downstream service',
-      'The circuit transitions to HALF_OPEN and lets this request through as a probe',
-      'The request is forwarded to a fallback service automatically'
+      'The request is forwarded to a fallback service automatically',
+      'The request is queued until the circuit closes',
+      'The circuit transitions to HALF_OPEN and lets this request through as a probe'
     ],
-    a: 1,
+    a: 0,
     e: 'When OPEN, the circuit breaker short-circuits: it throws or invokes the fallback immediately, without making the downstream call. The circuit stays OPEN until resetTimeout expires, then moves to HALF_OPEN for a single probe request.',
     w: {
-      0: 'Queueing still accumulates work and risks hammering the downstream service when it recovers. Fast-fail is the correct response.',
-      2: 'Transition to HALF_OPEN happens only after resetTimeout, not on the very next request. While OPEN, every request is fast-failed.',
-      3: 'Fallback is a separate layer wrapping the circuit breaker. The CB itself only fast-fails; the fallback is what the caller does with that failure.'
+      1: 'Fallback is a separate layer wrapping the circuit breaker. The CB itself only fast-fails; the fallback is what the caller does with that failure.',
+      2: 'Queueing still accumulates work and risks hammering the downstream service when it recovers. Fast-fail is the correct response.',
+      3: 'Transition to HALF_OPEN happens only after resetTimeout, not on the very next request. While OPEN, every request is fast-failed.'
     },
     r: { id: 'day84', label: 'Day 84 — Circuit Breaker and Resilience' }
   },
   {
     q: 'You add a 5th server to a 4-server consistent hash ring. With modulo hashing instead, what fraction of keys would have moved?',
     o: [
+      '1/2 — only keys above the midpoint move',
       '1/5 — the same as consistent hashing',
       '4/5 — the modulo base changed from 4 to 5, remapping almost all keys',
-      '1/2 — only keys above the midpoint move',
       '0 — existing keys stay on existing servers'
     ],
-    a: 1,
+    a: 2,
     e: 'With modulo hashing, changing N from 4 to 5 changes hash(key) % N for ~(N-1)/N = 80% of all keys. This causes a massive cache miss storm. Consistent hashing moves only ~1/N = 20% of keys by stealing only the adjacent arc.',
     w: {
-      0: '1/5 is the consistent hashing result. Modulo hashing is much worse because the divisor itself changes.',
-      2: 'There is no "midpoint" concept in modulo hashing — the fraction is (N-1)/N for any N.',
+      0: 'There is no "midpoint" concept in modulo hashing — the fraction is (N-1)/N for any N.',
+      1: '1/5 is the consistent hashing result. Modulo hashing is much worse because the divisor itself changes.',
       3: 'Changing the modulo base invalidates the mapping for nearly all keys.'
     },
     r: { id: 'day85', label: 'Day 85 — Consistent Hashing' }
@@ -282,16 +282,16 @@ const QUESTIONS = [
   {
     q: 'A URL shortener uses 301 redirect instead of 302. What is the most serious consequence?',
     o: [
+      'Search engines de-index the short URL immediately',
       'The short URL stops resolving after 24 hours',
       'Browsers permanently cache the destination — click analytics are lost and destination updates are impossible',
-      'Search engines de-index the short URL immediately',
       'The redirect stops working for HTTPS URLs'
     ],
-    a: 1,
+    a: 2,
     e: '301 = Moved Permanently. Browsers cache it forever. After the first visit, the browser navigates directly to the long URL without contacting your shortener — zero analytics recorded, and you cannot change the destination. 302 = Found (temporary), always checks your server.',
     w: {
-      0: '301 does not expire — it is permanent and works indefinitely. The problem is that it is cached too aggressively.',
-      2: 'Search engines may transfer page rank via 301, but that is not an analytics problem.',
+      0: 'Search engines may transfer page rank via 301, but that is not an analytics problem.',
+      1: '301 does not expire — it is permanent and works indefinitely. The problem is that it is cached too aggressively.',
       3: '301 and 302 both work for HTTPS. The issue is browser caching behavior, not protocol.'
     },
     r: { id: 'day86', label: 'Day 86 — URL Shortener' }
@@ -299,51 +299,51 @@ const QUESTIONS = [
   {
     q: 'A user sends a chat message and goes offline. The recipient is also offline. How does a real-time chat system deliver the message later?',
     o: [
-      'The message is lost — WebSocket delivery is best-effort only',
       'The message is stored in an offline delivery queue (e.g. per-user inbox in DB); when the recipient reconnects, the server flushes undelivered messages',
-      'The sender must retry when the recipient comes online',
-      'The message is stored in Redis pub/sub and delivered within 24 hours'
+      'The message is stored in Redis pub/sub and delivered within 24 hours',
+      'The message is lost — WebSocket delivery is best-effort only',
+      'The sender must retry when the recipient comes online'
     ],
-    a: 1,
+    a: 0,
     e: 'Redis Pub/Sub is ephemeral — if no subscriber is listening, the message is dropped. For offline delivery, messages are written to a persistent store (DB or message queue) keyed by recipient. On reconnect, the client requests messages since its last ack. This is the SENT/DELIVERED/READ receipt flow.',
     w: {
-      0: 'Best-effort applies only if you use only Pub/Sub without a persistent store. A production chat system writes to a durable store before acknowledging the sender.',
-      2: 'Retrying is the sender\'s fallback, not the design. The server stores messages so the sender does not need to know the recipient is offline.',
-      3: 'Redis Pub/Sub is in-memory and not persistent. Messages not consumed at publish time are lost. It is used for fan-out to online users, not for offline delivery.'
+      1: 'Redis Pub/Sub is in-memory and not persistent. Messages not consumed at publish time are lost. It is used for fan-out to online users, not for offline delivery.',
+      2: 'Best-effort applies only if you use only Pub/Sub without a persistent store. A production chat system writes to a durable store before acknowledging the sender.',
+      3: 'Retrying is the sender\'s fallback, not the design. The server stores messages so the sender does not need to know the recipient is offline.'
     },
     r: { id: 'day88', label: 'Day 88 — Real-time Chat' }
   },
   {
     q: 'What is the difference between Event Sourcing and CQRS?',
     o: [
+      'CQRS requires Event Sourcing to function',
       'They are the same pattern with different names',
       'Event Sourcing stores state as an append-only log of events (replay to rebuild); CQRS splits read and write models into separate paths optimized independently',
-      'Event Sourcing is the command side; CQRS is the query side',
-      'CQRS requires Event Sourcing to function'
+      'Event Sourcing is the command side; CQRS is the query side'
     ],
-    a: 1,
+    a: 2,
     e: 'Event Sourcing: every state change is an immutable event in a log; current state = replay of all events. CQRS: the write side accepts commands and updates the write model; the read side maintains denormalized read projections. They complement each other but are independent. You can use CQRS without Event Sourcing.',
     w: {
-      0: 'They are genuinely different. Event Sourcing is about how state is stored; CQRS is about how reads and writes are separated.',
-      2: 'Event Sourcing covers both command processing AND state storage. CQRS defines the read/write split, not a side.',
-      3: 'CQRS can be used with a traditional mutable database. Event Sourcing is one common implementation strategy for the write side of CQRS.'
+      0: 'CQRS can be used with a traditional mutable database. Event Sourcing is one common implementation strategy for the write side of CQRS.',
+      1: 'They are genuinely different. Event Sourcing is about how state is stored; CQRS is about how reads and writes are separated.',
+      3: 'Event Sourcing covers both command processing AND state storage. CQRS defines the read/write split, not a side.'
     },
     r: { id: 'day90', label: 'Day 90 — Event-Driven Architecture' }
   },
   {
     q: 'What is a hot shard in database sharding and what is the primary fix?',
     o: [
+      'A shard with more replicas than others — fix by removing extra replicas',
       'A shard running on an overheating server — fix by moving it to a cooler rack',
-      'A shard receiving disproportionately more traffic because the shard key maps many popular rows to it — fix by choosing a high-cardinality shard key or adding virtual shards',
       'A shard that holds more rows than the others — fix by redistributing rows evenly',
-      'A shard with more replicas than others — fix by removing extra replicas'
+      'A shard receiving disproportionately more traffic because the shard key maps many popular rows to it — fix by choosing a high-cardinality shard key or adding virtual shards'
     ],
-    a: 1,
+    a: 3,
     e: 'If the shard key is low-cardinality (e.g. country) or maps to a single celebrity user, one shard gets a huge fraction of traffic. Fix: use a high-cardinality key (hashed user_id), add a random suffix for extreme hot spots, or use virtual shards (fine-grained partitions) so hot partitions can be moved independently.',
     w: {
-      0: 'Hot shard is a traffic/load imbalance problem, not a thermal one.',
-      2: 'Hot shard is about traffic, not row count. A shard can have few rows but receive enormous traffic (e.g. a celebrity account).',
-      3: 'Replication topology is unrelated to the hot shard problem.'
+      0: 'Replication topology is unrelated to the hot shard problem.',
+      1: 'Hot shard is a traffic/load imbalance problem, not a thermal one.',
+      2: 'Hot shard is about traffic, not row count. A shard can have few rows but receive enormous traffic (e.g. a celebrity account).'
     },
     r: { id: 'day91', label: 'Day 91 — Database Sharding' }
   },
@@ -352,64 +352,64 @@ const QUESTIONS = [
     o: [
       'Strategy — the gateway picks one filter per request type',
       'Chain of Responsibility — each filter does its work and either calls next or short-circuits the chain',
-      'Observer — filters subscribe to request events',
-      'Composite — all filters run in parallel and results are merged'
+      'Composite — all filters run in parallel and results are merged',
+      'Observer — filters subscribe to request events'
     ],
     a: 1,
     e: 'Each filter (auth, rate-limit, logging, routing) has a handle(request, chain) method. It does its work and either calls chain.next() to pass along or returns early (e.g. 401 Unauthorized). This is Chain of Responsibility from Day 36: a chain of handlers, each deciding pass-along or stop.',
     w: {
       0: 'Strategy picks one algorithm from a set. The gateway runs ALL filters in sequence — a chain, not a selection.',
-      2: 'Observer is event notification. Filters are not notified of events; they are invoked sequentially in a chain.',
-      3: 'Composite aggregates children of the same type. The filter chain is sequential processing, not parallel aggregation.'
+      2: 'Composite aggregates children of the same type. The filter chain is sequential processing, not parallel aggregation.',
+      3: 'Observer is event notification. Filters are not notified of events; they are invoked sequentially in a chain.'
     },
     r: { id: 'day92', label: 'Day 92 — API Gateway and Service Mesh' }
   },
   {
     q: 'In Kafka, you need all events for a given orderId to be processed in order. What must you do?',
     o: [
-      'Set replication factor to 3 to ensure ordering',
+      'Set the consumer group to have exactly one consumer',
       'Use orderId as the message key — Kafka routes all messages with the same key to the same partition, and a partition is an ordered log',
       'Use a single partition per topic so all messages are globally ordered',
-      'Set the consumer group to have exactly one consumer'
+      'Set replication factor to 3 to ensure ordering'
     ],
     a: 1,
     e: 'Kafka guarantees ordering only within a partition. Using the entity ID (orderId) as the message key causes the producer to route via hash(key) % numPartitions — all events for that order land in the same partition and are consumed in order by one consumer in the group.',
     w: {
-      0: 'Replication factor controls fault tolerance (how many copies exist), not message ordering.',
+      0: 'One consumer per group processes the entire topic sequentially, which eliminates parallelism and does not help with per-entity ordering.',
       2: 'A single partition works but eliminates all parallelism. Key-based routing is the production solution.',
-      3: 'One consumer per group processes the entire topic sequentially, which eliminates parallelism and does not help with per-entity ordering.'
+      3: 'Replication factor controls fault tolerance (how many copies exist), not message ordering.'
     },
     r: { id: 'day94', label: 'Day 94 — Kafka and Distributed Messaging' }
   },
   {
     q: 'A service needs to write to its DB and publish a Kafka event atomically. What pattern solves this?',
     o: [
+      'Use a distributed lock to coordinate the two writes',
       'Two-phase commit (2PC) across the DB and Kafka',
-      'Outbox pattern — write the business record and an outbox event row in the same DB transaction; a relay publishes to Kafka separately',
       'Write to Kafka first, then to the DB — Kafka is more reliable',
-      'Use a distributed lock to coordinate the two writes'
+      'Outbox pattern — write the business record and an outbox event row in the same DB transaction; a relay publishes to Kafka separately'
     ],
-    a: 1,
+    a: 3,
     e: 'You cannot atomically span a DB transaction and a Kafka send. The outbox pattern keeps both writes in one DB transaction (always consistent). A relay (or Debezium CDC) reads uncommitted outbox rows and publishes them to Kafka. If the relay crashes, it re-reads unpublished rows on restart — no event is ever lost.',
     w: {
-      0: '2PC across a DB and Kafka is impractical — Kafka does not participate in XA transactions and the coordinator is a SPOF.',
-      2: 'Writing to Kafka first means if the DB write fails, the event has been published for a change that did not happen.',
-      3: 'A distributed lock does not help — the two writes still happen at different times; a crash between them leaves them inconsistent.'
+      0: 'A distributed lock does not help — the two writes still happen at different times; a crash between them leaves them inconsistent.',
+      1: '2PC across a DB and Kafka is impractical — Kafka does not participate in XA transactions and the coordinator is a SPOF.',
+      2: 'Writing to Kafka first means if the DB write fails, the event has been published for a change that did not happen.'
     },
     r: { id: 'day95', label: 'Day 95 — Distributed Transactions' }
   },
   {
     q: 'A CDN serves your homepage. You update the HTML. Users keep seeing the old version for hours. What went wrong and how do you fix static assets going forward?',
     o: [
-      'The CDN is broken — contact support',
       'The CDN cached the response per s-maxage and will not re-fetch until it expires; for versioned static assets use URL hashing (e.g. main.a3f9.js) so each build gets a unique URL that is instantly fresh',
+      'The CDN is broken — contact support',
       'Set Cache-Control: no-cache on all responses to prevent caching',
       'Switch from 200 to 304 responses to force revalidation'
     ],
-    a: 1,
+    a: 0,
     e: 'CDN PoPs serve from their local cache until s-maxage expires. For HTML (which changes), use a short s-maxage or stale-while-revalidate. For static assets (JS/CSS), embed a content hash in the filename — the URL changes on every build, so the CDN sees a brand-new URL and fetches fresh content immediately.',
     w: {
-      0: 'The CDN is behaving exactly as configured. The fix is a better caching strategy, not a support ticket.',
+      1: 'The CDN is behaving exactly as configured. The fix is a better caching strategy, not a support ticket.',
       2: 'no-cache forces revalidation on every request — it defeats CDN caching entirely and sends every request to origin.',
       3: '304 Not Modified is a revalidation response the origin sends to the CDN; it does not control how long the CDN caches in the first place.'
     },
@@ -418,85 +418,85 @@ const QUESTIONS = [
   {
     q: 'A load balancer uses IP hash for sticky sessions. What breaks when one server is removed from the pool?',
     o: [
+      'IP hash automatically migrates sessions to the new server',
       'Nothing — IP hash is immune to pool changes',
       'The modulo base changes (hash(ip) % N), so most clients suddenly hash to a different server than before, losing their session affinity all at once',
-      'Only the clients on the removed server are affected',
-      'IP hash automatically migrates sessions to the new server'
+      'Only the clients on the removed server are affected'
     ],
-    a: 1,
+    a: 2,
     e: 'IP hash routes via hash(clientIp) % N. Removing one server changes N, so almost every client\'s hash % N result changes — not just clients who were on the removed server. This is the same modulo-hashing fragility from consistent hashing (Day 85), applied to load balancer routing instead of cache routing.',
     w: {
-      0: 'IP hash is exactly as fragile to pool-size changes as plain modulo hashing — changing N reroutes almost everyone.',
-      2: 'Because the divisor N changes for everyone, clients who were NOT on the removed server are also affected, not just the ones who were.',
-      3: 'IP hash has no concept of session migration — it purely recomputes a hash. There is no data transfer between servers.'
+      0: 'IP hash has no concept of session migration — it purely recomputes a hash. There is no data transfer between servers.',
+      1: 'IP hash is exactly as fragile to pool-size changes as plain modulo hashing — changing N reroutes almost everyone.',
+      3: 'Because the divisor N changes for everyone, clients who were NOT on the removed server are also affected, not just the ones who were.'
     },
     r: { id: 'day97', label: 'Day 97 — Load Balancing' }
   },
   {
     q: 'Why must a circuit breaker\'s retry logic live INSIDE the breaker rather than wrapping it (a Day 84 idea revisited for load balancers and service meshes)?',
     o: [
-      'It does not matter which order they are in',
       'If retry wraps the breaker, the breaker only sees one logical failure per caller intent instead of each individual attempt, so it trips far too slowly during a real outage',
+      'The breaker cannot track failures unless retry is disabled entirely',
       'Retry outside the breaker causes a compile error',
-      'The breaker cannot track failures unless retry is disabled entirely'
+      'It does not matter which order they are in'
     ],
-    a: 1,
+    a: 0,
     e: 'This question is a direct callback to Day 84\'s resilience stack (Timeout → Retry → Circuit Breaker → Bulkhead → Fallback). Retry must be inside the CB so every individual attempt counts toward the trip threshold — the same principle a service mesh sidecar (Day 92) applies transparently to every service-to-service call.',
     w: {
-      0: 'Order changes how fast the breaker detects an outage — this is not cosmetic.',
+      1: 'The breaker can track failures with retry either inside or outside; the issue is granularity of what counts as one failure, not whether tracking is possible.',
       2: 'This is a design smell, not a compiler error — both orderings compile fine.',
-      3: 'The breaker can track failures with retry either inside or outside; the issue is granularity of what counts as one failure, not whether tracking is possible.'
+      3: 'Order changes how fast the breaker detects an outage — this is not cosmetic.'
     },
     r: { id: 'day97', label: 'Day 97 — Load Balancing' }
   },
   {
     q: 'A team extracts a "PaymentService" but has it share the same PostgreSQL database and tables as "OrderService." What is the core problem?',
     o: [
-      'There is no problem — sharing a database is fine as long as the code is in separate repos',
-      'The database is a hidden coupling point: a schema change in one service\'s tables can silently break the other service\'s queries, so true independence never existed despite separate codebases',
       'PostgreSQL cannot be shared by two services for licensing reasons',
-      'The problem only appears if the services are deployed to different servers'
+      'The problem only appears if the services are deployed to different servers',
+      'There is no problem — sharing a database is fine as long as the code is in separate repos',
+      'The database is a hidden coupling point: a schema change in one service\'s tables can silently break the other service\'s queries, so true independence never existed despite separate codebases'
     ],
-    a: 1,
+    a: 3,
     e: 'Database-per-service is the single most important microservices rule (Day 98). A shared database looks like two independent services but is not — PaymentService renaming a column breaks OrderService\'s query silently, and neither team can deploy schema changes without coordinating with the other. Cross-service reads must go through the owning service\'s API, not a DB join.',
     w: {
-      0: 'Separate repos and separate deploy pipelines do not remove the coupling if the underlying storage is still shared — a schema change still breaks the other service.',
-      2: 'This is an architectural coupling issue, not a licensing constraint.',
-      3: 'The problem is structural (shared schema, shared table ownership) — it exists regardless of physical deployment topology.'
+      0: 'This is an architectural coupling issue, not a licensing constraint.',
+      1: 'The problem is structural (shared schema, shared table ownership) — it exists regardless of physical deployment topology.',
+      2: 'Separate repos and separate deploy pipelines do not remove the coupling if the underlying storage is still shared — a schema change still breaks the other service.'
     },
     r: { id: 'day98', label: 'Day 98 — Microservices Patterns' }
   },
   {
     q: 'What is the "Strangler Fig" pattern, and why is it preferred over rewriting a monolith all at once?',
     o: [
+      'A database migration tool for schema changes',
       'A caching pattern that strangles slow queries by timing them out',
-      'Incrementally route one capability at a time from the monolith to a new microservice via a gateway, delete the dead code, and repeat — a big-bang rewrite almost always fails because the monolith keeps evolving while a full rewrite is frozen',
       'A pattern for compressing HTTP responses at the edge',
-      'A database migration tool for schema changes'
+      'Incrementally route one capability at a time from the monolith to a new microservice via a gateway, delete the dead code, and repeat — a big-bang rewrite almost always fails because the monolith keeps evolving while a full rewrite is frozen'
     ],
-    a: 1,
+    a: 3,
     e: 'Named after the strangler fig tree, which grows around a host tree and slowly replaces it. The migration cycle is: route (put a gateway in front) → extract (build the new service for one capability) → redirect (send that capability\'s traffic to the new service) → kill + repeat. This avoids the classic "6-month rewrite" trap, since the old system stays live and useful throughout.',
     w: {
-      0: 'This question is about service migration strategy, not caching or query timeouts.',
-      2: 'HTTP compression is unrelated — Strangler Fig is an architectural migration pattern.',
-      3: 'It is not a schema tool — it is a strategy for incrementally replacing an entire system, potentially including its database.'
+      0: 'It is not a schema tool — it is a strategy for incrementally replacing an entire system, potentially including its database.',
+      1: 'This question is about service migration strategy, not caching or query timeouts.',
+      2: 'HTTP compression is unrelated — Strangler Fig is an architectural migration pattern.'
     },
     r: { id: 'day98', label: 'Day 98 — Microservices Patterns' }
   },
   {
     q: 'In the 6-step system design interview framework (Day 99), which step is most often skipped by weak candidates, and what does skipping it signal?',
     o: [
-      'Step 3 (high-level design) — skipping it signals the candidate cannot draw diagrams',
+      'Step 2 (define scope) — skipping it only matters for very large systems',
       'Step 1 (clarify requirements) — jumping straight to drawing boxes without asking about scale, scope, or consistency signals solution-first thinking instead of problem-first thinking',
       'Step 6 (edge cases) — skipping it has no real consequence since production failures are rare',
-      'Step 2 (define scope) — skipping it only matters for very large systems'
+      'Step 3 (high-level design) — skipping it signals the candidate cannot draw diagrams'
     ],
     a: 1,
     e: 'Drawing before clarifying is the #1 mistake named across Day 99\'s common-mistakes section. A 10K QPS design and a 10M QPS design look completely different — without scale and scope questions, the constraints that should drive every later decision are missing, and the interviewer cannot tell if you understand why you chose SQL vs NoSQL, cache vs no cache, etc.',
     w: {
-      0: 'Step 3 is usually where candidates over-invest time, not skip — boxes are the "safe" part of the interview.',
+      0: 'Scope (Step 2) matters at every scale — it prevents the interviewer from later saying "you forgot X," regardless of system size.',
       2: 'Not mentioning failure modes (Step 6) is explicitly called out as a signal of junior-level thinking, not a minor omission.',
-      3: 'Scope (Step 2) matters at every scale — it prevents the interviewer from later saying "you forgot X," regardless of system size.'
+      3: 'Step 3 is usually where candidates over-invest time, not skip — boxes are the "safe" part of the interview.'
     },
     r: { id: 'day99', label: 'Day 99 — System Design Interview Synthesis' }
   },

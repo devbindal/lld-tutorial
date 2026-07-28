@@ -329,71 +329,71 @@ function PickupDemo() {
 const QUESTIONS = [
   {
     q: 'A Medium package arrives. Slots available: S1 (Small), M2 (Medium), L1 (Large). Which slot does the greedy algorithm pick?',
-    o: ['S1 — smallest slot overall', 'M2 — smallest slot that fits', 'L1 — largest slot to be safe'],
-    a: 1,
+    o: ['L1 — largest slot to be safe', 'S1 — smallest slot overall', 'M2 — smallest slot that fits'],
+    a: 2,
     e: 'Greedy picks the smallest slot whose size rank is >= the package rank. Medium fits in Medium or Large; the smallest of those is M2.',
     w: {
-      0: 'S1 is a Small slot — a Medium package does not fit in it. Size rank 2 (Medium) > rank 1 (Small), so it fails the fits() check.',
-      2: 'Picking the largest slot wastes the most space. A Large slot reserved for a Medium package can never hold a genuinely Large package. Greedy = smallest that fits.'
+      0: 'Picking the largest slot wastes the most space. A Large slot reserved for a Medium package can never hold a genuinely Large package. Greedy = smallest that fits.',
+      1: 'S1 is a Small slot — a Medium package does not fit in it. Size rank 2 (Medium) > rank 1 (Small), so it fails the fits() check.'
     },
     r: { id: 's4', label: 'Section 4 — Greedy size assignment' }
   },
   {
     q: 'Two couriers arrive at the same millisecond and both read slot M3 as AVAILABLE. What prevents a double-assignment?',
     o: [
-      'The database is single-threaded so only one write wins',
+      'The first courier to send an HTTP request wins because HTTP is sequential',
       'An atomic compareAndSet(AVAILABLE, OCCUPIED) — only one thread sets it; the other sees the old value and re-searches',
-      'The first courier to send an HTTP request wins because HTTP is sequential'
+      'The database is single-threaded so only one write wins'
     ],
     a: 1,
     e: 'compareAndSet is an atomic operation: read + conditional write happen as one unbreakable unit. The loser sees the CAS fail and must search again for another slot.',
     w: {
-      0: 'Databases are not single-threaded for reads — they can serve many queries simultaneously. Without a conditional update (optimistic lock or FOR UPDATE), two reads can both see AVAILABLE.',
-      2: 'HTTP requests run concurrently on the server. There is no HTTP-level sequencing. The race happens inside the server process.'
+      0: 'HTTP requests run concurrently on the server. There is no HTTP-level sequencing. The race happens inside the server process.',
+      2: 'Databases are not single-threaded for reads — they can serve many queries simultaneously. Without a conditional update (optimistic lock or FOR UPDATE), two reads can both see AVAILABLE.'
     },
     r: { id: 's4', label: 'Section 4 — Atomic slot claim' }
   },
   {
     q: 'Why should SlotSize use an explicit int rank field instead of relying on Enum.ordinal()?',
     o: [
-      'ordinal() is deprecated in Java 17+',
       'ordinal() returns the declaration order which can silently break if you reorder or insert enum constants',
-      'rank fields are faster at runtime'
+      'rank fields are faster at runtime',
+      'ordinal() is deprecated in Java 17+'
     ],
-    a: 1,
+    a: 0,
     e: 'Enum.ordinal() is tied to source code order. If anyone inserts X_SMALL between SMALL and MEDIUM, all ranks shift and every size comparison breaks silently. An explicit rank field is stable.',
     w: {
-      0: 'ordinal() is not deprecated — it still exists in all Java versions. The problem is semantic fragility, not deprecation.',
-      2: 'Performance difference between ordinal() and a field access is negligible and irrelevant here. Correctness is the concern.'
+      1: 'Performance difference between ordinal() and a field access is negligible and irrelevant here. Correctness is the concern.',
+      2: 'ordinal() is not deprecated — it still exists in all Java versions. The problem is semantic fragility, not deprecation.'
     },
     r: { id: 's4', label: 'Section 4 — SlotSize enum' }
   },
   {
     q: 'A customer enters the correct pickup code but the reservation expired 2 minutes ago. What should happen?',
     o: [
+      'Extend the reservation by 24 hours automatically',
       'Release the package anyway — the code is correct',
-      'Return an error: reservation expired, package returned to sender',
-      'Extend the reservation by 24 hours automatically'
+      'Return an error: reservation expired, package returned to sender'
     ],
-    a: 1,
+    a: 2,
     e: 'Expiry is a hard boundary. The slot may already be re-assigned to a new package. Releasing based on an expired code could give someone else\'s package to the wrong person.',
     w: {
-      0: 'A correct code from an expired reservation is not a valid claim. The slot may have been reassigned. Releasing the package would be a security and correctness violation.',
-      2: 'Automatic extension makes business sense only if designed as a feature. It is not a safe default — the locker bank may need that slot immediately.'
+      0: 'Automatic extension makes business sense only if designed as a feature. It is not a safe default — the locker bank may need that slot immediately.',
+      1: 'A correct code from an expired reservation is not a valid claim. The slot may have been reassigned. Releasing the package would be a security and correctness violation.'
     },
     r: { id: 's7', label: 'Section 7 — Expiry and the sweeper' }
   },
   {
     q: 'What property makes a pickup code secure and correct?',
     o: [
-      'It should be the package tracking number for easy lookup',
       'It should be a short random string, immutable after creation, and known only to the recipient',
+      'It should be the package tracking number for easy lookup',
       'It should encode the slot ID so the customer knows where to go'
     ],
-    a: 1,
+    a: 0,
     e: 'A pickup code is a Value Object: short, random (hard to guess), immutable (never changes after generation), and secret (only emailed to the recipient). Encoding slot info would be a security leak.',
     w: {
-      0: 'Tracking numbers are known to senders, carriers, and publicly queryable. Using them as pickup codes lets anyone who sees a tracking number collect the package.',
+      1: 'Tracking numbers are known to senders, carriers, and publicly queryable. Using them as pickup codes lets anyone who sees a tracking number collect the package.',
       2: 'Encoding the slot in the code leaks location info. The customer learns their slot when they enter the code, not before — the locker display shows it after successful auth.'
     },
     r: { id: 's6', label: 'Section 6 — Pickup codes' }
@@ -401,15 +401,15 @@ const QUESTIONS = [
   {
     q: 'The greedy assignSlot() finds no eligible slot. What is the correct response?',
     o: [
-      'Assign the package to the smallest available slot regardless of size — it will fit somehow',
       'Return an error to the courier system; notify the sender and possibly queue the package for re-attempt',
-      'Wait indefinitely until a slot opens up'
+      'Wait indefinitely until a slot opens up',
+      'Assign the package to the smallest available slot regardless of size — it will fit somehow'
     ],
-    a: 1,
+    a: 0,
     e: 'If no slot fits, the package cannot be stored. The courier system must be told immediately so it can reroute. Silent failure (putting it in a too-small slot) would physically damage the package.',
     w: {
-      0: 'Physical lockers have hard size limits. A large package in a small slot does not "fit somehow" — this is not software, it is reality. The package will not close.',
-      2: 'Waiting indefinitely blocks the courier at the locker. The correct pattern is fail-fast: return the result immediately and let the caller decide on retry or rerouting.'
+      1: 'Waiting indefinitely blocks the courier at the locker. The correct pattern is fail-fast: return the result immediately and let the caller decide on retry or rerouting.',
+      2: 'Physical lockers have hard size limits. A large package in a small slot does not "fit somehow" — this is not software, it is reality. The package will not close.'
     },
     r: { id: 's4', label: 'Section 4 — Greedy size assignment' }
   },
@@ -431,15 +431,15 @@ const QUESTIONS = [
   {
     q: 'Which design pattern describes the relationship between LockerBank and LockerSlot?',
     o: [
-      'Observer — LockerBank watches LockerSlot for state changes',
+      'Strategy — LockerSlot is a pluggable algorithm used by LockerBank',
       'Composition — LockerBank owns the LockerSlot objects; they cannot exist without the bank',
-      'Strategy — LockerSlot is a pluggable algorithm used by LockerBank'
+      'Observer — LockerBank watches LockerSlot for state changes'
     ],
     a: 1,
     e: 'LockerBank creates and owns its LockerSlot objects. When the bank is destroyed, the slots are gone. This lifecycle ownership is the definition of Composition (strong has-a).',
     w: {
-      0: 'Observer is about event notification. LockerBank does not subscribe to slot events — it directly reads and writes slot state when a store/pickup call arrives.',
-      2: 'Strategy encapsulates an interchangeable algorithm. LockerSlot is not an algorithm — it is a data-holding entity that represents a physical compartment.'
+      0: 'Strategy encapsulates an interchangeable algorithm. LockerSlot is not an algorithm — it is a data-holding entity that represents a physical compartment.',
+      2: 'Observer is about event notification. LockerBank does not subscribe to slot events — it directly reads and writes slot state when a store/pickup call arrives.'
     },
     r: { id: 's3', label: 'Section 3 — Entities and relationships' }
   }

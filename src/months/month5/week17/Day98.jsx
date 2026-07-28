@@ -329,7 +329,6 @@ function BoundedContextDemo() {
   return (
     <div className="panel">
       <div className="ptitle">Live demo · bounded context collision vs isolation</div>
-
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         <button className={`act${split ? ' ghost' : ''}`} onClick={() => { setSplit(false); resetDemo() }}>
           Shared model (monolith)
@@ -338,10 +337,9 @@ function BoundedContextDemo() {
           Split bounded contexts
         </button>
       </div>
-
       {!split ? (
         /* ── Monolith: one shared Customer ── */
-        <div>
+        (<div>
           <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#7c8aa5', marginBottom: 8 }}>
             ONE shared Customer class — used by all three teams
           </div>
@@ -390,10 +388,10 @@ function BoundedContextDemo() {
               <button className="ghost act" style={{ marginTop: 8 }} onClick={resetDemo}>Reset</button>
             </div>
           )}
-        </div>
+        </div>)
       ) : (
         /* ── Split bounded contexts ── */
-        <div>
+        (<div>
           <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#7c8aa5', marginBottom: 8 }}>
             Each team owns its own model — bounded contexts are isolated
           </div>
@@ -445,10 +443,10 @@ function BoundedContextDemo() {
           ) : (
             <Note>Click "Change [Team] model" above to see how only that bounded context is affected.</Note>
           )}
-        </div>
+        </div>)
       )}
     </div>
-  )
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -458,16 +456,16 @@ const QUESTIONS = [
   {
     q: 'What is the primary benefit of the "database per service" rule in microservices?',
     o: [
+      'It reduces storage costs by eliminating duplication',
       'It makes queries faster because each service has a smaller database',
       'It prevents services from coupling on shared schema — each service can evolve its storage independently',
-      'It reduces storage costs by eliminating duplication',
       'It enables SQL transactions across multiple services',
     ],
-    a: 1,
+    a: 2,
     e: 'Database per service breaks the hidden coupling that a shared schema creates. When Service A changes a table, Service B breaks even if they have separate code. Separate DBs mean separate schemas, separate migrations, independent evolution.',
     w: {
-      0: 'Query speed is not the reason — in fact, cross-service data now requires API calls instead of JOIN, which is slower. The benefit is independence, not speed.',
-      2: 'Separate databases typically increase storage costs because data is replicated or duplicated. The benefit is architectural independence, not cost reduction.',
+      0: 'Separate databases typically increase storage costs because data is replicated or duplicated. The benefit is architectural independence, not cost reduction.',
+      1: 'Query speed is not the reason — in fact, cross-service data now requires API calls instead of JOIN, which is slower. The benefit is independence, not speed.',
       3: 'The opposite is true — you CANNOT use a DB transaction that spans two separate databases. This is exactly why you need Sagas (Day 90) and the Outbox pattern (Day 95).',
     },
     r: { id: 's8', label: 'Section 8 — Database per service' },
@@ -475,17 +473,17 @@ const QUESTIONS = [
   {
     q: 'The Strangler Fig pattern solves which problem?',
     o: [
-      'How to share a database between multiple microservices',
       'How to safely migrate from a monolith to microservices incrementally, without a big-bang rewrite',
-      'How to prevent one service from calling another service directly',
       'How to distribute traffic across multiple instances of the same service',
+      'How to prevent one service from calling another service directly',
+      'How to share a database between multiple microservices',
     ],
-    a: 1,
+    a: 0,
     e: 'The Strangler Fig pattern lets you extract one capability at a time, routing its traffic to the new service at the API Gateway, while the monolith still handles everything else. Each step is reversible. There is no risky "freeze the monolith and rewrite everything" moment.',
     w: {
-      0: 'Database sharing is actually what microservices avoid. The Strangler Fig is about safe migration strategy, not database topology.',
+      1: 'Load balancing / scaling is handled by the infrastructure layer. The Strangler Fig is an architectural migration pattern.',
       2: 'Preventing direct service-to-service calls is a different concern (API Gateway routing, service mesh). The Strangler Fig is specifically about migration from a monolith.',
-      3: 'Load balancing / scaling is handled by the infrastructure layer. The Strangler Fig is an architectural migration pattern.',
+      3: 'Database sharing is actually what microservices avoid. The Strangler Fig is about safe migration strategy, not database topology.',
     },
     r: { id: 's6', label: 'Section 6 — Strangler Fig pattern' },
   },
@@ -494,15 +492,15 @@ const QUESTIONS = [
     o: [
       'Services should be small enough to be rewritten in two weeks',
       'The architecture of a system mirrors the communication structure of the organization that built it',
-      'Every microservice must expose a REST API',
       'Services that communicate frequently should be merged into one service',
+      'Every microservice must expose a REST API',
     ],
     a: 1,
     e: 'Conway\'s Law (1967): organizations produce systems that copy their own communication structure. If your teams are split by Sales/Support/Billing, your services will naturally align to those boundaries too. This is why "decompose by business capability" often maps cleanly to team structure.',
     w: {
       0: 'The "two-pizza team" or "two-week rewrite" heuristics are informal sizing rules, not Conway\'s Law. Conway\'s Law is about org structure mirroring system structure.',
-      2: 'REST vs gRPC vs messaging is an implementation choice. Conway\'s Law makes no statement about protocols.',
-      3: 'Co-locating frequently communicating services is a valid optimization (reducing network calls), but it is not what Conway\'s Law states.',
+      2: 'Co-locating frequently communicating services is a valid optimization (reducing network calls), but it is not what Conway\'s Law states.',
+      3: 'REST vs gRPC vs messaging is an implementation choice. Conway\'s Law makes no statement about protocols.',
     },
     r: { id: 's2', label: 'Section 2 — Decomposition strategies' },
   },
@@ -510,84 +508,84 @@ const QUESTIONS = [
     q: 'In the Bounded Context concept, what is wrong with one shared "Customer" model used by Sales, Support, and Billing?',
     o: [
       'It is too large to fit in memory',
-      'A Customer object cannot be serialized to JSON',
       'The word "Customer" means different things in each context — the shared model forces one schema to serve all meanings, so a change for one team breaks the others',
       'Shared models make SQL queries slower',
+      'A Customer object cannot be serialized to JSON',
     ],
-    a: 2,
+    a: 1,
     e: 'In Sales, "Customer" means a prospect with a lead score. In Support, it means a ticket holder with an SLA level. In Billing, it means an account with payment terms. One shared class tries to serve all three meanings. When Sales adds a field for their context, Support and Billing code breaks even though they never needed that field.',
     w: {
       0: 'Memory size is not the issue. Domain correctness is. A small but incorrectly shared model is still wrong.',
-      1: 'JSON serialization works fine on shared models. The problem is semantic coupling, not technical serialization.',
-      3: 'SQL performance is a separate concern. The bounded context problem is about meaning and change blast radius, not query speed.',
+      2: 'SQL performance is a separate concern. The bounded context problem is about meaning and change blast radius, not query speed.',
+      3: 'JSON serialization works fine on shared models. The problem is semantic coupling, not technical serialization.',
     },
     r: { id: 's3', label: 'Section 3 — Bounded contexts' },
   },
   {
     q: 'An Anti-Corruption Layer (ACL) is best described as:',
     o: [
-      'A security firewall that blocks unauthorized API calls between services',
-      'A translation layer that converts an external or legacy model into your own clean domain model',
       'A database migration tool that prevents data corruption',
       'A circuit breaker that stops cascading failures',
+      'A security firewall that blocks unauthorized API calls between services',
+      'A translation layer that converts an external or legacy model into your own clean domain model',
     ],
-    a: 1,
+    a: 3,
     e: 'An ACL (from DDD) sits at the boundary between your clean domain and an external system (legacy system, third-party API). It translates the external model into your domain model so your internals never get polluted with the external system\'s concepts. It implements the Adapter pattern (Day 26) at the bounded context boundary.',
     w: {
-      0: 'A security firewall is an infrastructure concern (API Gateway, network policy). The ACL is a domain design pattern about model translation, not security.',
-      2: 'Database migration tools (like Flyway, Liquibase) are unrelated. ACL is a domain layer pattern.',
-      3: 'A circuit breaker (like Hystrix/Resilience4j) handles fault tolerance. The ACL handles domain model translation. Both are important but different.',
+      0: 'Database migration tools (like Flyway, Liquibase) are unrelated. ACL is a domain layer pattern.',
+      1: 'A circuit breaker (like Hystrix/Resilience4j) handles fault tolerance. The ACL handles domain model translation. Both are important but different.',
+      2: 'A security firewall is an infrastructure concern (API Gateway, network policy). The ACL is a domain design pattern about model translation, not security.',
     },
     r: { id: 's5', label: 'Section 5 — Anti-Corruption Layer' },
   },
   {
     q: 'What is the API Composition (BFF) pattern for?',
     o: [
+      'Versioning REST APIs across multiple services',
       'Preventing services from sharing a database',
       'Aggregating data from multiple services server-side so the client makes one call instead of N',
       'Compressing API responses to reduce bandwidth',
-      'Versioning REST APIs across multiple services',
     ],
-    a: 1,
+    a: 2,
     e: 'Without API Composition, a mobile client needing order + user + payment data would make 3 separate network calls — 3 round-trips on a slow mobile connection. A BFF (Backend for Frontend) or API Composer fans out those 3 calls server-side in parallel, then merges the results and returns one response to the client.',
     w: {
-      0: 'Database isolation is the "database per service" rule, not API Composition. These are separate patterns.',
-      2: 'Response compression (gzip, brotli) is an HTTP-level concern. API Composition is about reducing the number of client round-trips.',
-      3: 'API versioning is handled by URL versioning (/v1/, /v2/) or header versioning. API Composition is about aggregating responses, not versioning.',
+      0: 'API versioning is handled by URL versioning (/v1/, /v2/) or header versioning. API Composition is about aggregating responses, not versioning.',
+      1: 'Database isolation is the "database per service" rule, not API Composition. These are separate patterns.',
+      3: 'Response compression (gzip, brotli) is an HTTP-level concern. API Composition is about reducing the number of client round-trips.',
     },
     r: { id: 's9', label: 'Section 9 — API Composition / BFF' },
   },
   {
     q: 'When should you START with microservices instead of a monolith?',
     o: [
-      'Always — microservices are always better than monoliths',
       'When your team has more than 5 engineers',
-      'Almost never — start with a well-structured modular monolith; extract services when you have a proven domain model and a specific scaling need',
+      'Always — microservices are always better than monoliths',
       'When you are using a cloud provider',
+      'Almost never — start with a well-structured modular monolith; extract services when you have a proven domain model and a specific scaling need',
     ],
-    a: 2,
+    a: 3,
     e: 'Microservices add enormous operational complexity: network latency, distributed tracing, separate deployments, eventual consistency. A monolith is simpler to build, test, and deploy. Extract services when the monolith\'s pain (deploy coupling, scaling a single component) exceeds the complexity cost of distribution. Martin Fowler calls this "MonolithFirst."',
     w: {
-      0: 'Microservices are not always better. For small teams and early-stage products they add complexity without benefit. Many successful systems (Basecamp, Shopify initially) are monoliths.',
-      1: 'Team size is one factor but not a threshold rule. A 10-person team can run a monolith efficiently; a 3-person team can struggle with microservices. Domain clarity and scaling needs matter more.',
-      3: 'Cloud providers support both monoliths and microservices equally well. Using AWS does not mean you need microservices.',
+      0: 'Team size is one factor but not a threshold rule. A 10-person team can run a monolith efficiently; a 3-person team can struggle with microservices. Domain clarity and scaling needs matter more.',
+      1: 'Microservices are not always better. For small teams and early-stage products they add complexity without benefit. Many successful systems (Basecamp, Shopify initially) are monoliths.',
+      2: 'Cloud providers support both monoliths and microservices equally well. Using AWS does not mean you need microservices.',
     },
     r: { id: 's1', label: 'Section 1 — Monolith vs microservices' },
   },
   {
     q: 'Which decomposition strategy says: identify where the same word (like "Order") means different things in different parts of the business, and draw a service boundary there?',
     o: [
-      'Decompose by volatility',
-      'Decompose by team size',
       'Decompose by subdomain / bounded context (Domain-Driven Design)',
+      'Decompose by volatility',
       'Decompose by database table',
+      'Decompose by team size',
     ],
-    a: 2,
+    a: 0,
     e: 'Domain-Driven Design (DDD) uses bounded contexts to find natural seams. "Order" in Sales means a quote; "Order" in Warehouse means a pick list; "Order" in Finance means a revenue event. Each bounded context becomes a service boundary because the models diverge. This produces stable, semantically clean services.',
     w: {
-      0: 'Decomposition by volatility asks "what changes often vs rarely?" — useful, but that is a separate strategy. It doesn\'t address the semantic "same word, different meaning" problem.',
-      1: 'Team size is an operational concern. DDD decomposition is about domain semantics, not org chart math.',
-      3: 'Table-per-service decomposition leads to data-layer-driven design, which often produces the wrong service boundaries (technical split, not business split). DDD recommends business-capability or subdomain boundaries instead.',
+      1: 'Decomposition by volatility asks "what changes often vs rarely?" — useful, but that is a separate strategy. It doesn\'t address the semantic "same word, different meaning" problem.',
+      2: 'Table-per-service decomposition leads to data-layer-driven design, which often produces the wrong service boundaries (technical split, not business split). DDD recommends business-capability or subdomain boundaries instead.',
+      3: 'Team size is an operational concern. DDD decomposition is about domain semantics, not org chart math.',
     },
     r: { id: 's2', label: 'Section 2 — Decomposition strategies' },
   },
